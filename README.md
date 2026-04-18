@@ -11,6 +11,15 @@ Early development. See `SPEC.md` for the full specification, `TASKS.md` for the 
 - Jellyfin 10.11.x
 - .NET 8
 
+## User concert list
+
+After installing the plugin, any logged-in Jellyfin user can bookmark:
+
+    https://<your-jellyfin>/web/ConfigurationPage?name=concertradar-view
+
+This page is independent from the admin Dashboard and does not require
+admin privileges. Configuration remains admin-only.
+
 ## License
 
 MIT — see `LICENSE`.

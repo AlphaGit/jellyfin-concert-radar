@@ -43,5 +43,10 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
             Name = "concertradar",
             EmbeddedResourcePath = GetType().Namespace + ".Web.admin.html",
         },
+        new PluginPageInfo
+        {
+            Name = "concertradar-view",
+            EmbeddedResourcePath = GetType().Namespace + ".Web.view.html",
+        },
     };
 }
