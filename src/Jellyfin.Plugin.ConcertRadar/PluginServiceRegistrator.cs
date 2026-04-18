@@ -50,6 +50,9 @@ public sealed class PluginServiceRegistrator : IPluginServiceRegistrator
         // resolves all of them. Additional adapters (T5.1, T7.1, etc.) follow the same pattern.
         serviceCollection.AddSingleton<ISourceAdapter, TicketmasterAdapter>();
 
+        // T5.2: Bandsintown adapter.
+        serviceCollection.AddSingleton<ISourceAdapter, BandsintownAdapter>();
+
         // T3.2: Scheduled task — Jellyfin discovers IScheduledTask implementations automatically
         // when they are in the DI container.
         serviceCollection.AddSingleton<IScheduledTask, RefreshConcertsTask>();
