@@ -285,6 +285,12 @@ Dependencies are called out explicitly. Tasks in the same phase without dependen
 - User view shows "Data: EdmTrain" badge on EdmTrain rows.
 - **Depends on**: T7.1, T1.7, T4.5.
 
+### T7.3 [FE] Attribution badges (EdmTrain ToS follow-up)
+- Show "Data: EdmTrain" badge in admin status card when the EdmTrain source is enabled.
+- Show "Data: EdmTrain" badge on each EdmTrain row in the user concert view (`view.html`).
+- Non-blocking for v0 ship, but required before ToS compliance.
+- **Depends on**: T7.2, T4.3, T6.4.
+
 ---
 
 ## Phase 8 — Songkick scraper
