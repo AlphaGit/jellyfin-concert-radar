@@ -1,0 +1,26 @@
+{
+  "id": "a74b1b7f-71a5-4011-9441-d0b5e4122711",
+  "name": "Radiohead",
+  "type": "Group",
+  "country": "GB",
+  "relations": [
+    {
+      "type": "wikipedia",
+      "url": {
+        "resource": "https://en.wikipedia.org/wiki/Radiohead"
+      }
+    },
+    {
+      "type": "official homepage",
+      "url": {
+        "resource": "https://www.radiohead.com/"
+      }
+    },
+    {
+      "type": "youtube",
+      "url": {
+        "resource": "https://www.youtube.com/user/radiohead"
+      }
+    }
+  ]
+}

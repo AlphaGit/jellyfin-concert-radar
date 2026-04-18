@@ -1,0 +1,27 @@
+{
+  "artists": [
+    {
+      "id": "a74b1b7f-71a5-4011-9441-d0b5e4122711",
+      "score": 95,
+      "name": "Radiohead",
+      "type": "Group",
+      "country": "GB"
+    },
+    {
+      "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "score": 70,
+      "name": "Radioheads Tribute Band",
+      "type": "Group",
+      "country": "US"
+    },
+    {
+      "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "score": 50,
+      "name": "Radio Head",
+      "type": "Group",
+      "country": "AU"
+    }
+  ],
+  "count": 3,
+  "offset": 0
+}

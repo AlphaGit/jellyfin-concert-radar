@@ -1,0 +1,20 @@
+{
+  "artists": [
+    {
+      "id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+      "score": 60,
+      "name": "Radioheads",
+      "type": "Group",
+      "country": "US"
+    },
+    {
+      "id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      "score": 45,
+      "name": "Radio",
+      "type": "Group",
+      "country": "CA"
+    }
+  ],
+  "count": 2,
+  "offset": 0
+}

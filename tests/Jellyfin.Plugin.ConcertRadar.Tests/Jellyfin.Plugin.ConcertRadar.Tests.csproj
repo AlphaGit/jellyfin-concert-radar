@@ -41,4 +41,12 @@
     <ProjectReference Include="..\..\src\Jellyfin.Plugin.ConcertRadar\Jellyfin.Plugin.ConcertRadar.csproj" />
   </ItemGroup>
 
+  <!-- Copy test fixtures to the output directory so FixtureLoader.Load works at runtime. -->
+  <ItemGroup>
+    <None Update="..\..\tests\fixtures\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>fixtures\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+
 </Project>

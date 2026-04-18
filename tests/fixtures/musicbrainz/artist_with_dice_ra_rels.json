@@ -1,0 +1,20 @@
+{
+  "id": "a74b1b7f-71a5-4011-9441-d0b5e4122711",
+  "name": "Radiohead",
+  "type": "Group",
+  "country": "GB",
+  "relations": [
+    {
+      "type": "dice fm",
+      "url": {
+        "resource": "https://dice.fm/artist/radiohead-abc123"
+      }
+    },
+    {
+      "type": "resident advisor",
+      "url": {
+        "resource": "https://ra.co/dj/radiohead"
+      }
+    }
+  ]
+}
