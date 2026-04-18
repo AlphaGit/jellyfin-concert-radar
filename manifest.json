@@ -1,0 +1,11 @@
+[
+  {
+    "guid": "65bb36d5-70d5-4121-8771-3dd404d20287",
+    "name": "Jellyfin Concert Radar",
+    "description": "Aggregates upcoming concerts for the artists in your Jellyfin music library from multiple sources.",
+    "overview": "Upcoming concerts for artists in your music library.",
+    "owner": "Alpha",
+    "category": "General",
+    "versions": []
+  }
+]

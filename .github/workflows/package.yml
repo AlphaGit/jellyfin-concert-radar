@@ -1,0 +1,42 @@
+name: package
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install JPRM
+        run: pip install jprm
+
+      - name: Build Release
+        run: dotnet publish src/Jellyfin.Plugin.ConcertRadar/Jellyfin.Plugin.ConcertRadar.csproj --configuration Release --output ./publish
+
+      - name: Derive version from tag
+        id: ver
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Package with JPRM
+        run: |
+          jprm plugin build . --version "${{ steps.ver.outputs.version }}" --output ./artifacts
+
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jellyfin-concert-radar-${{ steps.ver.outputs.version }}
+          path: ./artifacts/*.zip
