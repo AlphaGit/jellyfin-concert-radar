@@ -1,10 +1,13 @@
 using Jellyfin.Plugin.ConcertRadar.Library;
 using Jellyfin.Plugin.ConcertRadar.RateLimiting;
 using Jellyfin.Plugin.ConcertRadar.Resolution;
+using Jellyfin.Plugin.ConcertRadar.ScheduledTasks;
+using Jellyfin.Plugin.ConcertRadar.Sources;
 using Jellyfin.Plugin.ConcertRadar.Storage;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Plugins;
+using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -43,9 +46,12 @@ public sealed class PluginServiceRegistrator : IPluginServiceRegistrator
         // T2.3: MusicBrainz resolver.
         serviceCollection.AddSingleton<MusicBrainzResolver>();
 
-        // ISourceAdapter registrations are added in Phase 3+ (T3.1, T5.1, T7.1, etc.).
-        // When adapters are registered they should be added as:
-        //   serviceCollection.AddSingleton<ISourceAdapter, TicketmasterAdapter>();
-        // The scheduled task resolves IEnumerable<ISourceAdapter> from the container.
+        // T3.1: Source adapters — registered individually so IEnumerable<ISourceAdapter>
+        // resolves all of them. Additional adapters (T5.1, T7.1, etc.) follow the same pattern.
+        serviceCollection.AddSingleton<ISourceAdapter, TicketmasterAdapter>();
+
+        // T3.2: Scheduled task — Jellyfin discovers IScheduledTask implementations automatically
+        // when they are in the DI container.
+        serviceCollection.AddSingleton<IScheduledTask, RefreshConcertsTask>();
     }
 }
