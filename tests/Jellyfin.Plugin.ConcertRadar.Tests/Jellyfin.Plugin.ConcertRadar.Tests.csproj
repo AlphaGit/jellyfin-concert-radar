@@ -17,7 +17,9 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="FluentAssertions" Version="8.2.0" />
+    <!-- Pin FluentAssertions to 7.x (Apache-2.0). FA 8+ switched to the Xceed
+         royalty-free license which is ambiguous for an MIT-licensed plugin. -->
+    <PackageReference Include="FluentAssertions" Version="7.*" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.*" />
     <!--
