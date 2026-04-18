@@ -1,0 +1,42 @@
+# .NET
+bin/
+obj/
+out/
+*.user
+*.suo
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+TestResults/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+
+# Packaging
+*.nupkg
+*.zip
+package/
+publish/
+
+# Secrets (fixtures must be scrubbed before commit)
+*.secret
+.env
+.env.local
