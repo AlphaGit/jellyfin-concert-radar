@@ -259,6 +259,27 @@ public sealed class SourceStateRepository
     }
 
     /// <summary>
+    /// Persists a rate-limiter backoff floor to <c>source_state.next_allowed_at</c> so it
+    /// survives a plugin restart.  Pass <c>null</c> to clear the floor.
+    /// </summary>
+    public async Task SetNextAllowedAtAsync(string source, DateTimeOffset? until, CancellationToken ct)
+    {
+        await EnsureRowAsync(source, ct).ConfigureAwait(false);
+
+        await using var conn = await OpenAsync(ct).ConfigureAwait(false);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            UPDATE source_state
+            SET next_allowed_at = @val
+            WHERE source = @source
+            """;
+        cmd.Parameters.AddWithValue("@val",
+            until.HasValue ? (object)until.Value.ToString("O") : DBNull.Value);
+        cmd.Parameters.AddWithValue("@source", source);
+        await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Creates or updates the status for a source (used for initialization and manual overrides).
     /// </summary>
     public async Task UpsertStatusAsync(string source, SourceStatus status, CancellationToken ct)
