@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -15,25 +15,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Jellyfin references: exclude runtime assets so the host's copies are used -->
-    <!-- Jellyfin 10.10.x is the last release targeting net8.0.
-         Jellyfin 10.11.x moved to net9.0; pin to 10.10.7 until the build
-         environment upgrades to a net9 SDK. See SPEC §3 deviation note. -->
-    <PackageReference Include="Jellyfin.Controller" Version="10.10.7">
+    <!-- Jellyfin 10.11.6 targets net9.0. Keep package versions in lockstep with the server ABI. -->
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.6">
       <ExcludeAssets>runtime</ExcludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Jellyfin.Model" Version="10.10.7">
+    <PackageReference Include="Jellyfin.Model" Version="10.11.6">
       <ExcludeAssets>runtime</ExcludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
 
-    <!-- SQLite persistence -->
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.*" />
+    <!-- SQLite persistence (net9-compatible baseline) -->
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.*" />
 
     <!--
       AngleSharp is the canonical HTML parsing library for all scrapers in this plugin.
-      Do NOT add a second HTML parser (e.g. HtmlAgilityPack) — use AngleSharp for everything.
+      Do NOT add a second HTML parser (e.g. HtmlAgilityPack) - use AngleSharp for everything.
     -->
     <PackageReference Include="AngleSharp" Version="1.*" />
   </ItemGroup>

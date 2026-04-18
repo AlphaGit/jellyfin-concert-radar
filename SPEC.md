@@ -18,12 +18,12 @@
 
 - Ticket purchasing. Plugin only links out to the source.
 - Push notifications / calendar export. Possible future work.
-- Running on Jellyfin < 10.11 or > 10.11.x. Rebuild required for 10.12 (net9).
+- Running on Jellyfin < 10.11 or > 10.11.x. A framework retarget may be required for 10.12.
 - Per-user configuration. All configuration is server-global.
 
 ## 3. Constraints
 
-- **Runtime**: .NET 8, `Jellyfin.Controller` 10.11.6, `Jellyfin.Model` 10.11.6, `ExcludeAssets=runtime` on both.
+- **Runtime**: .NET 9, `Jellyfin.Controller` 10.11.6, `Jellyfin.Model` 10.11.6, `ExcludeAssets=runtime` on both. (Jellyfin 10.11.x targets net9.0; net8 was the 10.10.x line.)
 - **License**: MIT (sources confirm permissive licenses are acceptable per the plugin template policy).
 - **Persistence**: private SQLite database under `IApplicationPaths.DataPath/concertradar/concerts.db` via `Microsoft.Data.Sqlite`. Never write to the Jellyfin system database.
 - **Configuration**: `BasePluginConfiguration`-derived type, server-global only. Jellyfin has no native per-user plugin config.
@@ -384,4 +384,4 @@ Authentication flow when visited directly via `/web/ConfigurationPage?name=conce
 - Scraper drift for Dice/RA/Songkick — mitigated by fixture-based contract tests + circuit breaker.
 - Cloudflare escalation on Dice — plugin sets realistic `User-Agent` and `Accept-Language`; on persistent 403 the circuit disables the adapter and surfaces a message.
 - Absent MBIDs in library → name-based fallback lookups with lower confidence; matches with confidence below threshold are stored but flagged.
-- Jellyfin 10.12 will require a rebuild against net9.
+- Jellyfin 10.12 may require a framework retarget.

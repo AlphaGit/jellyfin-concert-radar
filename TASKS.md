@@ -23,9 +23,9 @@ Dependencies are called out explicitly. Tasks in the same phase without dependen
 - **Deliverable**: repo with SPEC.md, TASKS.md, TESTS.md, LICENSE, README.md, .gitignore.
 
 ### T0.2 [INFRA] .NET project scaffold
-- Create `src/Jellyfin.Plugin.ConcertRadar/Jellyfin.Plugin.ConcertRadar.csproj` targeting `net8.0`.
+- Create `src/Jellyfin.Plugin.ConcertRadar/Jellyfin.Plugin.ConcertRadar.csproj` targeting `net9.0` (Jellyfin 10.11.x is net9).
 - Reference `Jellyfin.Controller` 10.11.6, `Jellyfin.Model` 10.11.6 with `<ExcludeAssets>runtime</ExcludeAssets>`.
-- Reference `Microsoft.Data.Sqlite` 8.x, `AngleSharp` (for HTML parsing in scrapers), `HtmlAgilityPack` is acceptable alternative — pick one and stick with it.
+- Reference `Microsoft.Data.Sqlite` 9.x, `AngleSharp` (canonical HTML parser for all scrapers — do not add HtmlAgilityPack).
 - Create `Plugin.cs` inheriting `BasePlugin<PluginConfiguration>`, implementing `IHasWebPages` (returns empty for now).
 - Create `Configuration/PluginConfiguration.cs` with stub fields.
 - Verify `dotnet build` succeeds.
