@@ -9,7 +9,7 @@ Early development. See `SPEC.md` for the full specification, `TASKS.md` for the 
 ## Target
 
 - Jellyfin 10.11.x
-- .NET 8
+- .NET 9
 
 ## User concert list
 
