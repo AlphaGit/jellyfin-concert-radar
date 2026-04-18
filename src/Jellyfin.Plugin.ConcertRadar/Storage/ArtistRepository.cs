@@ -187,6 +187,53 @@ public sealed class ArtistRepository
         return results;
     }
 
+    /// <summary>
+    /// Returns all artists in the database.
+    /// </summary>
+    public async Task<IReadOnlyList<StoredArtist>> GetAllAsync(CancellationToken ct)
+    {
+        await using var conn = await OpenAsync(ct).ConfigureAwait(false);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT id, mbid, name, jellyfin_item_id, ext_ids,
+                   last_checked_at, last_error, consecutive_errors
+            FROM artists
+            ORDER BY name ASC
+            """;
+
+        var results = new List<StoredArtist>();
+        await using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
+        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            results.Add(ReadStoredArtist(reader));
+
+        return results;
+    }
+
+    /// <summary>
+    /// Returns the number of artists that have never been checked (<c>last_checked_at IS NULL</c>).
+    /// </summary>
+    public async Task<int> CountUncheckedAsync(CancellationToken ct)
+    {
+        await using var conn = await OpenAsync(ct).ConfigureAwait(false);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM artists WHERE last_checked_at IS NULL";
+        var scalar = await cmd.ExecuteScalarAsync(ct).ConfigureAwait(false);
+        return Convert.ToInt32(scalar);
+    }
+
+    /// <summary>
+    /// Resets <c>ext_ids</c> to <c>{}</c> for all artists, forcing re-resolution on the next
+    /// scheduler run.
+    /// </summary>
+    public async Task ClearAllExternalIdsAsync(CancellationToken ct)
+    {
+        await using var conn = await OpenAsync(ct).ConfigureAwait(false);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE artists SET ext_ids = '{}'";
+        int rows = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+        _logger.LogInformation("ClearAllExternalIds reset ext_ids for {Count} artist(s).", rows);
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private async Task<SqliteConnection> OpenAsync(CancellationToken ct)
