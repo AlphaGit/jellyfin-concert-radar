@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Jellyfin.Plugin.ConcertRadar.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="8.2.0" />
+    <PackageReference Include="NSubstitute" Version="5.3.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.*" />
+    <!--
+      Jellyfin references for test host. Unlike the main plugin (which runs inside Jellyfin and
+      excludes runtime assets because the host provides them), the test host needs the actual
+      DLLs present in the output directory so the test runner can load them. We therefore omit
+      ExcludeAssets=runtime here. PrivateAssets=all is still correct so these are not exposed as
+      NuGet transitive dependencies if the test project were ever packed (it isn't — IsPackable=false).
+    -->
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.6">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Jellyfin.Model" Version="10.11.6">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Jellyfin.Plugin.ConcertRadar\Jellyfin.Plugin.ConcertRadar.csproj" />
+  </ItemGroup>
+
+</Project>
