@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Jellyfin.Plugin.ConcertRadar.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
@@ -37,5 +36,12 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     public static Plugin? Instance { get; private set; }
 
     /// <inheritdoc />
-    public IEnumerable<PluginPageInfo> GetPages() => Enumerable.Empty<PluginPageInfo>();
+    public IEnumerable<PluginPageInfo> GetPages() => new[]
+    {
+        new PluginPageInfo
+        {
+            Name = "concertradar",
+            EmbeddedResourcePath = GetType().Namespace + ".Web.admin.html",
+        },
+    };
 }

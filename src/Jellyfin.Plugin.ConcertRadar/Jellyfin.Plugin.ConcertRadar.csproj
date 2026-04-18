@@ -20,6 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Embed web UI pages (admin config page, user concerts view) as assembly resources. -->
+    <EmbeddedResource Include="Web/*.html;Web/*.js;Web/*.css" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Jellyfin 10.11.6 targets net9.0. Keep package versions in lockstep with the server ABI. -->
     <PackageReference Include="Jellyfin.Controller" Version="10.11.6">
       <ExcludeAssets>runtime</ExcludeAssets>
