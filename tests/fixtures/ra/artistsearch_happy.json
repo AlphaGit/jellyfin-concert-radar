@@ -1,0 +1,13 @@
+{
+  "data": {
+    "artistSearch": {
+      "data": [
+        {
+          "id": "ra-artist-deadmau5",
+          "name": "deadmau5",
+          "urlSlug": "deadmau5"
+        }
+      ]
+    }
+  }
+}

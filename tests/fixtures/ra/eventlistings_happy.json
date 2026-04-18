@@ -1,0 +1,56 @@
+{
+  "data": {
+    "eventListings": {
+      "data": [
+        {
+          "event": {
+            "id": "ra-evt-100001",
+            "title": "deadmau5 at fabric",
+            "contentUrl": "/events/100001",
+            "date": "2025-09-28",
+            "startTime": "22:00",
+            "endTime": "06:00",
+            "venue": {
+              "name": "fabric",
+              "address": "77a Charterhouse St, London EC1M 6HJ",
+              "area": {
+                "name": "London",
+                "country": {
+                  "name": "United Kingdom"
+                }
+              }
+            },
+            "artists": [
+              { "name": "deadmau5" },
+              { "name": "Four Tet" }
+            ]
+          }
+        },
+        {
+          "event": {
+            "id": "ra-evt-100002",
+            "title": "deadmau5 NYC",
+            "contentUrl": "/events/100002",
+            "date": "2025-10-10",
+            "startTime": "23:00",
+            "endTime": "05:00",
+            "venue": {
+              "name": "Output",
+              "address": "74 Wythe Ave, Brooklyn",
+              "area": {
+                "name": "New York",
+                "country": {
+                  "name": "United States"
+                }
+              }
+            },
+            "artists": [
+              { "name": "deadmau5" }
+            ]
+          }
+        }
+      ],
+      "totalResults": 2
+    }
+  }
+}
