@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": 12345,
+      "name": "deadmau5",
+      "link": "https://edmtrain.com/artists/12345-deadmau5"
+    }
+  ]
+}

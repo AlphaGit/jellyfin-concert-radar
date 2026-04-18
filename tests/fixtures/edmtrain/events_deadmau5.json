@@ -1,0 +1,52 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": 99001,
+      "link": "https://edmtrain.com/events/99001",
+      "ticketLink": "https://tickets.example.com/99001",
+      "name": "deadmau5 at Echostage",
+      "ages": "18+",
+      "festivalInd": false,
+      "electronicGenreInd": true,
+      "otherGenreInd": false,
+      "date": "2025-09-15",
+      "venue": {
+        "id": 501,
+        "name": "Echostage",
+        "location": "Washington DC",
+        "address": "2135 Queens Chapel Rd NE",
+        "state": "DC",
+        "latitude": 38.9200,
+        "longitude": -76.9850
+      },
+      "artistList": [
+        { "id": 12345, "name": "deadmau5", "link": "https://edmtrain.com/artists/12345-deadmau5" }
+      ]
+    },
+    {
+      "id": 99002,
+      "link": "https://edmtrain.com/events/99002",
+      "ticketLink": null,
+      "name": "EDM Festival 2025",
+      "ages": "All Ages",
+      "festivalInd": true,
+      "electronicGenreInd": true,
+      "otherGenreInd": false,
+      "date": "2025-10-05",
+      "venue": {
+        "id": 502,
+        "name": "Insomniac Festival Grounds",
+        "location": "Los Angeles",
+        "address": "1600 Exposition Blvd",
+        "state": "CA",
+        "latitude": 34.0195,
+        "longitude": -118.2856
+      },
+      "artistList": [
+        { "id": 12345, "name": "deadmau5", "link": "https://edmtrain.com/artists/12345-deadmau5" },
+        { "id": 99999, "name": "Eric Prydz", "link": "https://edmtrain.com/artists/99999-eric-prydz" }
+      ]
+    }
+  ]
+}
