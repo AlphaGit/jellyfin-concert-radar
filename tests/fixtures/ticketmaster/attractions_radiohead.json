@@ -1,0 +1,18 @@
+{
+  "_embedded": {
+    "attractions": [
+      {
+        "id": "K8vZ9171oZf",
+        "name": "Radiohead"
+      },
+      {
+        "id": "K8vZ9171abc",
+        "name": "Radiohead Tribute Band"
+      },
+      {
+        "id": "K8vZ9171xyz",
+        "name": "The Radiohead Experience"
+      }
+    ]
+  }
+}

@@ -1,0 +1,200 @@
+{
+  "_embedded": {
+    "events": [
+      {
+        "id": "TM-001",
+        "url": "https://www.ticketmaster.com/event/TM-001",
+        "dates": {
+          "start": {
+            "localDate": "2025-09-15",
+            "dateTime": "2025-09-15T19:30:00Z"
+          },
+          "status": {
+            "code": "onsale"
+          }
+        },
+        "sales": {
+          "public": {
+            "startDateTime": "2025-06-01T10:00:00Z"
+          }
+        },
+        "priceRanges": [
+          {
+            "type": "standard",
+            "currency": "USD",
+            "min": 45.0,
+            "max": 150.0
+          }
+        ],
+        "classifications": [
+          {
+            "genre": {
+              "name": "Rock"
+            }
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "Madison Square Garden",
+              "address": {
+                "line1": "4 Pennsylvania Plaza"
+              },
+              "city": {
+                "name": "New York"
+              },
+              "state": {
+                "name": "New York"
+              },
+              "country": {
+                "countryCode": "US",
+                "name": "United States Of America"
+              },
+              "location": {
+                "longitude": "-73.9934",
+                "latitude": "40.7505"
+              }
+            }
+          ],
+          "attractions": [
+            {
+              "id": "K8vZ9171oZf",
+              "name": "Radiohead"
+            }
+          ]
+        }
+      },
+      {
+        "id": "TM-002",
+        "url": "https://www.ticketmaster.com/event/TM-002",
+        "dates": {
+          "start": {
+            "localDate": "2025-09-18",
+            "dateTime": "2025-09-18T20:00:00Z"
+          },
+          "status": {
+            "code": "onsale"
+          }
+        },
+        "sales": {
+          "public": {
+            "startDateTime": "2025-06-01T10:00:00Z"
+          }
+        },
+        "priceRanges": [
+          {
+            "type": "standard",
+            "currency": "USD",
+            "min": 50.0,
+            "max": 200.0
+          }
+        ],
+        "classifications": [
+          {
+            "genre": {
+              "name": "Festival"
+            }
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "United Center",
+              "address": {
+                "line1": "1901 W Madison St"
+              },
+              "city": {
+                "name": "Chicago"
+              },
+              "state": {
+                "name": "Illinois"
+              },
+              "country": {
+                "countryCode": "US",
+                "name": "United States Of America"
+              },
+              "location": {
+                "longitude": "-87.6742",
+                "latitude": "41.8807"
+              }
+            }
+          ],
+          "attractions": [
+            {
+              "id": "K8vZ9171oZf",
+              "name": "Radiohead"
+            },
+            {
+              "id": "K8vZ9171abc",
+              "name": "Thom Yorke"
+            }
+          ]
+        }
+      },
+      {
+        "id": "TM-003",
+        "url": "https://www.ticketmaster.com/event/TM-003",
+        "dates": {
+          "start": {
+            "localDate": "2025-09-22",
+            "dateTime": "2025-09-22T21:00:00Z"
+          },
+          "status": {
+            "code": "onsale"
+          }
+        },
+        "priceRanges": [
+          {
+            "type": "standard",
+            "currency": "USD",
+            "min": 75.0,
+            "max": 300.0
+          }
+        ],
+        "classifications": [
+          {
+            "genre": {
+              "name": "Rock"
+            }
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "Hollywood Bowl",
+              "address": {
+                "line1": "2301 N Highland Ave"
+              },
+              "city": {
+                "name": "Los Angeles"
+              },
+              "state": {
+                "name": "California"
+              },
+              "country": {
+                "countryCode": "US",
+                "name": "United States Of America"
+              },
+              "location": {
+                "longitude": "-118.3392",
+                "latitude": "34.1122"
+              }
+            }
+          ],
+          "attractions": [
+            {
+              "id": "K8vZ9171oZf",
+              "name": "Radiohead"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "page": {
+    "size": 200,
+    "totalElements": 3,
+    "totalPages": 1,
+    "number": 0
+  }
+}

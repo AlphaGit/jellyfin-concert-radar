@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Jellyfin.Plugin.ConcertRadar.Tests.Sources;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Model.Serialization;
 using NSubstitute;
@@ -8,7 +9,10 @@ namespace Jellyfin.Plugin.ConcertRadar.Tests;
 
 /// <summary>
 /// Sanity tests that verify fundamental plugin invariants without requiring a running Jellyfin host.
+/// Placed in <see cref="PluginInstanceCollection"/> because the test constructs a <see cref="Plugin"/>
+/// which sets the static <c>Plugin.Instance</c> field.
 /// </summary>
+[Collection(PluginInstanceCollection.Name)]
 public class PluginSanityTests
 {
     /// <summary>

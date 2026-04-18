@@ -1,0 +1,65 @@
+[
+  {
+    "id": "BIT-001",
+    "url": "https://www.bandsintown.com/e/BIT-001",
+    "datetime": "2025-09-15T20:00:00",
+    "title": "Radiohead at O2 Arena",
+    "venue": {
+      "name": "O2 Arena",
+      "address1": "Peninsula Square",
+      "city": "London",
+      "region": "England",
+      "country": "United Kingdom",
+      "latitude": "51.5030",
+      "longitude": "0.0032"
+    },
+    "lineup": ["Radiohead", "Thom Yorke"],
+    "offers": [
+      {
+        "type": "Tickets",
+        "url": "https://www.ticketweb.uk/event/BIT-001",
+        "status": "available"
+      }
+    ]
+  },
+  {
+    "id": "BIT-002",
+    "url": "https://www.bandsintown.com/e/BIT-002",
+    "datetime": "2025-09-20T19:30:00",
+    "title": "Radiohead Live",
+    "venue": {
+      "name": "Accor Arena",
+      "address1": "8 Boulevard de Bercy",
+      "city": "Paris",
+      "region": "Île-de-France",
+      "country": "France",
+      "latitude": "48.8382",
+      "longitude": "2.3788"
+    },
+    "lineup": ["Radiohead"],
+    "offers": [
+      {
+        "type": "Tickets",
+        "url": "https://www.fnacspectacles.com/BIT-002",
+        "status": "sold out"
+      }
+    ]
+  },
+  {
+    "id": "BIT-003",
+    "url": "https://www.bandsintown.com/e/BIT-003",
+    "datetime": "2025-09-25T21:00:00",
+    "title": "Radiohead + Special Guests",
+    "venue": {
+      "name": "Barclays Center",
+      "address1": "620 Atlantic Ave",
+      "city": "Brooklyn",
+      "region": "New York",
+      "country": "United States",
+      "latitude": "40.6826",
+      "longitude": "-73.9754"
+    },
+    "lineup": ["Radiohead", "PJ Harvey", "Portishead"],
+    "offers": []
+  }
+]
