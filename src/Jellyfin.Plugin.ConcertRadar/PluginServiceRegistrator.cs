@@ -56,6 +56,16 @@ public sealed class PluginServiceRegistrator : IPluginServiceRegistrator
         // T7.2: EdmTrain adapter.
         serviceCollection.AddSingleton<ISourceAdapter, EdmTrainAdapter>();
 
+        // T8.2: Songkick scraper.
+        serviceCollection.AddSingleton<ISourceAdapter, SongkickScrapeAdapter>();
+
+        // T9.2: Dice.fm scraper (ToS opt-in required; IsConfigured guards at fetch time).
+        serviceCollection.AddSingleton<ISourceAdapter, DiceScrapeAdapter>();
+
+        // T10.2: Resident Advisor scraper (ToS opt-in required; IsConfigured guards at fetch time).
+        // Note: the RA warning banner in admin.html was added in T4.5.
+        serviceCollection.AddSingleton<ISourceAdapter, RaScrapeAdapter>();
+
         // T3.2: Scheduled task — Jellyfin discovers IScheduledTask implementations automatically
         // when they are in the DI container.
         serviceCollection.AddSingleton<IScheduledTask, RefreshConcertsTask>();
