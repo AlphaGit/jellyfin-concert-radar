@@ -15,6 +15,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Embed SQL migration scripts as assembly resources so SchemaMigrator can read them at runtime. -->
+    <EmbeddedResource Include="Storage/Migrations/*.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Jellyfin 10.11.6 targets net9.0. Keep package versions in lockstep with the server ABI. -->
     <PackageReference Include="Jellyfin.Controller" Version="10.11.6">
       <ExcludeAssets>runtime</ExcludeAssets>
