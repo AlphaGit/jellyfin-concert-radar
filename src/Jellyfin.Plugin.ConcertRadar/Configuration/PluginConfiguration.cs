@@ -26,11 +26,13 @@ public class PluginConfiguration : BasePluginConfiguration
 
     /// <summary>
     /// Gets or sets the list of enabled source identifiers.
-    /// Defaults: ticketmaster, bandsintown, songkick.
-    /// Using <see cref="List{T}"/> for XML-serializer compatibility.
+    /// Empty by default; <see cref="PluginConfigurationDefaults.SeedIfEmpty"/>
+    /// populates the spec defaults on first startup. Seeding at construction
+    /// would cause <see cref="System.Xml.Serialization.XmlSerializer"/> to
+    /// duplicate entries on every round-trip (it calls <c>Add</c> on the
+    /// existing list instead of replacing it).
     /// </summary>
-    public List<string> EnabledSources { get; set; } =
-        new() { "ticketmaster", "bandsintown", "songkick" };
+    public List<string> EnabledSources { get; set; } = new();
 
     /// <summary>Gets or sets a value indicating whether the user has accepted the Resident Advisor scrape ToS.</summary>
     public bool AcceptRaScrapeTos { get; set; } = false;
@@ -90,15 +92,10 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets per-source rate-limit overrides.
     /// Stored as a list of key/value entries because <c>Dictionary&lt;string, RateLimitConfig&gt;</c>
     /// cannot be serialized by <see cref="System.Xml.Serialization.XmlSerializer"/>.
-    /// Seeded with spec-default values for all six sources.
+    /// Empty by default; <see cref="PluginConfigurationDefaults.SeedIfEmpty"/>
+    /// populates the spec-default entries on first startup. Seeding at
+    /// construction would cause the serializer to double the list on every
+    /// round-trip (Add, not replace).
     /// </summary>
-    public List<SourceRateLimitEntry> RateLimits { get; set; } = new()
-    {
-        new() { Source = "ticketmaster", Config = new() { RequestsPerSecond = 5,   RequestsPerDay = 5000 } },
-        new() { Source = "bandsintown",  Config = new() { RequestsPerSecond = 1,   RequestsPerDay = null  } },
-        new() { Source = "edmtrain",     Config = new() { RequestsPerSecond = 1,   RequestsPerDay = null  } },
-        new() { Source = "songkick",     Config = new() { RequestsPerSecond = 1,   RequestsPerDay = null  } },
-        new() { Source = "dice",         Config = new() { RequestsPerSecond = 0.5, RequestsPerDay = null  } },
-        new() { Source = "ra",           Config = new() { RequestsPerSecond = 0.5, RequestsPerDay = null  } },
-    };
+    public List<SourceRateLimitEntry> RateLimits { get; set; } = new();
 }

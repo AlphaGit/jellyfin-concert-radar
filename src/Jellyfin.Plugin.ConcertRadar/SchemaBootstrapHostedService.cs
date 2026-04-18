@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.ConcertRadar.Configuration;
 using Jellyfin.Plugin.ConcertRadar.Storage;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -7,10 +8,9 @@ using Microsoft.Extensions.Logging;
 namespace Jellyfin.Plugin.ConcertRadar;
 
 /// <summary>
-/// An <see cref="IHostedService"/> that runs the SQLite schema migration once at startup.
-/// This is the idiomatic Jellyfin/ASP.NET Core pattern for initialization work:
-/// register via <c>AddHostedService</c> and the host will call
-/// <see cref="StartAsync"/> during startup.
+/// An <see cref="IHostedService"/> that runs the SQLite schema migration and
+/// seeds default configuration entries once at startup. Registered via
+/// <c>AddHostedService</c>; the host calls <see cref="StartAsync"/> during startup.
 /// </summary>
 public sealed class SchemaBootstrapHostedService : IHostedService
 {
@@ -34,6 +34,18 @@ public sealed class SchemaBootstrapHostedService : IHostedService
         _logger.LogInformation("ConcertRadar: running schema migration.");
         await _migrator.MigrateAsync(cancellationToken).ConfigureAwait(false);
         _logger.LogInformation("ConcertRadar: schema migration complete.");
+
+        var plugin = Plugin.Instance;
+        if (plugin is null)
+        {
+            return;
+        }
+
+        if (PluginConfigurationDefaults.SeedIfEmpty(plugin.Configuration))
+        {
+            _logger.LogInformation("ConcertRadar: seeded default configuration entries.");
+            plugin.SaveConfiguration();
+        }
     }
 
     /// <inheritdoc />
