@@ -46,6 +46,7 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
     private readonly HostRateLimiter _rateLimiter;
     private readonly ArtistRepository _artistRepository;
     private readonly SourceStateRepository _sourceStateRepository;
+    private readonly IPluginConfigurationProvider _configProvider;
     private readonly ILogger<DiceScrapeAdapter> _logger;
 
     /// <summary>
@@ -55,18 +56,21 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
     /// <param name="rateLimiter">Shared rate limiter.</param>
     /// <param name="artistRepository">Artist repository for caching external IDs.</param>
     /// <param name="sourceStateRepository">Source state repository for circuit breaker.</param>
+    /// <param name="configProvider">Plugin configuration provider.</param>
     /// <param name="logger">Logger.</param>
     public DiceScrapeAdapter(
         IHttpClientFactory httpClientFactory,
         HostRateLimiter rateLimiter,
         ArtistRepository artistRepository,
         SourceStateRepository sourceStateRepository,
+        IPluginConfigurationProvider configProvider,
         ILogger<DiceScrapeAdapter> logger)
     {
         _httpClientFactory     = httpClientFactory;
         _rateLimiter           = rateLimiter;
         _artistRepository      = artistRepository;
         _sourceStateRepository = sourceStateRepository;
+        _configProvider        = configProvider;
         _logger                = logger;
     }
 
@@ -94,7 +98,7 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
         SourceFilter filter,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        var cfg = Plugin.Instance?.Configuration;
+        var cfg = _configProvider.GetConfiguration();
         if (cfg is null || !IsConfigured(cfg))
             yield break;
 

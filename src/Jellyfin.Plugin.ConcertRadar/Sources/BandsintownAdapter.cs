@@ -46,6 +46,7 @@ public sealed class BandsintownAdapter : ISourceAdapter
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly HostRateLimiter _rateLimiter;
     private readonly SourceStateRepository _sourceStateRepository;
+    private readonly IPluginConfigurationProvider _configProvider;
     private readonly ILogger<BandsintownAdapter> _logger;
 
     /// <summary>
@@ -54,16 +55,19 @@ public sealed class BandsintownAdapter : ISourceAdapter
     /// <param name="httpClientFactory">HTTP client factory.</param>
     /// <param name="rateLimiter">Shared rate limiter.</param>
     /// <param name="sourceStateRepository">Source state repository for circuit breaker.</param>
+    /// <param name="configProvider">Plugin configuration provider.</param>
     /// <param name="logger">Logger.</param>
     public BandsintownAdapter(
         IHttpClientFactory httpClientFactory,
         HostRateLimiter rateLimiter,
         SourceStateRepository sourceStateRepository,
+        IPluginConfigurationProvider configProvider,
         ILogger<BandsintownAdapter> logger)
     {
         _httpClientFactory     = httpClientFactory;
         _rateLimiter           = rateLimiter;
         _sourceStateRepository = sourceStateRepository;
+        _configProvider        = configProvider;
         _logger                = logger;
     }
 
@@ -92,7 +96,7 @@ public sealed class BandsintownAdapter : ISourceAdapter
         SourceFilter filter,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        var cfg = Plugin.Instance?.Configuration;
+        var cfg = _configProvider.GetConfiguration();
         if (cfg is null || !IsConfigured(cfg))
             yield break;
 
