@@ -325,10 +325,19 @@
                         </div>
                     </div>
 
-                    <div class="cr-source-toggle-group" id="cr-src-songkick">
+                    <!-- Songkick: ToS opt-in required -->
+                    <div class="cr-source-toggle-group cr-tos-gated" id="cr-src-songkick">
                         <div class="cr-check-row">
-                            <input type="checkbox" id="cr-src-chk-songkick" data-source="songkick" />
-                            <label for="cr-src-chk-songkick">Songkick (HTML scrape)</label>
+                            <input type="checkbox" id="cr-tos-songkick" name="AcceptSongkickScrapeTos" />
+                            <label for="cr-tos-songkick">I accept the Songkick scrape terms of service</label>
+                        </div>
+                        <div class="cr-tos-warning">
+                            This source has no official API. Scraping may violate Songkick's terms of service.
+                            Use at your own risk.
+                        </div>
+                        <div class="cr-check-row" id="cr-src-songkick-row">
+                            <input type="checkbox" id="cr-src-chk-songkick" data-source="songkick" disabled />
+                            <label for="cr-src-chk-songkick" id="cr-src-songkick-label">Songkick (HTML scrape) — accept ToS above to enable</label>
                         </div>
                     </div>
 
@@ -832,6 +841,23 @@
         }
     }
 
+    function updateSongkickGate() {
+        var tosChk   = document.getElementById('cr-tos-songkick');
+        var srcChk   = document.getElementById('cr-src-chk-songkick');
+        var srcLabel = document.getElementById('cr-src-songkick-label');
+        var group    = document.getElementById('cr-src-songkick');
+        if (!tosChk || !srcChk) return;
+        var accepted = tosChk.checked;
+        srcChk.disabled = !accepted;
+        if (!accepted) srcChk.checked = false;
+        group.classList.toggle('cr-tos-disabled', !accepted);
+        if (srcLabel) {
+            srcLabel.textContent = accepted
+                ? 'Songkick (HTML scrape)'
+                : 'Songkick (HTML scrape) — accept ToS above to enable';
+        }
+    }
+
     // ── Populate form from config ────────────────────────────────────────
     function populateForm(cfg) {
         // Credentials
@@ -847,14 +873,17 @@
         });
 
         // ToS flags
-        var tosDice = document.getElementById('cr-tos-dice');
-        var tosRa   = document.getElementById('cr-tos-ra');
-        if (tosDice) tosDice.checked = !!cfg.AcceptDiceScrapeTos;
-        if (tosRa)   tosRa.checked   = !!cfg.AcceptRaScrapeTos;
+        var tosDice     = document.getElementById('cr-tos-dice');
+        var tosRa       = document.getElementById('cr-tos-ra');
+        var tosSongkick = document.getElementById('cr-tos-songkick');
+        if (tosDice)     tosDice.checked     = !!cfg.AcceptDiceScrapeTos;
+        if (tosRa)       tosRa.checked       = !!cfg.AcceptRaScrapeTos;
+        if (tosSongkick) tosSongkick.checked = !!cfg.AcceptSongkickScrapeTos;
 
         // Apply gating after ToS flags are set
         updateDiceGate();
         updateRaGate();
+        updateSongkickGate();
 
         // Filters — locations
         var tbody = document.getElementById('cr-location-tbody');
@@ -894,16 +923,18 @@
             if (chk && chk.checked) enabled.push(src);
         });
 
-        var tosDice = document.getElementById('cr-tos-dice');
-        var tosRa   = document.getElementById('cr-tos-ra');
+        var tosDice     = document.getElementById('cr-tos-dice');
+        var tosRa       = document.getElementById('cr-tos-ra');
+        var tosSongkick = document.getElementById('cr-tos-songkick');
 
         return {
             TicketmasterApiKey:          document.getElementById('cr-tm-key').value.trim(),
             BandsintownAppId:            document.getElementById('cr-bit-key').value.trim(),
             EdmTrainApiKey:              document.getElementById('cr-edt-key').value.trim(),
             EnabledSources:              enabled,
-            AcceptDiceScrapeTos:         tosDice ? tosDice.checked : false,
-            AcceptRaScrapeTos:           tosRa   ? tosRa.checked   : false,
+            AcceptDiceScrapeTos:         tosDice     ? tosDice.checked     : false,
+            AcceptRaScrapeTos:           tosRa       ? tosRa.checked       : false,
+            AcceptSongkickScrapeTos:     tosSongkick ? tosSongkick.checked : false,
             Locations:                   readLocations(),
             CountryAllowlist:            parseCommaList(document.getElementById('cr-country-allowlist').value),
             GenreAllowlist:              parseCommaList(document.getElementById('cr-genre-allowlist').value),
@@ -1033,6 +1064,7 @@
     // ── ToS gates ────────────────────────────────────────────────────────
     document.getElementById('cr-tos-dice').addEventListener('change', updateDiceGate);
     document.getElementById('cr-tos-ra').addEventListener('change', updateRaGate);
+    document.getElementById('cr-tos-songkick').addEventListener('change', updateSongkickGate);
 
     // ── Seed defaults ────────────────────────────────────────────────────
     document.getElementById('cr-seed-defaults').addEventListener('click', function () {
