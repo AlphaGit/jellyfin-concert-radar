@@ -23,15 +23,10 @@ public sealed class TicketmasterAdapter : ISourceAdapter
 {
     private const string SourceId = "ticketmaster";
     private const string BaseUrl = "https://app.ticketmaster.com/discovery/v2";
-    private const int MaxPages = 10;
-    private const int PageSize = 200;
+    private const int MaxPages = AdapterDefaults.MaxPaginationPages;
+    private const int PageSize = AdapterDefaults.DefaultPageSize;
 
-    private static readonly TimeSpan[] RetryDelays =
-    [
-        TimeSpan.FromMilliseconds(200),
-        TimeSpan.FromMilliseconds(800),
-        TimeSpan.FromMilliseconds(3200),
-    ];
+    private static readonly TimeSpan[] RetryDelays = AdapterDefaults.RetryBackoffs;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -305,7 +300,7 @@ public sealed class TicketmasterAdapter : ISourceAdapter
                 if (response.Headers.RetryAfter is { } retryAfter)
                 {
                     DateTimeOffset until = retryAfter.Date
-                        ?? _clock.GetUtcNow().Add(retryAfter.Delta ?? TimeSpan.FromSeconds(60));
+                        ?? _clock.GetUtcNow().Add(retryAfter.Delta ?? AdapterDefaults.DefaultRetryAfterFallback);
                     await _rateLimiter.SetBackoffAsync(SourceId, until, ct).ConfigureAwait(false);
                 }
 

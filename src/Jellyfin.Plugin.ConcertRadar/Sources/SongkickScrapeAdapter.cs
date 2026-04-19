@@ -32,12 +32,7 @@ public sealed partial class SongkickScrapeAdapter : ISourceAdapter
     // If fewer than this fraction of expected selectors match, we flag Degraded.
     private const double DegradedThreshold = 0.20;
 
-    private static readonly TimeSpan[] RetryDelays =
-    [
-        TimeSpan.FromMilliseconds(200),
-        TimeSpan.FromMilliseconds(800),
-        TimeSpan.FromMilliseconds(3200),
-    ];
+    private static readonly TimeSpan[] RetryDelays = AdapterDefaults.RetryBackoffs;
 
     private static readonly string UserAgent =
         "Mozilla/5.0 (compatible; JellyfinConcertRadar/0.1.0; +https://github.com/alphagma/jellyfin-concert-radar)";
@@ -420,7 +415,7 @@ public sealed partial class SongkickScrapeAdapter : ISourceAdapter
                 if (response.Headers.RetryAfter is { } retryAfter)
                 {
                     DateTimeOffset until = retryAfter.Date
-                        ?? _clock.GetUtcNow().Add(retryAfter.Delta ?? TimeSpan.FromSeconds(60));
+                        ?? _clock.GetUtcNow().Add(retryAfter.Delta ?? AdapterDefaults.DefaultRetryAfterFallback);
                     await _rateLimiter.SetBackoffAsync(SourceId, until, ct).ConfigureAwait(false);
                 }
 

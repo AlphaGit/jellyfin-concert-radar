@@ -31,12 +31,7 @@ public sealed class RaScrapeAdapter : ISourceAdapter
     private const int PageSize = 100;
     private const int MaxPages = 5;
 
-    private static readonly TimeSpan[] RetryDelays =
-    [
-        TimeSpan.FromMilliseconds(200),
-        TimeSpan.FromMilliseconds(800),
-        TimeSpan.FromMilliseconds(3200),
-    ];
+    private static readonly TimeSpan[] RetryDelays = AdapterDefaults.RetryBackoffs;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -454,7 +449,7 @@ public sealed class RaScrapeAdapter : ISourceAdapter
                 if (response.Headers.RetryAfter is { } retryAfter)
                 {
                     DateTimeOffset until = retryAfter.Date
-                        ?? _clock.GetUtcNow().Add(retryAfter.Delta ?? TimeSpan.FromSeconds(60));
+                        ?? _clock.GetUtcNow().Add(retryAfter.Delta ?? AdapterDefaults.DefaultRetryAfterFallback);
                     await _rateLimiter.SetBackoffAsync(SourceId, until, ct).ConfigureAwait(false);
                 }
 

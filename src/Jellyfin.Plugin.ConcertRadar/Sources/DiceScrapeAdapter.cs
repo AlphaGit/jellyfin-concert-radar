@@ -27,12 +27,7 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
     private const string SourceId = "dice";
     private const string BaseUrl = "https://dice.fm";
 
-    private static readonly TimeSpan[] RetryDelays =
-    [
-        TimeSpan.FromMilliseconds(200),
-        TimeSpan.FromMilliseconds(800),
-        TimeSpan.FromMilliseconds(3200),
-    ];
+    private static readonly TimeSpan[] RetryDelays = AdapterDefaults.RetryBackoffs;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -442,7 +437,7 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
                 if (response.Headers.RetryAfter is { } retryAfter)
                 {
                     DateTimeOffset until = retryAfter.Date
-                        ?? _clock.GetUtcNow().Add(retryAfter.Delta ?? TimeSpan.FromSeconds(60));
+                        ?? _clock.GetUtcNow().Add(retryAfter.Delta ?? AdapterDefaults.DefaultRetryAfterFallback);
                     await _rateLimiter.SetBackoffAsync(SourceId, until, ct).ConfigureAwait(false);
                 }
 

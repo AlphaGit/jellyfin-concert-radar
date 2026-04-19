@@ -33,12 +33,7 @@ public sealed class MusicBrainzResolver
     private const int MinScoreThreshold = 85;
 
     // Retry delays: 200ms, 800ms, 3200ms (3 attempts = 3 waits after initial failure).
-    private static readonly TimeSpan[] RetryDelays =
-    [
-        TimeSpan.FromMilliseconds(200),
-        TimeSpan.FromMilliseconds(800),
-        TimeSpan.FromMilliseconds(3200),
-    ];
+    private static readonly TimeSpan[] RetryDelays = Sources.AdapterDefaults.RetryBackoffs;
 
     private static readonly Regex SongkickIdRegex =
         new(@"/artists/(\d+)", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
@@ -241,7 +236,7 @@ public sealed class MusicBrainzResolver
                 if (response.Headers.RetryAfter is { } retryAfter)
                 {
                     DateTimeOffset until = retryAfter.Date
-                        ?? DateTimeOffset.UtcNow.Add(retryAfter.Delta ?? TimeSpan.FromSeconds(60));
+                        ?? DateTimeOffset.UtcNow.Add(retryAfter.Delta ?? Sources.AdapterDefaults.DefaultRetryAfterFallback);
                     await _rateLimiter.SetBackoffAsync(SourceKey, until, ct).ConfigureAwait(false);
                 }
 

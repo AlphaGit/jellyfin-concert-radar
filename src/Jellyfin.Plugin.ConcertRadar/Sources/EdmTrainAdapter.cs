@@ -32,12 +32,7 @@ public sealed class EdmTrainAdapter : ISourceAdapter
     private const string SourceId = "edmtrain";
     private const string BaseUrl = "https://edmtrain.com/api";
 
-    private static readonly TimeSpan[] RetryDelays =
-    [
-        TimeSpan.FromMilliseconds(200),
-        TimeSpan.FromMilliseconds(800),
-        TimeSpan.FromMilliseconds(3200),
-    ];
+    private static readonly TimeSpan[] RetryDelays = AdapterDefaults.RetryBackoffs;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -274,7 +269,7 @@ public sealed class EdmTrainAdapter : ISourceAdapter
                 if (response.Headers.RetryAfter is { } retryAfter)
                 {
                     DateTimeOffset until = retryAfter.Date
-                        ?? _clock.GetUtcNow().Add(retryAfter.Delta ?? TimeSpan.FromSeconds(60));
+                        ?? _clock.GetUtcNow().Add(retryAfter.Delta ?? AdapterDefaults.DefaultRetryAfterFallback);
                     await _rateLimiter.SetBackoffAsync(SourceId, until, ct).ConfigureAwait(false);
                 }
 
