@@ -484,3 +484,65 @@ Findings from the full code review performed after Phase 12 landed. Each task ow
 #### T13.15 [BE] NIT — Songkick missing ToS opt-in gate
 - `Sources/SongkickScrapeAdapter.cs` sets `RequiresTosOptIn => false` but Songkick's ToS prohibits scraping just as Dice/RA do. Inconsistent with DICE/RA pattern.
 - Fix: add `AcceptSongkickScrapeTos` to `PluginConfiguration`; set `RequiresTosOptIn => true`; wire an opt-in checkbox in `admin.html`.
+
+---
+
+## Phase 14 — Security review fixes + completion gaps
+
+Findings from second-pass code review (security-focused) + TASKS.md completion audit. Tagged per owning agent + severity.
+
+### Security findings (severity-ordered)
+
+#### T14.1 [FE] MEDIUM — Unescaped date strings in admin status cards (XSS)
+- `Web/admin.html` `renderSourceCards`: `fmtDate(s.disabledUntil)` and `fmtDate(s.lastSuccessAt)` are concatenated into `grid.innerHTML`. `fmtDate` falls back to raw ISO string on parse failure — a crafted `disabled_until` (e.g. via malicious upstream Retry-After) lands in the admin DOM unescaped.
+- Fix: wrap every `fmtDate()` call that flows into `innerHTML` with `escHtml(fmtDate(...))`.
+
+#### T14.2 [FE] MEDIUM — Fragile class-attribute interpolation (XSS hygiene)
+- `Web/admin.html` `renderSourceCards`: `badgeCls` is injected into `class="..."` attribute position. Currently safe due to dictionary lookup, but any future refactor passing `s.status` through directly would introduce XSS. Defense-in-depth.
+- Fix: `escHtml(badgeCls)` at every attribute interpolation site.
+
+#### T14.3 [BE] MEDIUM — Source-id allowlist on admin reset endpoint
+- `Api/AdminController.cs` `POST /admin/sources/{id}/reset`: path parameter flows directly to `SourceStateRepository.ResetAsync`. No allowlist → admin can create arbitrary rows with unbounded string keys. Also affects `HostRateLimiter.GetOrCreateLimiter` (Finding T14.8).
+- Fix: controller-level allowlist check against the six known source IDs; return `400` otherwise.
+
+#### T14.4 [BE] MEDIUM — Unbounded HTTP response buffering (DoS)
+- All six adapters + `MusicBrainzResolver` call `response.Content.ReadAsStringAsync(ct)` without setting `HttpClient.MaxResponseContentBufferSize`. A gigabyte-scale upstream response would OOM the Jellyfin process.
+- Fix: set a per-client `MaxResponseContentBufferSize` (e.g. 10 MiB) via a custom `HttpClient` factory wrapper, or switch JSON paths to streaming `JsonSerializer.DeserializeAsync` on the response stream.
+
+#### T14.5 [BE] MEDIUM — `AdminController.RunNow` reflects raw `ex.Message` to response
+- `Api/AdminController.cs` line 72: `StatusCode(500, ex.Message)` sends internal error details straight to the admin browser. Downstream error strings could contain data from other plugins or internal paths that escaped `UrlRedactor`.
+- Fix: return a generic `"Failed to queue the refresh task. See server logs."` body; keep `_logger.LogError(ex, …)` for operator visibility.
+
+#### T14.6 [BE] LOW — `/api/status` exposes `LastError` to non-admin users
+- `Api/ConcertsController.cs` `GET /status`: user-scoped endpoint returns `SourceStatusDto` with `LastError` populated. Even after `UrlRedactor`, error strings reveal which endpoints are probed and their failure modes.
+- Fix: strip `LastError` from the DTO returned by this endpoint, OR move `/status` under the admin controller (prefer stripping — the rest of the payload is useful to users).
+
+#### T14.7 [BE] LOW — Open redirect via scraper-supplied URL hosts
+- `Sources/RaScrapeAdapter.cs` `MapToRawEvent` (around line 303) and `Sources/DiceScrapeAdapter.cs` (around line 265): `contentUrl` / `url` from scraped JSON is stored in `SourceUrl` with only a `StartsWith("http")` guard. A compromised upstream could redirect clicks to an attacker domain.
+- Fix: validate that the host matches `ra.co` / `dice.fm` (or their expected subdomain) before storing. Reject/null the URL otherwise.
+
+#### T14.8 [BE] LOW — Rate-limiter dictionary unbounded growth
+- `RateLimiting/HostRateLimiter.cs` `GetOrCreateLimiter`: `_limiters.GetOrAdd(sourceId, …)` spawns a new limiter (with a replenishment timer) for every unique source id. Combined with T14.3 this enables slow memory growth from admin-driven resets.
+- Fix: gate limiter creation behind the same source-id allowlist used in T14.3.
+
+#### T14.9 [BE] LOW — `lastError` persisted without UrlRedactor on artist row
+- `ScheduledTasks/RefreshConcertsTask.cs` line 242: `lastError = $"{adapter.Id}: {ex.Message}"` stored in `artists.last_error` without `UrlRedactor` protection. Most adapter throw paths already redact, but JSON parse failures mid-response can reach here with partial response bodies.
+- Fix: `UrlRedactor.Redact(ex.Message)` before interpolation.
+
+#### T14.10 [INFRA] INFO — Floating NuGet version ranges
+- `src/Jellyfin.Plugin.ConcertRadar/Jellyfin.Plugin.ConcertRadar.csproj`: `Microsoft.Data.Sqlite 9.0.*` and `AngleSharp 1.*` use floating minors. Non-reproducible restores; supply-chain substitution risk if the feed is compromised.
+- Fix: add `<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>` + commit `packages.lock.json`. Alternative: pin to exact versions.
+
+### Completion gaps (from TASKS.md audit)
+
+#### T14.11 [FE] `CircuitBreakerCooldownHours` missing from admin UI
+- `PluginConfiguration.CircuitBreakerCooldownHours` exists but has no corresponding input in `Web/admin.html` scheduler section.
+- Fix: add numeric input + bind in `populateForm` / `readForm`.
+
+#### T14.12 [INFRA] JPRM release pipeline (`gh-pages` hosting)
+- `.github/workflows/package.yml` builds + uploads the zip but does NOT append to `manifest.json` on `gh-pages`.
+- Fix: extend the workflow to check out `gh-pages`, append a new version entry (version, changelog, targetAbi, sourceUrl, checksum, timestamp), copy the artifact, commit, and push.
+
+#### T14.13 [DOC] Deferred enhancements
+- README "configuration walkthrough with screenshots" pending (minor).
+- `docs/smoke-test.md` post-release install checklist pending.
