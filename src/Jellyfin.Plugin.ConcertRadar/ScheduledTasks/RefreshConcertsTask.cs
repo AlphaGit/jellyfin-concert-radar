@@ -322,8 +322,9 @@ public sealed class RefreshConcertsTask : IScheduledTask
     private static bool IsTosAccepted(string sourceId, PluginConfiguration cfg)
         => sourceId switch
         {
-            "dice" => cfg.AcceptDiceScrapeTos,
-            "ra"   => cfg.AcceptRaScrapeTos,
-            _      => false,
+            "dice"     => cfg.AcceptDiceScrapeTos,
+            "ra"       => cfg.AcceptRaScrapeTos,
+            "songkick" => cfg.AcceptSongkickScrapeTos,
+            _          => false,
         };
 }

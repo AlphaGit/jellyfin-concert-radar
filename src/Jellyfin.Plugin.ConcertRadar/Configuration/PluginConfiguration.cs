@@ -40,6 +40,12 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Gets or sets a value indicating whether the user has accepted the Dice.fm scrape ToS.</summary>
     public bool AcceptDiceScrapeTos { get; set; } = false;
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the user has accepted the Songkick scrape ToS.
+    /// Songkick's Terms of Service prohibit scraping; operator must explicitly opt in.
+    /// </summary>
+    public bool AcceptSongkickScrapeTos { get; set; } = false;
+
     // ── Filters ───────────────────────────────────────────────────────────────
 
     /// <summary>Gets or sets the list of geographic locations to filter by.</summary>

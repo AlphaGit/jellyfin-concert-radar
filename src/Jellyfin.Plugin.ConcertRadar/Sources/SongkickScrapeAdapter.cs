@@ -86,10 +86,10 @@ public sealed partial class SongkickScrapeAdapter : ISourceAdapter
     public bool RequiresCredentials => false;
 
     /// <inheritdoc />
-    public bool RequiresTosOptIn => false;
+    public bool RequiresTosOptIn => true;
 
     /// <inheritdoc />
-    public bool IsConfigured(PluginConfiguration cfg) => true;
+    public bool IsConfigured(PluginConfiguration cfg) => cfg.AcceptSongkickScrapeTos;
 
     /// <inheritdoc />
     public async IAsyncEnumerable<RawEvent> FetchAsync(
