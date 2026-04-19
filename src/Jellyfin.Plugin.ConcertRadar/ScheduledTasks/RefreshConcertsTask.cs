@@ -122,20 +122,29 @@ public sealed class RefreshConcertsTask : IScheduledTask
             cancellationToken.ThrowIfCancellationRequested();
 
             // Ensure external IDs are resolved (one-time via MusicBrainz).
-            if (artist.ExternalIds.Count == 0 && !string.IsNullOrEmpty(artist.Mbid))
+            // freshExtIds holds the just-resolved dict so adapters use it immediately.
+            IReadOnlyDictionary<string, string>? freshExtIds = null;
+
+            if (!artist.ExternalIds.ContainsKey(MusicBrainzResolver.MbResolvedSentinel) &&
+                !string.IsNullOrEmpty(artist.Mbid))
             {
                 try
                 {
-                    var extIds = await _mbResolver
+                    var resolved = await _mbResolver
                         .FetchUrlRelsAsync(artist.Mbid, cancellationToken)
                         .ConfigureAwait(false);
 
-                    if (extIds.Count > 0)
+                    // Always persist so we know we ran at least once (sentinel prevents re-query).
+                    var toStore = new Dictionary<string, string>(resolved)
                     {
-                        await _artistRepository
-                            .SetExternalIdsAsync(artist.Id, extIds, cancellationToken)
-                            .ConfigureAwait(false);
-                    }
+                        [MusicBrainzResolver.MbResolvedSentinel] = "true",
+                    };
+
+                    await _artistRepository
+                        .SetExternalIdsAsync(artist.Id, toStore, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    freshExtIds = toStore;
                 }
                 catch (OperationCanceledException)
                 {
@@ -148,11 +157,8 @@ public sealed class RefreshConcertsTask : IScheduledTask
                 }
             }
 
-            // Re-read external IDs in case they were just resolved.
-            var extIdsForRef = artist.ExternalIds.Count > 0
-                ? artist.ExternalIds
-                : (IReadOnlyDictionary<string, string>)new Dictionary<string, string>();
-
+            // Use freshly-resolved IDs when available; fall back to the snapshot from GetNextBatchAsync.
+            var extIdsForRef = freshExtIds ?? artist.ExternalIds;
             var artistRef = new ArtistRef(artist.Name, artist.Mbid, extIdsForRef);
 
             bool anySucceeded = false;

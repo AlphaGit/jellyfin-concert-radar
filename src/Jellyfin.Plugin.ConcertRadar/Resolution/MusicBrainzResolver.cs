@@ -21,6 +21,13 @@ namespace Jellyfin.Plugin.ConcertRadar.Resolution;
 public sealed class MusicBrainzResolver
 {
     private const string SourceKey = "musicbrainz";
+
+    /// <summary>
+    /// Sentinel key stored in an artist's ext_ids after a successful MusicBrainz URL-rels
+    /// lookup.  Prevents repeated re-queries for artists that genuinely have no relations.
+    /// </summary>
+    public const string MbResolvedSentinel = "_mb_resolved";
+
     // Score threshold below which name-based matches are rejected.
     private const int MinScoreThreshold = 85;
 
