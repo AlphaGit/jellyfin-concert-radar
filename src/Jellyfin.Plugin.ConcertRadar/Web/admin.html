@@ -948,6 +948,10 @@
     document.addEventListener('pageshow', function (e) {
         if (e.detail && e.detail.page && e.detail.page.id !== 'concertradarConfigPage') return;
 
+        // Defensive: stop any existing polling before starting a new interval.
+        // Jellyfin's SPA can fire pageshow more than once on the same element.
+        stopStatusPolling();
+
         // Load config
         ApiClient.getPluginConfiguration(PLUGIN_ID).then(function (cfg) {
             populateForm(cfg);
