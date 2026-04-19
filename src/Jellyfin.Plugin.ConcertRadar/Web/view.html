@@ -231,6 +231,20 @@
         }
         @keyframes cr-spin { to { transform: rotate(360deg); } }
 
+        /* ── EdmTrain attribution badge ─────────────────────────────── */
+        .cr-edmtrain-attribution {
+            display: inline-block;
+            font-size: .65em;
+            font-weight: 600;
+            padding: .1em .35em;
+            border-radius: 3px;
+            background: #4a1a4a;
+            color: #e898f8;
+            margin-left: .35em;
+            vertical-align: middle;
+            letter-spacing: .02em;
+        }
+
         /* ── Live region ────────────────────────────────────────────── */
         #cr-live { position: absolute; left: -9999px; }
     </style>
@@ -595,7 +609,11 @@
                 (locationParts ? '<div class="cr-card-venue">' + escHtml(locationParts) + '</div>' : '') +
                 lineupHtml +
                 priceHtml +
-                '<div><span class="' + escHtml(sourcePillClass(source)) + '">' + escHtml(source) + '</span></div>' +
+                '<div><span class="' + escHtml(sourcePillClass(source)) + '">' + escHtml(source) + '</span>' +
+                    (source.toLowerCase() === 'edmtrain'
+                        ? '<span class="cr-edmtrain-attribution" aria-label="Data provided by EdmTrain">Data: EdmTrain</span>'
+                        : '') +
+                '</div>' +
             '</div>' +
             '<div class="cr-card-actions">' +
                 btnViewHtml +

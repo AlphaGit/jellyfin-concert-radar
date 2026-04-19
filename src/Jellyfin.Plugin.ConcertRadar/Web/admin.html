@@ -205,6 +205,19 @@
             padding: .75em 0;
         }
 
+        /* ── EdmTrain attribution badge ──────────────────────────────── */
+        .cr-attribution-badge {
+            display: inline-block;
+            font-size: .68em;
+            font-weight: 600;
+            padding: .1em .4em;
+            border-radius: 3px;
+            background: #4a1a4a;
+            color: #e898f8;
+            margin-top: .25em;
+            letter-spacing: .02em;
+        }
+
         /* ── Numeric grid ────────────────────────────────────────────── */
         .cr-num-grid {
             display: grid;
@@ -596,11 +609,16 @@
             var badgeCls  = badgeClass(s.status);
             var sourceId  = (s.source || s.id || '').toLowerCase();
             var disabledUntilStr = s.disabledUntil ? 'Disabled until: ' + fmtDate(s.disabledUntil) + '<br>' : '';
+            // EdmTrain ToS attribution badge — shown when the source is enabled (not Disabled/Unconfigured)
+            var edmAttrib = (sourceId === 'edmtrain' && s.status !== 'Disabled' && s.status !== 'Unconfigured')
+                ? '<div><span class="cr-attribution-badge">Data: EdmTrain</span></div>'
+                : '';
             html += '<div class="cr-source-card">' +
                 '<div class="cr-source-name">' +
                     '<span>' + escHtml(s.displayName || sourceId) + '</span>' +
                     '<span class="' + badgeCls + '">' + escHtml(s.status || 'Unknown') + '</span>' +
                 '</div>' +
+                edmAttrib +
                 '<div class="cr-source-meta">' +
                     'Last success: ' + fmtDate(s.lastSuccessAt) + '<br>' +
                     'Calls today: ' + escHtml(s.callsToday != null ? String(s.callsToday) : '—') + '<br>' +
