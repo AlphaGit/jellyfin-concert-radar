@@ -608,7 +608,7 @@
         sources.forEach(function (s) {
             var badgeCls  = badgeClass(s.status);
             var sourceId  = (s.source || s.id || '').toLowerCase();
-            var disabledUntilStr = s.disabledUntil ? 'Disabled until: ' + fmtDate(s.disabledUntil) + '<br>' : '';
+            var disabledUntilStr = s.disabledUntil ? 'Disabled until: ' + escHtml(fmtDate(s.disabledUntil)) + '<br>' : '';
             // EdmTrain ToS attribution badge — shown when the source is enabled (not Disabled/Unconfigured)
             var edmAttrib = (sourceId === 'edmtrain' && s.status !== 'Disabled' && s.status !== 'Unconfigured')
                 ? '<div><span class="cr-attribution-badge">Data: EdmTrain</span></div>'
@@ -620,7 +620,7 @@
                 '</div>' +
                 edmAttrib +
                 '<div class="cr-source-meta">' +
-                    'Last success: ' + fmtDate(s.lastSuccessAt) + '<br>' +
+                    'Last success: ' + escHtml(fmtDate(s.lastSuccessAt)) + '<br>' +
                     'Calls today: ' + escHtml(s.callsToday != null ? String(s.callsToday) : '—') + '<br>' +
                     disabledUntilStr +
                     (s.lastError ? 'Last error: ' + escHtml(s.lastError) + '<br>' : '') +
