@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.ConcertRadar.ScheduledTasks;
+using Jellyfin.Plugin.ConcertRadar.Sources;
 using Jellyfin.Plugin.ConcertRadar.Storage;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Model.Tasks;
@@ -69,7 +70,7 @@ public sealed class AdminController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "AdminController: failed to queue RefreshConcertsTask.");
-            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "Failed to queue the refresh task. See server logs for details.");
         }
     }
 
@@ -81,10 +82,14 @@ public sealed class AdminController : ControllerBase
     /// <returns>204 No Content.</returns>
     [HttpPost("sources/{id}/reset")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> ResetSourceAsync(
         string id,
         CancellationToken cancellationToken = default)
     {
+        if (!KnownSources.Ids.Contains(id))
+            return BadRequest($"Unknown source id '{id}'.");
+
         await _sourceStateRepository.ResetAsync(id, cancellationToken).ConfigureAwait(false);
         _logger.LogInformation("AdminController: circuit breaker reset for source '{Source}'.", id);
         return NoContent();
