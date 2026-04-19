@@ -488,8 +488,8 @@
                         </div>
                         <div class="cr-field">
                             <label for="cr-cb-cooldown">Circuit Breaker Cooldown (hours)</label>
-                            <input type="number" id="cr-cb-cooldown" name="CircuitBreakerCooldownHours" min="1" step="1" />
-                            <div class="cr-error-msg" id="cr-err-cb-cooldown">Must be at least 1.</div>
+                            <input type="number" id="cr-cb-cooldown" name="CircuitBreakerCooldownHours" min="1" max="168" step="1" />
+                            <div class="cr-error-msg" id="cr-err-cb-cooldown">Must be between 1 and 168.</div>
                         </div>
                     </div>
                 </section>
@@ -984,7 +984,7 @@
         fail('cr-err-daily-budget',  cfg.PerSourceDailyBudget < 1);
         fail('cr-err-stale-days',    cfg.StaleRecordDays < 1);
         fail('cr-err-cb-threshold',  cfg.CircuitBreakerThreshold < 1);
-        fail('cr-err-cb-cooldown',   cfg.CircuitBreakerCooldownHours < 1);
+        fail('cr-err-cb-cooldown',   cfg.CircuitBreakerCooldownHours < 1 || cfg.CircuitBreakerCooldownHours > 168);
 
         if (!valid) {
             formErrEl.textContent = 'Please fix the highlighted errors before saving.';
