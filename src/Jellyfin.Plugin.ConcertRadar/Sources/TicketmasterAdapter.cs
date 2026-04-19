@@ -356,12 +356,19 @@ public sealed class TicketmasterAdapter : ISourceAdapter
             onSaleAt = saleDt;
         }
 
-        // Festival flag.
+        // Festival flag + genre extraction.
         bool isFestival = false;
+        var genres = new List<string>();
         if (ev.Classifications?.Count > 0)
         {
-            var cls = ev.Classifications[0];
-            isFestival = string.Equals(cls.Genre?.Name, "Festival", StringComparison.OrdinalIgnoreCase);
+            foreach (var cls in ev.Classifications)
+            {
+                if (!string.IsNullOrWhiteSpace(cls.Genre?.Name))
+                    genres.Add(cls.Genre.Name);
+            }
+
+            isFestival = genres.Count > 0 &&
+                string.Equals(genres[0], "Festival", StringComparison.OrdinalIgnoreCase);
         }
 
         // Cancelled/postponed → treat as not available; no direct sold-out flag.
@@ -401,7 +408,8 @@ public sealed class TicketmasterAdapter : ISourceAdapter
             Currency: currency,
             OnSaleAt: onSaleAt,
             IsFestival: isFestival,
-            IsSoldOut: isSoldOut);
+            IsSoldOut: isSoldOut,
+            Genres: genres.Count > 0 ? genres : null);
     }
 
     // ── DTOs ──────────────────────────────────────────────────────────────────

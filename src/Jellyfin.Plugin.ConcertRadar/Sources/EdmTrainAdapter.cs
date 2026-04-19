@@ -355,6 +355,13 @@ public sealed class EdmTrainAdapter : ISourceAdapter
         // TODO: Update if EdmTrain adds a sold-out indicator to the API response.
         bool isSoldOut = false;
 
+        // Genre: derive from electronicGenreInd / otherGenreInd boolean flags.
+        IReadOnlyList<string>? genres = null;
+        if (ev.ElectronicGenreInd)
+            genres = new[] { "Electronic" };
+        else if (ev.OtherGenreInd)
+            genres = new[] { "Other" };
+
         return new RawEvent(
             SourceEventId: ev.Id.ToString(),
             SourceUrl: sourceUrl,
@@ -374,7 +381,8 @@ public sealed class EdmTrainAdapter : ISourceAdapter
             Currency: null,
             OnSaleAt: null,
             IsFestival: ev.FestivalInd,
-            IsSoldOut: isSoldOut);
+            IsSoldOut: isSoldOut,
+            Genres: genres);
     }
 
     // ── DTOs ──────────────────────────────────────────────────────────────────

@@ -26,6 +26,7 @@ namespace Jellyfin.Plugin.ConcertRadar.Model;
 /// <param name="OnSaleAt">On-sale date/time.</param>
 /// <param name="IsFestival">Whether this event is classified as a festival.</param>
 /// <param name="IsSoldOut">Whether this event is sold out.</param>
+/// <param name="Genres">Genre tags as returned by the source (may be empty).</param>
 public sealed record RawEvent(
     string SourceEventId,
     string SourceUrl,
@@ -45,4 +46,5 @@ public sealed record RawEvent(
     string? Currency,
     DateTimeOffset? OnSaleAt,
     bool IsFestival,
-    bool IsSoldOut);
+    bool IsSoldOut,
+    IReadOnlyList<string>? Genres = null);
