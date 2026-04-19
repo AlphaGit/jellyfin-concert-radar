@@ -141,6 +141,7 @@ public sealed class SourceStateRepository
     /// Records an adapter failure. If <c>consecutive_errors</c> reaches
     /// <paramref name="threshold"/>, the circuit trips: status becomes
     /// <see cref="SourceStatus.Failing"/> and <c>disabled_until</c> is set.
+    /// Single atomic INSERT … ON CONFLICT … DO UPDATE to avoid two round-trips.
     /// </summary>
     public async Task RecordFailureAsync(
         string source,
@@ -150,85 +151,89 @@ public sealed class SourceStateRepository
         DateTimeOffset now,
         CancellationToken ct)
     {
-        await EnsureRowAsync(source, ct).ConfigureAwait(false);
-
-        var state = await GetAsync(source, ct).ConfigureAwait(false);
-        int newErrors = (state?.ConsecutiveErrors ?? 0) + 1;
-        bool tripCircuit = newErrors >= threshold;
+        string disabledUntil = (now + cooldown).ToString("O");
 
         await using var conn = await OpenAsync(ct).ConfigureAwait(false);
         await using var cmd = conn.CreateCommand();
 
-        if (tripCircuit)
+        // Single statement:
+        //   • Upserts the row (INSERT OR IGNORE-style via ON CONFLICT).
+        //   • Increments consecutive_errors atomically.
+        //   • When the new total >= threshold, sets status = 'Failing' and disabled_until.
+        //   • Log the trip outside SQL after reading back the new error count.
+        cmd.CommandText = """
+            INSERT INTO source_state (source, status, consecutive_errors, last_error)
+            VALUES (@source, 'Ok', 1, @error)
+            ON CONFLICT(source) DO UPDATE SET
+                consecutive_errors = source_state.consecutive_errors + 1,
+                last_error         = @error,
+                status             = CASE
+                    WHEN source_state.consecutive_errors + 1 >= @threshold THEN 'Failing'
+                    ELSE source_state.status
+                END,
+                disabled_until     = CASE
+                    WHEN source_state.consecutive_errors + 1 >= @threshold THEN @disabledUntil
+                    ELSE source_state.disabled_until
+                END
+            RETURNING consecutive_errors
+            """;
+
+        cmd.Parameters.AddWithValue("@source", source);
+        cmd.Parameters.AddWithValue("@error", error);
+        cmd.Parameters.AddWithValue("@threshold", threshold);
+        cmd.Parameters.AddWithValue("@disabledUntil", disabledUntil);
+
+        var result = await cmd.ExecuteScalarAsync(ct).ConfigureAwait(false);
+        int newErrors = result is long l ? (int)l : 1;
+
+        if (newErrors >= threshold)
         {
             _logger.LogWarning(
                 "Source {Source} tripped circuit breaker after {Count} consecutive errors. " +
                 "Disabling until {Until}.",
                 source, newErrors, now + cooldown);
-
-            cmd.CommandText = """
-                UPDATE source_state
-                SET consecutive_errors = @errors,
-                    last_error         = @error,
-                    status             = 'Failing',
-                    disabled_until     = @disabledUntil
-                WHERE source = @source
-                """;
-            cmd.Parameters.AddWithValue("@disabledUntil", (now + cooldown).ToString("O"));
         }
-        else
-        {
-            cmd.CommandText = """
-                UPDATE source_state
-                SET consecutive_errors = @errors,
-                    last_error         = @error
-                WHERE source = @source
-                """;
-        }
-
-        cmd.Parameters.AddWithValue("@errors", newErrors);
-        cmd.Parameters.AddWithValue("@error", error);
-        cmd.Parameters.AddWithValue("@source", source);
-        await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
     }
 
     /// <summary>
     /// Increments the <c>calls_today</c> counter. If the last reset timestamp has crossed
     /// midnight UTC (per the injected <see cref="TimeProvider"/>), the counter is reset to 1
-    /// before incrementing.
+    /// atomically in a single SQL statement.
     /// </summary>
     public async Task IncrementCallCounterAsync(string source, CancellationToken ct)
     {
-        await EnsureRowAsync(source, ct).ConfigureAwait(false);
-
-        var state = await GetAsync(source, ct).ConfigureAwait(false);
         DateTimeOffset now = _clock.GetUtcNow();
-
-        bool reset = HasCrossedMidnight(state?.CallsTodayReset);
+        // Midnight in UTC as ISO-8601; used in the CASE expression to determine whether
+        // calls_today_reset is before today.
+        string todayMidnightStr = new DateTimeOffset(now.UtcDateTime.Date, TimeSpan.Zero).ToString("O");
+        string nowStr = now.ToString("O");
 
         await using var conn = await OpenAsync(ct).ConfigureAwait(false);
         await using var cmd = conn.CreateCommand();
 
-        if (reset)
-        {
-            cmd.CommandText = """
-                UPDATE source_state
-                SET calls_today       = 1,
-                    calls_today_reset = @now
-                WHERE source = @source
-                """;
-        }
-        else
-        {
-            cmd.CommandText = """
-                UPDATE source_state
-                SET calls_today = calls_today + 1
-                WHERE source = @source
-                """;
-        }
+        // Single statement: upsert + conditional reset + increment.
+        // If calls_today_reset < today midnight → reset to 1; otherwise increment.
+        cmd.CommandText = """
+            INSERT INTO source_state (source, status, calls_today, calls_today_reset)
+            VALUES (@source, 'Ok', 1, @now)
+            ON CONFLICT(source) DO UPDATE SET
+                calls_today       = CASE
+                    WHEN source_state.calls_today_reset IS NULL
+                      OR source_state.calls_today_reset < @todayMidnight
+                    THEN 1
+                    ELSE source_state.calls_today + 1
+                END,
+                calls_today_reset = CASE
+                    WHEN source_state.calls_today_reset IS NULL
+                      OR source_state.calls_today_reset < @todayMidnight
+                    THEN @now
+                    ELSE source_state.calls_today_reset
+                END
+            """;
 
-        cmd.Parameters.AddWithValue("@now", now.ToString("O"));
         cmd.Parameters.AddWithValue("@source", source);
+        cmd.Parameters.AddWithValue("@now", nowStr);
+        cmd.Parameters.AddWithValue("@todayMidnight", todayMidnightStr);
         await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
     }
 
