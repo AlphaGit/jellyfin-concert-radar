@@ -18,7 +18,8 @@ namespace Jellyfin.Plugin.ConcertRadar.Tests.RateLimiting;
 /// </summary>
 public class HostRateLimiterTests
 {
-    private const string Source = "testsource";
+    // Use a known source id — T14.8 guards the limiter against unknown ids.
+    private const string Source = "ticketmaster";
 
     private static readonly DateTimeOffset BaseTime =
         new DateTimeOffset(2025, 6, 15, 14, 0, 0, TimeSpan.Zero); // 14:00 UTC — mid-day

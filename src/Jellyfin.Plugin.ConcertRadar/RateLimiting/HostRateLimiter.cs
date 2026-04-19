@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.RateLimiting;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.ConcertRadar.Configuration;
+using Jellyfin.Plugin.ConcertRadar.Sources;
 using Jellyfin.Plugin.ConcertRadar.Storage;
 using Microsoft.Extensions.Logging;
 
@@ -62,10 +63,17 @@ public sealed class HostRateLimiter : IAsyncDisposable
     /// Acquires a rate-limit token for <paramref name="sourceId"/>.
     /// Waits until a token is available, then checks daily budget and the persisted backoff floor.
     /// </summary>
+    /// <exception cref="ArgumentException">When <paramref name="sourceId"/> is not a known source.</exception>
     /// <exception cref="OperationCanceledException">When <paramref name="ct"/> is cancelled.</exception>
     /// <exception cref="DailyBudgetExhaustedException">When the daily budget is exhausted.</exception>
     public async Task AcquireAsync(string sourceId, CancellationToken ct)
     {
+        if (!KnownSources.Ids.Contains(sourceId) &&
+            !string.Equals(sourceId, "musicbrainz", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException($"Unknown source id '{sourceId}'.", nameof(sourceId));
+        }
+
         ct.ThrowIfCancellationRequested();
 
         // Check persisted backoff floor from previous Retry-After headers.
@@ -140,7 +148,16 @@ public sealed class HostRateLimiter : IAsyncDisposable
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private TokenBucketRateLimiter GetOrCreateLimiter(string sourceId, RateLimitConfig cfg)
-        => _limiters.GetOrAdd(sourceId, _ => BuildLimiter(cfg));
+    {
+        // Guard: only known source IDs may create limiters (prevents unbounded dictionary growth).
+        if (!KnownSources.Ids.Contains(sourceId) &&
+            !string.Equals(sourceId, "musicbrainz", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException($"Unknown source id '{sourceId}'.", nameof(sourceId));
+        }
+
+        return _limiters.GetOrAdd(sourceId, _ => BuildLimiter(cfg));
+    }
 
     private static TokenBucketRateLimiter BuildLimiter(RateLimitConfig cfg)
     {
