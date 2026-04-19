@@ -328,7 +328,10 @@ public sealed class SourceStateRepository
     {
         if (!lastReset.HasValue) return true;
         DateTimeOffset now = _clock.GetUtcNow();
-        DateTimeOffset todayMidnight = now.Date.ToUniversalTime();
+        // Use UtcDateTime.Date (already UTC midnight) wrapped in a zero-offset DateTimeOffset
+        // to avoid the local-kind shift that now.Date.ToUniversalTime() would introduce on
+        // non-UTC servers.
+        DateTimeOffset todayMidnight = new DateTimeOffset(now.UtcDateTime.Date, TimeSpan.Zero);
         return lastReset.Value < todayMidnight;
     }
 
