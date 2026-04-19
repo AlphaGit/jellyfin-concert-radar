@@ -47,6 +47,7 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
     private readonly ArtistRepository _artistRepository;
     private readonly SourceStateRepository _sourceStateRepository;
     private readonly IPluginConfigurationProvider _configProvider;
+    private readonly TimeProvider _clock;
     private readonly ILogger<DiceScrapeAdapter> _logger;
 
     /// <summary>
@@ -57,6 +58,7 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
     /// <param name="artistRepository">Artist repository for caching external IDs.</param>
     /// <param name="sourceStateRepository">Source state repository for circuit breaker.</param>
     /// <param name="configProvider">Plugin configuration provider.</param>
+    /// <param name="clock">Time provider.</param>
     /// <param name="logger">Logger.</param>
     public DiceScrapeAdapter(
         IHttpClientFactory httpClientFactory,
@@ -64,6 +66,7 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
         ArtistRepository artistRepository,
         SourceStateRepository sourceStateRepository,
         IPluginConfigurationProvider configProvider,
+        TimeProvider clock,
         ILogger<DiceScrapeAdapter> logger)
     {
         _httpClientFactory     = httpClientFactory;
@@ -71,6 +74,7 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
         _artistRepository      = artistRepository;
         _sourceStateRepository = sourceStateRepository;
         _configProvider        = configProvider;
+        _clock                 = clock;
         _logger                = logger;
     }
 
@@ -429,9 +433,6 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
 
             if (response.IsSuccessStatusCode)
             {
-                await _sourceStateRepository
-                    .RecordSuccessAsync(SourceId, DateTimeOffset.UtcNow, ct)
-                    .ConfigureAwait(false);
                 return (body, false);
             }
 
@@ -441,7 +442,7 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
                 if (response.Headers.RetryAfter is { } retryAfter)
                 {
                     DateTimeOffset until = retryAfter.Date
-                        ?? DateTimeOffset.UtcNow.Add(retryAfter.Delta ?? TimeSpan.FromSeconds(60));
+                        ?? _clock.GetUtcNow().Add(retryAfter.Delta ?? TimeSpan.FromSeconds(60));
                     await _rateLimiter.SetBackoffAsync(SourceId, until, ct).ConfigureAwait(false);
                 }
 

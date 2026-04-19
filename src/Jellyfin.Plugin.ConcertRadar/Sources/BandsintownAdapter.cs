@@ -47,6 +47,7 @@ public sealed class BandsintownAdapter : ISourceAdapter
     private readonly HostRateLimiter _rateLimiter;
     private readonly SourceStateRepository _sourceStateRepository;
     private readonly IPluginConfigurationProvider _configProvider;
+    private readonly TimeProvider _clock;
     private readonly ILogger<BandsintownAdapter> _logger;
 
     /// <summary>
@@ -56,18 +57,21 @@ public sealed class BandsintownAdapter : ISourceAdapter
     /// <param name="rateLimiter">Shared rate limiter.</param>
     /// <param name="sourceStateRepository">Source state repository for circuit breaker.</param>
     /// <param name="configProvider">Plugin configuration provider.</param>
+    /// <param name="clock">Time provider.</param>
     /// <param name="logger">Logger.</param>
     public BandsintownAdapter(
         IHttpClientFactory httpClientFactory,
         HostRateLimiter rateLimiter,
         SourceStateRepository sourceStateRepository,
         IPluginConfigurationProvider configProvider,
+        TimeProvider clock,
         ILogger<BandsintownAdapter> logger)
     {
         _httpClientFactory     = httpClientFactory;
         _rateLimiter           = rateLimiter;
         _sourceStateRepository = sourceStateRepository;
         _configProvider        = configProvider;
+        _clock                 = clock;
         _logger                = logger;
     }
 
@@ -194,8 +198,6 @@ public sealed class BandsintownAdapter : ISourceAdapter
             if (response.IsSuccessStatusCode)
             {
                 string body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                await _sourceStateRepository.RecordSuccessAsync(SourceId, DateTimeOffset.UtcNow, ct)
-                    .ConfigureAwait(false);
                 return JsonSerializer.Deserialize<T>(body, JsonOptions);
             }
 
@@ -206,7 +208,7 @@ public sealed class BandsintownAdapter : ISourceAdapter
                 if (response.Headers.RetryAfter is { } retryAfter)
                 {
                     DateTimeOffset until = retryAfter.Date
-                        ?? DateTimeOffset.UtcNow.Add(retryAfter.Delta ?? TimeSpan.FromSeconds(60));
+                        ?? _clock.GetUtcNow().Add(retryAfter.Delta ?? TimeSpan.FromSeconds(60));
                     await _rateLimiter.SetBackoffAsync(SourceId, until, ct).ConfigureAwait(false);
                 }
 

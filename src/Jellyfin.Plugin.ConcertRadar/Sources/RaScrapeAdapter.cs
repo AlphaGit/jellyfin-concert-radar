@@ -97,6 +97,7 @@ public sealed class RaScrapeAdapter : ISourceAdapter
     private readonly ArtistRepository _artistRepository;
     private readonly SourceStateRepository _sourceStateRepository;
     private readonly IPluginConfigurationProvider _configProvider;
+    private readonly TimeProvider _clock;
     private readonly ILogger<RaScrapeAdapter> _logger;
 
     /// <summary>
@@ -107,6 +108,7 @@ public sealed class RaScrapeAdapter : ISourceAdapter
     /// <param name="artistRepository">Artist repository for caching external IDs.</param>
     /// <param name="sourceStateRepository">Source state repository for circuit breaker.</param>
     /// <param name="configProvider">Plugin configuration provider.</param>
+    /// <param name="clock">Time provider.</param>
     /// <param name="logger">Logger.</param>
     public RaScrapeAdapter(
         IHttpClientFactory httpClientFactory,
@@ -114,6 +116,7 @@ public sealed class RaScrapeAdapter : ISourceAdapter
         ArtistRepository artistRepository,
         SourceStateRepository sourceStateRepository,
         IPluginConfigurationProvider configProvider,
+        TimeProvider clock,
         ILogger<RaScrapeAdapter> logger)
     {
         _httpClientFactory     = httpClientFactory;
@@ -121,6 +124,7 @@ public sealed class RaScrapeAdapter : ISourceAdapter
         _artistRepository      = artistRepository;
         _sourceStateRepository = sourceStateRepository;
         _configProvider        = configProvider;
+        _clock                 = clock;
         _logger                = logger;
     }
 
@@ -441,9 +445,6 @@ public sealed class RaScrapeAdapter : ISourceAdapter
             if (response.IsSuccessStatusCode)
             {
                 string body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                await _sourceStateRepository
-                    .RecordSuccessAsync(SourceId, DateTimeOffset.UtcNow, ct)
-                    .ConfigureAwait(false);
                 return JsonNode.Parse(body);
             }
 
@@ -453,7 +454,7 @@ public sealed class RaScrapeAdapter : ISourceAdapter
                 if (response.Headers.RetryAfter is { } retryAfter)
                 {
                     DateTimeOffset until = retryAfter.Date
-                        ?? DateTimeOffset.UtcNow.Add(retryAfter.Delta ?? TimeSpan.FromSeconds(60));
+                        ?? _clock.GetUtcNow().Add(retryAfter.Delta ?? TimeSpan.FromSeconds(60));
                     await _rateLimiter.SetBackoffAsync(SourceId, until, ct).ConfigureAwait(false);
                 }
 
