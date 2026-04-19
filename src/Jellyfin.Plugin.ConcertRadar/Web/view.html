@@ -455,6 +455,14 @@
         return d.toISOString().slice(0, 10);
     }
 
+    function safeHref(url) {
+        if (!url || typeof url !== 'string') return '';
+        try {
+            var u = new URL(url, window.location.origin);
+            return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
+        } catch (e) { return ''; }
+    }
+
     function debounce(fn, ms) {
         var t;
         return function () {
@@ -550,17 +558,33 @@
             artistHtml = escHtml(artist);
         }
 
-        // Buttons
+        // Buttons — use safeHref to block javascript: and other non-http(s) schemes
+        var safeSrcUrl    = safeHref(srcUrl);
+        var safeTicketUrl = safeHref(ticketUrl);
+
         var btnViewHtml = '';
         if (srcUrl) {
             var srcLabel = source ? 'View on ' + source.charAt(0).toUpperCase() + source.slice(1) : 'View Source';
-            btnViewHtml = '<a href="' + escHtml(srcUrl) + '" target="_blank" rel="noopener noreferrer" ' +
-                          'class="cr-btn cr-btn-secondary cr-btn-sm">' + escHtml(srcLabel) + '</a>';
+            if (safeSrcUrl) {
+                btnViewHtml = '<a href="' + escHtml(safeSrcUrl) + '" target="_blank" rel="noopener noreferrer" ' +
+                              'class="cr-btn cr-btn-secondary cr-btn-sm">' + escHtml(srcLabel) + '</a>';
+            } else {
+                // URL failed the scheme allowlist — render disabled
+                btnViewHtml = '<span class="cr-btn cr-btn-secondary cr-btn-sm" ' +
+                              'style="opacity:.45;cursor:not-allowed;" aria-disabled="true">' +
+                              escHtml(srcLabel) + '</span>';
+            }
         }
         var btnTicketHtml = '';
         if (ticketUrl && ticketUrl !== srcUrl) {
-            btnTicketHtml = '<a href="' + escHtml(ticketUrl) + '" target="_blank" rel="noopener noreferrer" ' +
-                            'class="cr-btn cr-btn-primary cr-btn-sm">Buy Tickets</a>';
+            if (safeTicketUrl) {
+                btnTicketHtml = '<a href="' + escHtml(safeTicketUrl) + '" target="_blank" rel="noopener noreferrer" ' +
+                                'class="cr-btn cr-btn-primary cr-btn-sm">Buy Tickets</a>';
+            } else {
+                // URL failed the scheme allowlist — render disabled
+                btnTicketHtml = '<span class="cr-btn cr-btn-primary cr-btn-sm" ' +
+                                'style="opacity:.45;cursor:not-allowed;" aria-disabled="true">Buy Tickets</span>';
+            }
         }
 
         return '<article class="cr-concert-card">' +
