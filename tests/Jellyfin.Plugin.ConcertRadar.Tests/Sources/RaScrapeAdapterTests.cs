@@ -102,6 +102,8 @@ public sealed class RaScrapeAdapterTests : IAsyncLifetime
             rateLimiter,
             _db.Artists,
             _db.SourceState,
+            configProvider,
+            TimeProvider.System,
             NullLogger<RaScrapeAdapter>.Instance);
     }
 

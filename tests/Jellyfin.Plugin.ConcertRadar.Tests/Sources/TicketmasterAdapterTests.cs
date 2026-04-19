@@ -106,6 +106,8 @@ public sealed class TicketmasterAdapterTests : IAsyncLifetime
             rateLimiter,
             _db.Artists,
             _db.SourceState,
+            configProvider,
+            TimeProvider.System,
             NullLogger<TicketmasterAdapter>.Instance);
     }
 

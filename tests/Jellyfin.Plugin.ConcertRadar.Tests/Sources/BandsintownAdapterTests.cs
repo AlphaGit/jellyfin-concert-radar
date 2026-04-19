@@ -112,6 +112,8 @@ public sealed class BandsintownAdapterTests : IAsyncLifetime
             factory,
             rateLimiter,
             _db.SourceState,
+            configProvider,
+            TimeProvider.System,
             NullLogger<BandsintownAdapter>.Instance);
     }
 

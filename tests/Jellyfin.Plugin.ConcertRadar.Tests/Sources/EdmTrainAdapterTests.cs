@@ -101,6 +101,8 @@ public sealed class EdmTrainAdapterTests : IAsyncLifetime
             rateLimiter,
             _db.Artists,
             _db.SourceState,
+            configProvider,
+            TimeProvider.System,
             NullLogger<EdmTrainAdapter>.Instance);
     }
 

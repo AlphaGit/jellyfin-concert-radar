@@ -102,6 +102,8 @@ public sealed class DiceScrapeAdapterTests : IAsyncLifetime
             rateLimiter,
             _db.Artists,
             _db.SourceState,
+            configProvider,
+            TimeProvider.System,
             NullLogger<DiceScrapeAdapter>.Instance);
     }
 

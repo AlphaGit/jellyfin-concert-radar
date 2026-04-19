@@ -203,24 +203,32 @@ public class HostRateLimiterTests
         await using (db)
         await using (limiter)
         {
-            // Set a backoff floor 250ms from now.
-            var backoffUntil = BaseTime.AddMilliseconds(250);
+            // Set a backoff floor 30 seconds of stub-time from now.
+            // Using stub time means we never actually wait 30 seconds — the clock is
+            // advanced programmatically, which fires the FakeTimer registered inside
+            // Task.Delay(delay, _clock, ct) inside AcquireAsync.
+            var backoffUntil = BaseTime.AddSeconds(30);
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             await limiter.SetBackoffAsync(Source, backoffUntil, cts.Token);
 
-            // The limiter calls Task.Delay(delay, _clock, ct) which uses stub time.
-            // We advance the stub past the floor on a background task so the delay unblocks.
-            var advanceTask = Task.Run(async () =>
-            {
-                await Task.Delay(100); // real 100ms to let AcquireAsync reach the delay
-                clock.Set(backoffUntil.AddMilliseconds(10));
-            });
+            // Start AcquireAsync in the background — it will enter Task.Delay waiting for
+            // the backoff floor to pass.  Give it a moment to reach the delay and register
+            // its FakeTimer with the stub clock (one real async round-trip is enough).
+            var acquireTask = Task.Run(() => limiter.AcquireAsync(Source, cts.Token), cts.Token);
 
-            // AcquireAsync should complete once the stub clock passes the floor.
-            await limiter.AcquireAsync(Source, cts.Token);
-            await advanceTask;
+            // Wait for AcquireAsync to register the timer with the stub clock.
+            // A short real delay is still needed here — but 500 ms is ample even on
+            // the most loaded CI runner (the only work before the timer is a DB read).
+            await Task.Delay(500, CancellationToken.None);
 
-            // Test passes if no exception was thrown.
+            // Advance stub clock past the floor: TimeProviderStub.CreateTimer fires all
+            // due FakeTimers synchronously, which unblocks Task.Delay inside AcquireAsync.
+            clock.Set(backoffUntil.AddMilliseconds(10));
+
+            // AcquireAsync must complete promptly once the timer fired.
+            await acquireTask.WaitAsync(TimeSpan.FromSeconds(2), CancellationToken.None);
+
+            // Test passes if no OperationCanceledException or other exception was thrown.
         }
     }
 }
