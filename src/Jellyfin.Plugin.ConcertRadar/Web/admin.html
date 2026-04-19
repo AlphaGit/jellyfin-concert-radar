@@ -594,7 +594,7 @@
                 '</div>' +
                 '<div class="cr-source-meta">' +
                     'Last success: ' + fmtDate(s.lastSuccessAt) + '<br>' +
-                    'Calls today: ' + (s.callsToday != null ? s.callsToday : '—') + '<br>' +
+                    'Calls today: ' + escHtml(s.callsToday != null ? String(s.callsToday) : '—') + '<br>' +
                     disabledUntilStr +
                     (s.lastError ? 'Last error: ' + escHtml(s.lastError) + '<br>' : '') +
                 '</div>' +
@@ -666,21 +666,43 @@
     }
 
     // ── Location rows ────────────────────────────────────────────────────
+    function makeLocInput(type, cls, value, attrs) {
+        var inp = document.createElement('input');
+        inp.type = type;
+        inp.className = cls;
+        inp.value = (value != null) ? String(value) : '';
+        if (attrs) {
+            Object.keys(attrs).forEach(function (k) { inp.setAttribute(k, attrs[k]); });
+        }
+        var td = document.createElement('td');
+        td.appendChild(inp);
+        return td;
+    }
+
     function makeLocationRow(loc) {
         loc = loc || {};
         var tr = document.createElement('tr');
-        tr.innerHTML =
-            '<td><input type="text"   class="cr-loc-city"    value="' + escHtml(loc.city    || '') + '" placeholder="City" /></td>' +
-            '<td><input type="text"   class="cr-loc-region"  value="' + escHtml(loc.region  || '') + '" placeholder="Region" /></td>' +
-            '<td><input type="text"   class="cr-loc-country" value="' + escHtml(loc.country || '') + '" placeholder="US" maxlength="2" /></td>' +
-            '<td><input type="number" class="cr-loc-lat"     value="' + (loc.lat  != null ? loc.lat  : '') + '" placeholder="—" step="any" /></td>' +
-            '<td><input type="number" class="cr-loc-lon"     value="' + (loc.lon  != null ? loc.lon  : '') + '" placeholder="—" step="any" /></td>' +
-            '<td><input type="number" class="cr-loc-radius"  value="' + (loc.radiusKm != null ? loc.radiusKm : 80) + '" min="1" step="1" /></td>' +
-            '<td><button type="button" class="cr-btn cr-btn-danger cr-remove-location" aria-label="Remove row">✕</button></td>';
-        tr.querySelector('.cr-remove-location').addEventListener('click', function () {
+
+        tr.appendChild(makeLocInput('text',   'cr-loc-city',    loc.city    || '', { placeholder: 'City' }));
+        tr.appendChild(makeLocInput('text',   'cr-loc-region',  loc.region  || '', { placeholder: 'Region' }));
+        tr.appendChild(makeLocInput('text',   'cr-loc-country', loc.country || '', { placeholder: 'US', maxlength: '2' }));
+        tr.appendChild(makeLocInput('number', 'cr-loc-lat',     loc.lat  != null ? loc.lat  : '', { placeholder: '—', step: 'any' }));
+        tr.appendChild(makeLocInput('number', 'cr-loc-lon',     loc.lon  != null ? loc.lon  : '', { placeholder: '—', step: 'any' }));
+        tr.appendChild(makeLocInput('number', 'cr-loc-radius',  loc.radiusKm != null ? loc.radiusKm : 80, { min: '1', step: '1' }));
+
+        var removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'cr-btn cr-btn-danger cr-remove-location';
+        removeBtn.setAttribute('aria-label', 'Remove row');
+        removeBtn.textContent = '\u2715';
+        removeBtn.addEventListener('click', function () {
             tr.parentNode.removeChild(tr);
             updateLocationPlaceholder();
         });
+        var tdBtn = document.createElement('td');
+        tdBtn.appendChild(removeBtn);
+        tr.appendChild(tdBtn);
+
         return tr;
     }
 
@@ -747,9 +769,9 @@
             tr.innerHTML =
                 '<td>' + escHtml(srcId) + '</td>' +
                 '<td><input type="number" class="cr-rl-rps" data-source="' + escHtml(srcId) +
-                    '" value="' + rps + '" min="0.1" step="0.1" /></td>' +
+                    '" value="' + escHtml(String(rps)) + '" min="0.1" step="0.1" /></td>' +
                 '<td><input type="number" class="cr-rl-rpd" data-source="' + escHtml(srcId) +
-                    '" value="' + (rpd !== null && rpd !== '' && rpd !== undefined ? rpd : '') +
+                    '" value="' + escHtml(rpd !== null && rpd !== '' && rpd !== undefined ? String(rpd) : '') +
                     '" min="0" step="1" placeholder="unlimited" /></td>';
             tbody.appendChild(tr);
         });
