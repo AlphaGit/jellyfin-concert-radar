@@ -404,3 +404,83 @@ Dependencies are called out explicitly. Tasks in the same phase without dependen
 - **TEST tasks** are embedded in each feature; see `TESTS.md` for the full list.
 
 Recommended build order for the minimum useful system: Phases 0 → 1 → 2 → 3 → 4 (admin works end-to-end with Ticketmaster only). Phases 5, 6, 7, 8, 9, 10 can overlap between agents once Phase 4 lands. Phase 11 and 12 are the hardening/release gate.
+
+---
+
+## Phase 13 — Post-review fixes
+
+Findings from the full code review performed after Phase 12 landed. Each task owns exactly one finding. Severity and owning agent tagged; implement in severity order.
+
+### Previously flagged (known before review)
+
+#### T13.0a [BE] Inject `IPluginConfigurationProvider` into adapters
+- All six source adapters currently read `Plugin.Instance?.Configuration` directly. Forces `PluginInstanceCollection` serial test collection.
+- Fix: constructor-inject `IPluginConfigurationProvider` (seam already exists for `HostRateLimiter`); remove the `PluginInstanceCollection` attribute from the adapter test files it unblocks.
+
+#### T13.0b [FE] EdmTrain attribution badges
+- Show "Data: EdmTrain" badge on the admin status card and on each EdmTrain row of the user view. Required by EdmTrain API ToS. Non-blocking for local dev, required before any redistribution.
+
+#### T13.0c [INFRA] JPRM release pipeline
+- Wire `gh-pages` branch hosting of `manifest.json` + release zip. On tag push, append the new version to `manifest.json` and publish.
+
+### Review findings (severity-ordered)
+
+#### T13.1 [BE] CRITICAL — Freshly-resolved external IDs discarded
+- `ScheduledTasks/RefreshConcertsTask.cs` lines 125–156: after `SetExternalIdsAsync` persists new ext_ids, the code still reads `artist.ExternalIds` (stale snapshot from `GetNextBatchAsync`). Adapters fall back to slow name-lookup every run until the NEXT run.
+- Fix: use the freshly-returned `extIds` dict when constructing `ArtistRef` if `extIds.Count > 0`.
+
+#### T13.2 [BE] CRITICAL — Missing Normalizer post-filters
+- `Normalization/Normalizer.cs`: `SourceFilter.GenreAllowlist` and `SourceFilter.Locations` (city/country/radius) are populated by `RefreshConcertsTask.BuildSourceFilter` but never checked in `Normalize`. Dead code paths in SPEC §5 filters.
+- Fix: add genre and location-radius post-filter checks. Radius calc via haversine on lat/lon.
+
+#### T13.3 [FE] HIGH — `javascript:` URL XSS in view.html
+- `Web/view.html` lines 557–562: `srcUrl` / `ticketUrl` escaped for HTML but no URL-scheme allowlist. Malicious stored URL runs JS on click.
+- Fix: allowlist `https?:` only before rendering each `href` attribute; fallback = empty href + disabled button.
+
+#### T13.4 [BE] HIGH — Midnight-crossing timezone bug
+- `Storage/SourceStateRepository.cs` `HasCrossedMidnight` uses `now.Date.ToUniversalTime()` — `DateTimeOffset.Date` strips offset and returns local-kind `DateTime`; `ToUniversalTime()` on a local DateTime shifts hours. Breaks daily-budget reset on non-UTC servers.
+- Fix: `new DateTimeOffset(now.UtcDateTime.Date, TimeSpan.Zero)`.
+
+#### T13.5 [BE] HIGH — Duplicate `RecordSuccessAsync` in adapters
+- All six adapters call `RecordSuccessAsync` inside their retry helpers; `RefreshConcertsTask` calls it again. Fires N+1 times per artist, uses `DateTimeOffset.UtcNow` (bypasses injected `TimeProvider`, breaks test determinism).
+- Fix: remove `RecordSuccessAsync` from adapter retry helpers; keep only in `RefreshConcertsTask`. Replace any `DateTimeOffset.UtcNow` in adapters with injected `TimeProvider`.
+
+#### T13.6 [BE] HIGH — API key leak in exception message
+- `Sources/TicketmasterAdapter.cs` line 293 (and similar in `MusicBrainzResolver`): retry exhaustion throws `HttpRequestException` with the full URL including `apikey=<key>`. Message persists in `source_state.last_error` and returns via `/api/status` to authenticated users.
+- Fix: redact `apikey=...` (and other credential query params) from URL before embedding in exception / log messages.
+
+#### T13.7 [BE] MEDIUM — Ticketmaster attraction false-positive
+- `Sources/TicketmasterAdapter.cs` line 161, 207: `ResolveAttractionIdAsync` falls back to first result when no exact name match. Common names bind to wrong attraction, cached permanently.
+- Fix: add minimum-confidence check (e.g. similarity ratio ≥ 0.8) OR log a warning + skip caching so next run retries.
+
+#### T13.8 [BE] MEDIUM — Redundant MusicBrainz resolution for zero-rel artists
+- `ScheduledTasks/RefreshConcertsTask.cs` lines 125–127: resolver runs every batch for artists whose MusicBrainz lookup genuinely returned zero URL relations. No sentinel means infinite re-query.
+- Fix: store `{"_resolved": "true"}` (or similar sentinel key) after a successful zero-result lookup; guard subsequent runs on that key.
+
+#### T13.9 [BE] MEDIUM — Two round-trips per state mutation
+- `Storage/SourceStateRepository.cs` `RecordFailureAsync` and `IncrementCallCounterAsync`: each calls `GetAsync` then opens a second connection for `UPDATE`. 2× latency per write.
+- Fix: merge into single parameterized statement using `COALESCE` and conditional expressions.
+
+#### T13.10 [FE] MEDIUM — `innerHTML` write of numeric config values
+- `Web/admin.html` line 672 (`makeLocationRow`): `loc.lat`, `loc.lon`, `loc.radiusKm` inserted into `innerHTML` without `escHtml`. Corrupted config could render raw strings.
+- Fix: apply `escHtml` to all interpolated values, or switch to `createElement`/`setAttribute`.
+
+#### T13.11 [BE] MEDIUM — Magic retry / pagination constants
+- All adapters duplicate `200ms / 800ms / 3.2s` backoff and per-adapter page caps as literals.
+- Fix: extract shared `AdapterDefaults` static class (or wire through `PluginConfiguration`).
+
+#### T13.12 [FE] LOW — Status interval leak on SPA re-entry
+- `Web/admin.html` lines 926–944: `pageshow` starts interval; `pagebeforehide` cleanup wired once. Re-entry spawns duplicate intervals.
+- Fix: call `stopStatusPolling()` at top of `pageshow` before starting new interval.
+
+#### T13.13 [BE] LOW — Race between DI schema bootstrap and first API request
+- `SchemaBootstrapHostedService.StartAsync` migrates synchronously during startup but API controllers register before `IHostedService.StartAsync` completes. A request in the first ms can hit the repo before schema exists.
+- Fix: gate first-request handling on `IHostApplicationLifetime.ApplicationStarted`, or add a `PRAGMA user_version` guard in repository `OpenAsync`.
+
+#### T13.14 [TEST] LOW — Flaky real-time delay in rate-limiter test
+- `tests/.../RateLimiting/HostRateLimiterTests.cs` line 215: uses `Task.Delay(100)` to wait for async backoff. Can race on loaded CI.
+- Fix: replace with stub-clock advancement or `ManualResetEventSlim` signal.
+
+#### T13.15 [BE] NIT — Songkick missing ToS opt-in gate
+- `Sources/SongkickScrapeAdapter.cs` sets `RequiresTosOptIn => false` but Songkick's ToS prohibits scraping just as Dice/RA do. Inconsistent with DICE/RA pattern.
+- Fix: add `AcceptSongkickScrapeTos` to `PluginConfiguration`; set `RequiresTosOptIn => true`; wire an opt-in checkbox in `admin.html`.
