@@ -174,25 +174,53 @@ public sealed class TicketmasterAdapter : ISourceAdapter
         if (resp?.Embedded?.Attractions is null)
             return null;
 
-        // Pick best match by exact case-insensitive name.
+        // Pick best match: prefer exact case-insensitive name, then fall back to
+        // Levenshtein similarity ratio. Cache and return only when ratio >= 0.8.
+        const double MinConfidence = 0.8;
+
         string? attractionId = null;
+        string? bestCandidateName = null;
+        double bestScore = 0.0;
+
         foreach (var att in resp.Embedded.Attractions)
         {
+            if (string.IsNullOrWhiteSpace(att.Name) || string.IsNullOrWhiteSpace(att.Id))
+                continue;
+
             if (string.Equals(att.Name, artist.Name, StringComparison.OrdinalIgnoreCase))
             {
+                // Exact match — accept immediately.
                 attractionId = att.Id;
+                bestCandidateName = att.Name;
+                bestScore = 1.0;
                 break;
+            }
+
+            double score = LevenshteinRatio(artist.Name, att.Name);
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestCandidateName = att.Name;
+                attractionId = att.Id;
             }
         }
 
-        // Fall back to first result if no exact match.
-        attractionId ??= resp.Embedded.Attractions.Count > 0
-            ? resp.Embedded.Attractions[0].Id
-            : null;
+        if (attractionId is not null && bestScore < MinConfidence)
+        {
+            _logger.LogWarning(
+                "TicketmasterAdapter: skipped low-confidence attraction match for '{Name}': " +
+                "best candidate '{Candidate}' scored {Score:F2} (threshold {Threshold:F2}). " +
+                "Will retry next run.",
+                artist.Name, bestCandidateName, bestScore, MinConfidence);
+            return null;
+        }
 
         if (attractionId is not null)
         {
-            // Derive the DB primary key using the same logic as ArtistRepository.ComputeId.
+            _logger.LogInformation(
+                "TicketmasterAdapter: resolved '{Name}' → attraction '{Candidate}' (score {Score:F2}).",
+                artist.Name, bestCandidateName, bestScore);
+
             string dbId = ArtistRepository.ComputeId(artist.Mbid, artist.Name);
             await _artistRepository
                 .SetExternalIdsAsync(dbId, new Dictionary<string, string> { [SourceId] = attractionId }, ct)
@@ -412,6 +440,47 @@ public sealed class TicketmasterAdapter : ISourceAdapter
             IsFestival: isFestival,
             IsSoldOut: isSoldOut,
             Genres: genres.Count > 0 ? genres : null);
+    }
+
+    // ── Levenshtein similarity ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Computes a normalized Levenshtein similarity ratio in [0.0, 1.0] between
+    /// <paramref name="a"/> and <paramref name="b"/> (case-insensitive).
+    /// </summary>
+    private static double LevenshteinRatio(string a, string b)
+    {
+        a = a.ToUpperInvariant();
+        b = b.ToUpperInvariant();
+
+        int la = a.Length;
+        int lb = b.Length;
+
+        if (la == 0 && lb == 0) return 1.0;
+        if (la == 0 || lb == 0) return 0.0;
+
+        // Single-row rolling DP.
+        var prev = new int[lb + 1];
+        var curr = new int[lb + 1];
+
+        for (int j = 0; j <= lb; j++) prev[j] = j;
+
+        for (int i = 1; i <= la; i++)
+        {
+            curr[0] = i;
+            for (int j = 1; j <= lb; j++)
+            {
+                int cost = a[i - 1] == b[j - 1] ? 0 : 1;
+                curr[j] = Math.Min(
+                    Math.Min(curr[j - 1] + 1, prev[j] + 1),
+                    prev[j - 1] + cost);
+            }
+
+            (prev, curr) = (curr, prev);
+        }
+
+        int dist = prev[lb];
+        return 1.0 - (double)dist / Math.Max(la, lb);
     }
 
     // ── DTOs ──────────────────────────────────────────────────────────────────
