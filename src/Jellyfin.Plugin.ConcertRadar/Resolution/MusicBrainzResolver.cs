@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.ConcertRadar.RateLimiting;
+using Jellyfin.Plugin.ConcertRadar.Sources;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.ConcertRadar.Resolution;
@@ -223,7 +224,7 @@ public sealed class MusicBrainzResolver
             }
             catch (HttpRequestException ex)
             {
-                _logger.LogWarning(ex, "MusicBrainz: network error on attempt {Attempt} for {Url}.", attempt + 1, url);
+                _logger.LogWarning(ex, "MusicBrainz: network error on attempt {Attempt} for {Url}.", attempt + 1, UrlRedactor.Redact(url));
                 lastEx = ex;
                 continue;
             }
@@ -244,13 +245,14 @@ public sealed class MusicBrainzResolver
                     await _rateLimiter.SetBackoffAsync(SourceKey, until, ct).ConfigureAwait(false);
                 }
 
+                string redactedUrl = UrlRedactor.Redact(url);
                 var statusEx = new HttpRequestException(
-                    $"MusicBrainz returned {(int)response.StatusCode} for {url}.",
+                    $"MusicBrainz returned {(int)response.StatusCode} for {redactedUrl}.",
                     null,
                     response.StatusCode);
                 _logger.LogWarning(statusEx,
                     "MusicBrainz: transient error {Status} on attempt {Attempt} for {Url}.",
-                    response.StatusCode, attempt + 1, url);
+                    response.StatusCode, attempt + 1, redactedUrl);
                 lastEx = statusEx;
                 continue;
             }
@@ -260,7 +262,7 @@ public sealed class MusicBrainzResolver
         }
 
         throw new HttpRequestException(
-            $"MusicBrainz request failed after {RetryDelays.Length + 1} attempts: {url}",
+            $"MusicBrainz request failed after {RetryDelays.Length + 1} attempts: {UrlRedactor.Redact(url)}",
             lastEx);
     }
 }

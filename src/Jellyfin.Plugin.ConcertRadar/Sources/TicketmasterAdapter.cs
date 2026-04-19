@@ -296,7 +296,7 @@ public sealed class TicketmasterAdapter : ISourceAdapter
         }
 
         throw new HttpRequestException(
-            $"Ticketmaster request failed after {RetryDelays.Length + 1} attempts: {url}",
+            $"Ticketmaster request failed after {RetryDelays.Length + 1} attempts: {UrlRedactor.Redact(url)}",
             lastEx);
     }
 

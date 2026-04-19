@@ -439,7 +439,7 @@ public sealed partial class SongkickScrapeAdapter : ISourceAdapter
         }
 
         throw new HttpRequestException(
-            $"Songkick request failed after {RetryDelays.Length + 1} attempts: {url}",
+            $"Songkick request failed after {RetryDelays.Length + 1} attempts: {UrlRedactor.Redact(url)}",
             lastEx);
     }
 

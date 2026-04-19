@@ -461,7 +461,7 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
         }
 
         throw new HttpRequestException(
-            $"Dice.fm request failed after {RetryDelays.Length + 1} attempts: {url}",
+            $"Dice.fm request failed after {RetryDelays.Length + 1} attempts: {UrlRedactor.Redact(url)}",
             lastEx);
     }
 }
