@@ -18,17 +18,20 @@ namespace Jellyfin.Plugin.ConcertRadar.Storage;
 public sealed class ConcertRepository
 {
     private readonly DatabaseLocator _locator;
+    private readonly IMigrationGate _gate;
     private readonly ILogger<ConcertRepository> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConcertRepository"/> class.
     /// </summary>
     /// <param name="locator">Database path resolver.</param>
+    /// <param name="gate">Migration gate — awaited before first connection open.</param>
     /// <param name="logger">Logger.</param>
-    public ConcertRepository(DatabaseLocator locator, ILogger<ConcertRepository> logger)
+    public ConcertRepository(DatabaseLocator locator, IMigrationGate gate, ILogger<ConcertRepository> logger)
     {
         _locator = locator;
-        _logger = logger;
+        _gate    = gate;
+        _logger  = logger;
     }
 
     // ── Write ─────────────────────────────────────────────────────────────────
@@ -247,6 +250,7 @@ public sealed class ConcertRepository
 
     private async Task<SqliteConnection> OpenAsync(CancellationToken ct)
     {
+        await _gate.WaitAsync(ct).ConfigureAwait(false);
         var conn = new SqliteConnection(_locator.ConnectionString);
         await conn.OpenAsync(ct).ConfigureAwait(false);
         return conn;

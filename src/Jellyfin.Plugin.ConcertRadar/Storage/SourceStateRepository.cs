@@ -15,6 +15,7 @@ namespace Jellyfin.Plugin.ConcertRadar.Storage;
 public sealed class SourceStateRepository
 {
     private readonly DatabaseLocator _locator;
+    private readonly IMigrationGate _gate;
     private readonly TimeProvider _clock;
     private readonly ILogger<SourceStateRepository> _logger;
 
@@ -22,6 +23,7 @@ public sealed class SourceStateRepository
     /// Initializes a new instance of the <see cref="SourceStateRepository"/> class.
     /// </summary>
     /// <param name="locator">Database path resolver.</param>
+    /// <param name="gate">Migration gate — awaited before first connection open.</param>
     /// <param name="clock">
     /// Time provider — inject <see cref="TimeProvider.System"/> in production;
     /// supply a stub in tests for deterministic midnight-reset logic.
@@ -29,12 +31,14 @@ public sealed class SourceStateRepository
     /// <param name="logger">Logger.</param>
     public SourceStateRepository(
         DatabaseLocator locator,
+        IMigrationGate gate,
         TimeProvider clock,
         ILogger<SourceStateRepository> logger)
     {
         _locator = locator;
-        _clock = clock;
-        _logger = logger;
+        _gate    = gate;
+        _clock   = clock;
+        _logger  = logger;
     }
 
     // ── Read ──────────────────────────────────────────────────────────────────
@@ -305,6 +309,7 @@ public sealed class SourceStateRepository
 
     private async Task<SqliteConnection> OpenAsync(CancellationToken ct)
     {
+        await _gate.WaitAsync(ct).ConfigureAwait(false);
         var conn = new SqliteConnection(_locator.ConnectionString);
         await conn.OpenAsync(ct).ConfigureAwait(false);
         return conn;

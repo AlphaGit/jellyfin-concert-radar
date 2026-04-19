@@ -25,6 +25,8 @@ public sealed class PluginServiceRegistrator : IPluginServiceRegistrator
         // Core storage layer — singletons because they hold no per-request state.
         serviceCollection.AddSingleton<DatabaseLocator>();
         serviceCollection.AddSingleton<SchemaMigrator>();
+        // Migration gate: signals repositories that the schema is ready.
+        serviceCollection.AddSingleton<IMigrationGate, MigrationGate>();
         serviceCollection.AddSingleton<ConcertRepository>();
         serviceCollection.AddSingleton<ArtistRepository>();
         serviceCollection.AddSingleton<SourceStateRepository>();

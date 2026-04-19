@@ -11,21 +11,29 @@ namespace Jellyfin.Plugin.ConcertRadar;
 /// An <see cref="IHostedService"/> that runs the SQLite schema migration and
 /// seeds default configuration entries once at startup. Registered via
 /// <c>AddHostedService</c>; the host calls <see cref="StartAsync"/> during startup.
+/// Signals <see cref="IMigrationGate"/> on completion so repositories do not serve
+/// requests before the schema exists.
 /// </summary>
 public sealed class SchemaBootstrapHostedService : IHostedService
 {
     private readonly SchemaMigrator _migrator;
+    private readonly IMigrationGate _gate;
     private readonly ILogger<SchemaBootstrapHostedService> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SchemaBootstrapHostedService"/> class.
     /// </summary>
     /// <param name="migrator">Schema migrator.</param>
+    /// <param name="gate">Migration gate to signal when migration completes.</param>
     /// <param name="logger">Logger.</param>
-    public SchemaBootstrapHostedService(SchemaMigrator migrator, ILogger<SchemaBootstrapHostedService> logger)
+    public SchemaBootstrapHostedService(
+        SchemaMigrator migrator,
+        IMigrationGate gate,
+        ILogger<SchemaBootstrapHostedService> logger)
     {
         _migrator = migrator;
-        _logger = logger;
+        _gate     = gate;
+        _logger   = logger;
     }
 
     /// <inheritdoc />
@@ -36,16 +44,17 @@ public sealed class SchemaBootstrapHostedService : IHostedService
         _logger.LogInformation("ConcertRadar: schema migration complete.");
 
         var plugin = Plugin.Instance;
-        if (plugin is null)
+        if (plugin is not null)
         {
-            return;
+            if (PluginConfigurationDefaults.SeedIfEmpty(plugin.Configuration))
+            {
+                _logger.LogInformation("ConcertRadar: seeded default configuration entries.");
+                plugin.SaveConfiguration();
+            }
         }
 
-        if (PluginConfigurationDefaults.SeedIfEmpty(plugin.Configuration))
-        {
-            _logger.LogInformation("ConcertRadar: seeded default configuration entries.");
-            plugin.SaveConfiguration();
-        }
+        // Signal all waiting repositories that the schema is ready.
+        _gate.SignalReady();
     }
 
     /// <inheritdoc />
