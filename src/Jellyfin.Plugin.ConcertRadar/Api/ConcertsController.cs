@@ -166,8 +166,10 @@ public sealed class ConcertsController : ControllerBase
             _logger.LogWarning(ex, "ConcertsController: could not resolve task schedule info.");
         }
 
+        // Strip LastError from the user-facing DTO: error strings may reveal internal endpoints
+        // or failure modes even after UrlRedactor processing. Admins can check the Jellyfin log.
         var response = new StatusResponse(
-            Sources:   sourceStates.Select(SourceStatusDto.FromRecord).ToList(),
+            Sources:   sourceStates.Select(r => SourceStatusDto.FromRecord(r) with { LastError = null }).ToList(),
             LastRun:   lastRun,
             NextRun:   nextRun,
             QueueSize: queueSize);
