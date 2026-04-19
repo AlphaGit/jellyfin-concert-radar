@@ -239,7 +239,7 @@ public sealed class RefreshConcertsTask : IScheduledTask
                 catch (Exception ex)
                 {
                     totalErrors++;
-                    lastError = $"{adapter.Id}: {ex.Message}";
+                    lastError = $"{adapter.Id}: {UrlRedactor.Redact(ex.Message)}";
 
                     _logger.LogWarning(ex,
                         "RefreshConcertsTask: source '{Source}' failed for '{Artist}'.",
