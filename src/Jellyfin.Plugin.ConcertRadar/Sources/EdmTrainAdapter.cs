@@ -17,7 +17,6 @@ using Jellyfin.Plugin.ConcertRadar.Configuration;
 using Jellyfin.Plugin.ConcertRadar.Model;
 using Jellyfin.Plugin.ConcertRadar.RateLimiting;
 using Jellyfin.Plugin.ConcertRadar.Storage;
-using MediaBrowser.Common.Net;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.ConcertRadar.Sources;
@@ -238,7 +237,7 @@ public sealed class EdmTrainAdapter : ISourceAdapter
 
             await _rateLimiter.AcquireAsync(SourceId, ct).ConfigureAwait(false);
 
-            using var client = _httpClientFactory.CreateClient(NamedClient.Default);
+            using var client = _httpClientFactory.CreateClient(PluginHttpClient.ClientName);
             client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
 
             HttpResponseMessage response;

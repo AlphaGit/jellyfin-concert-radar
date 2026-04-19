@@ -208,7 +208,7 @@ public sealed class MusicBrainzResolver
 
             await _rateLimiter.AcquireAsync(SourceKey, ct).ConfigureAwait(false);
 
-            using var client = _httpClientFactory.CreateClient(MediaBrowser.Common.Net.NamedClient.Default);
+            using var client = _httpClientFactory.CreateClient(PluginHttpClient.ClientName);
             client.DefaultRequestHeaders.UserAgent.Clear();
             client.DefaultRequestHeaders.Add("User-Agent", UserAgent);
 

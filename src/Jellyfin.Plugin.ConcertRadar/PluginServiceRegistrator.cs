@@ -42,6 +42,13 @@ public sealed class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.TryAddSingleton<IPluginConfigurationProvider, DefaultPluginConfigurationProvider>();
         serviceCollection.AddSingleton<HostRateLimiter>();
 
+        // T14.4: Named HttpClient with a 10 MiB response-body cap to prevent OOM on runaway
+        // upstream responses. All adapters and the MusicBrainz resolver use this client name.
+        serviceCollection.AddHttpClient(PluginHttpClient.ClientName, client =>
+        {
+            client.MaxResponseContentBufferSize = 10 * 1024 * 1024; // 10 MiB
+        });
+
         // T2.2: Library artist enumerator (depends on ILibraryManager from Jellyfin's DI).
         serviceCollection.AddSingleton<LibraryArtistEnumerator>();
 

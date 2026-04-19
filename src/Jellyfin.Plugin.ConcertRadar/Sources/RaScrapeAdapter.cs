@@ -13,7 +13,6 @@ using Jellyfin.Plugin.ConcertRadar.Configuration;
 using Jellyfin.Plugin.ConcertRadar.Model;
 using Jellyfin.Plugin.ConcertRadar.RateLimiting;
 using Jellyfin.Plugin.ConcertRadar.Storage;
-using MediaBrowser.Common.Net;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.ConcertRadar.Sources;
@@ -311,6 +310,16 @@ public sealed class RaScrapeAdapter : ISourceAdapter
             ? contentUrl
             : $"https://ra.co{contentUrl}";
 
+        // Validate that the final URL host is ra.co (or a subdomain). Drop events with
+        // unexpected hosts to prevent open-redirect via a compromised upstream.
+        if (!UrlGuard.IsHostAllowed(sourceUrl, "ra.co"))
+        {
+            _logger.LogWarning(
+                "RaScrapeAdapter: event {Id} has unexpected host in sourceUrl '{Url}'; dropping.",
+                idRaw, sourceUrl);
+            return null;
+        }
+
         // Parse event date and startTime.
         string? dateStr      = ev["date"]?.GetValue<string>();
         string? startTimeStr = ev["startTime"]?.GetValue<string>();
@@ -405,7 +414,7 @@ public sealed class RaScrapeAdapter : ISourceAdapter
 
             await _rateLimiter.AcquireAsync(SourceId, ct).ConfigureAwait(false);
 
-            using var client = _httpClientFactory.CreateClient(NamedClient.Default);
+            using var client = _httpClientFactory.CreateClient(PluginHttpClient.ClientName);
             client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
             client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
             client.DefaultRequestHeaders.Referrer = new Uri("https://ra.co/events");
