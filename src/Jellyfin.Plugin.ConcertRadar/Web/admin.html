@@ -616,7 +616,7 @@
             html += '<div class="cr-source-card">' +
                 '<div class="cr-source-name">' +
                     '<span>' + escHtml(s.displayName || sourceId) + '</span>' +
-                    '<span class="' + badgeCls + '">' + escHtml(s.status || 'Unknown') + '</span>' +
+                    '<span class="' + escHtml(badgeCls) + '">' + escHtml(s.status || 'Unknown') + '</span>' +
                 '</div>' +
                 edmAttrib +
                 '<div class="cr-source-meta">' +
