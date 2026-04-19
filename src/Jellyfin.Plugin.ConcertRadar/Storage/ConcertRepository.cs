@@ -34,6 +34,15 @@ public sealed class ConcertRepository
         _logger  = logger;
     }
 
+    /// <summary>
+    /// Convenience constructor for test code that has already applied migrations and does not
+    /// need a gate delay.  Uses a pre-signalled <see cref="AlreadyReadyGate"/> internally.
+    /// </summary>
+    public ConcertRepository(DatabaseLocator locator, ILogger<ConcertRepository> logger)
+        : this(locator, AlreadyReadyGate.Instance, logger)
+    {
+    }
+
     // ── Write ─────────────────────────────────────────────────────────────────
 
     /// <summary>

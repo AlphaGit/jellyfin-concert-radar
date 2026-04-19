@@ -33,6 +33,15 @@ public sealed class ArtistRepository
         _logger  = logger;
     }
 
+    /// <summary>
+    /// Convenience constructor for test code that has already applied migrations and does not
+    /// need a gate delay.  Uses a pre-signalled <see cref="MigrationGate"/> internally.
+    /// </summary>
+    public ArtistRepository(DatabaseLocator locator, ILogger<ArtistRepository> logger)
+        : this(locator, AlreadyReadyGate.Instance, logger)
+    {
+    }
+
     // ── Write ─────────────────────────────────────────────────────────────────
 
     /// <summary>

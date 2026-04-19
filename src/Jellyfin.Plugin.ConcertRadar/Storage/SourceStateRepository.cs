@@ -41,6 +41,18 @@ public sealed class SourceStateRepository
         _logger  = logger;
     }
 
+    /// <summary>
+    /// Convenience constructor for test code that has already applied migrations and does not
+    /// need a gate delay.  Uses a pre-signalled <see cref="AlreadyReadyGate"/> internally.
+    /// </summary>
+    public SourceStateRepository(
+        DatabaseLocator locator,
+        TimeProvider clock,
+        ILogger<SourceStateRepository> logger)
+        : this(locator, AlreadyReadyGate.Instance, clock, logger)
+    {
+    }
+
     // ── Read ──────────────────────────────────────────────────────────────────
 
     /// <summary>Returns all source state rows.</summary>
@@ -158,27 +170,34 @@ public sealed class SourceStateRepository
         string disabledUntil = (now + cooldown).ToString("O");
 
         await using var conn = await OpenAsync(ct).ConfigureAwait(false);
-        await using var cmd = conn.CreateCommand();
 
-        // Single statement:
-        //   • Upserts the row (INSERT OR IGNORE-style via ON CONFLICT).
-        //   • Increments consecutive_errors atomically.
-        //   • When the new total >= threshold, sets status = 'Failing' and disabled_until.
-        //   • Log the trip outside SQL after reading back the new error count.
+        // Step 1: ensure the row exists (no-op if already present).
+        await using (var ensureCmd = conn.CreateCommand())
+        {
+            ensureCmd.CommandText = """
+                INSERT OR IGNORE INTO source_state (source, status)
+                VALUES (@source, 'Ok')
+                """;
+            ensureCmd.Parameters.AddWithValue("@source", source);
+            await ensureCmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+        }
+
+        // Step 2: atomically increment and conditionally trip the circuit.
+        // Single UPDATE avoids a separate SELECT round-trip.
+        await using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            INSERT INTO source_state (source, status, consecutive_errors, last_error)
-            VALUES (@source, 'Ok', 1, @error)
-            ON CONFLICT(source) DO UPDATE SET
-                consecutive_errors = source_state.consecutive_errors + 1,
+            UPDATE source_state
+            SET consecutive_errors = consecutive_errors + 1,
                 last_error         = @error,
                 status             = CASE
-                    WHEN source_state.consecutive_errors + 1 >= @threshold THEN 'Failing'
-                    ELSE source_state.status
+                    WHEN consecutive_errors + 1 >= @threshold THEN 'Failing'
+                    ELSE status
                 END,
                 disabled_until     = CASE
-                    WHEN source_state.consecutive_errors + 1 >= @threshold THEN @disabledUntil
-                    ELSE source_state.disabled_until
+                    WHEN consecutive_errors + 1 >= @threshold THEN @disabledUntil
+                    ELSE disabled_until
                 END
+            WHERE source = @source
             RETURNING consecutive_errors
             """;
 
