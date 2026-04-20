@@ -51,4 +51,28 @@ public static class PluginConfigurationDefaults
 
         return changed;
     }
+
+    /// <summary>
+    /// Removes <see cref="LocationFilter"/> entries with no usable geographic data and
+    /// <see cref="SourceRateLimitEntry"/> entries with a blank source identifier.
+    /// Such rows can accumulate from older plugin builds where the admin form
+    /// serialized nested objects with camelCase keys that the XML-backed config
+    /// deserializer silently dropped to defaults.
+    /// </summary>
+    /// <returns>True if any entries were pruned.</returns>
+    public static bool PruneEmpty(PluginConfiguration cfg)
+    {
+        var changed = false;
+
+        int locRemoved = cfg.Locations.RemoveAll(l =>
+            string.IsNullOrWhiteSpace(l.City)
+            && (!l.Lat.HasValue || !l.Lon.HasValue));
+        if (locRemoved > 0) changed = true;
+
+        int rlRemoved = cfg.RateLimits.RemoveAll(e =>
+            string.IsNullOrWhiteSpace(e.Source));
+        if (rlRemoved > 0) changed = true;
+
+        return changed;
+    }
 }

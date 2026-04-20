@@ -46,9 +46,12 @@ public sealed class SchemaBootstrapHostedService : IHostedService
         var plugin = Plugin.Instance;
         if (plugin is not null)
         {
-            if (PluginConfigurationDefaults.SeedIfEmpty(plugin.Configuration))
+            var seeded = PluginConfigurationDefaults.SeedIfEmpty(plugin.Configuration);
+            var pruned = PluginConfigurationDefaults.PruneEmpty(plugin.Configuration);
+            if (seeded || pruned)
             {
-                _logger.LogInformation("ConcertRadar: seeded default configuration entries.");
+                if (seeded) _logger.LogInformation("ConcertRadar: seeded default configuration entries.");
+                if (pruned) _logger.LogInformation("ConcertRadar: pruned empty configuration entries.");
                 plugin.SaveConfiguration();
             }
         }

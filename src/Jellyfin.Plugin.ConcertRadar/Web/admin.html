@@ -665,6 +665,8 @@
             }
 
             function readLocations() {
+                // Server deserializes these as LocationFilter (PascalCase C# properties);
+                // emitting lowercase keys silently drops every field on save.
                 var rows = page.querySelectorAll('#cr-location-tbody tr');
                 var locs = [];
                 rows.forEach(function (tr) {
@@ -674,13 +676,19 @@
                     var latStr  = tr.querySelector('.cr-loc-lat').value.trim();
                     var lonStr  = tr.querySelector('.cr-loc-lon').value.trim();
                     var radStr  = tr.querySelector('.cr-loc-radius').value.trim();
+
+                    // Drop entries with no usable geographic data.
+                    var hasCity = city !== '';
+                    var hasCoords = latStr !== '' && lonStr !== '';
+                    if (!hasCity && !hasCoords) return;
+
                     locs.push({
-                        city: city,
-                        region: region,
-                        country: country,
-                        lat:  latStr !== '' ? parseFloat(latStr) : null,
-                        lon:  lonStr !== '' ? parseFloat(lonStr) : null,
-                        radiusKm: radStr !== '' ? parseInt(radStr, 10) : 80
+                        City: city,
+                        Region: region,
+                        Country: country,
+                        Lat:  latStr !== '' ? parseFloat(latStr) : null,
+                        Lon:  lonStr !== '' ? parseFloat(lonStr) : null,
+                        RadiusKm: radStr !== '' ? parseInt(radStr, 10) : 80
                     });
                 });
                 return locs;
@@ -724,6 +732,8 @@
             }
 
             function readRateLimits() {
+                // Server deserializes these as SourceRateLimitEntry (PascalCase C# properties);
+                // emitting lowercase keys silently drops every field on save.
                 var entries = [];
                 page.querySelectorAll('#cr-rate-tbody tr').forEach(function (tr) {
                     var rpsEl = tr.querySelector('.cr-rl-rps');
@@ -734,10 +744,10 @@
                     var rpsVal = rpsEl.value.trim() !== '' ? parseFloat(rpsEl.value) : 0;
                     var rpdRaw = rpdEl.value.trim();
                     entries.push({
-                        source: src,
-                        config: {
-                            requestsPerSecond: rpsVal,
-                            requestsPerDay: rpdRaw !== '' ? parseInt(rpdRaw, 10) : null
+                        Source: src,
+                        Config: {
+                            RequestsPerSecond: rpsVal,
+                            RequestsPerDay: rpdRaw !== '' ? parseInt(rpdRaw, 10) : null
                         }
                     });
                 });
