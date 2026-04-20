@@ -67,28 +67,33 @@ public sealed record ConcertDto
     /// <summary>Gets the on-sale date/time.</summary>
     public DateTimeOffset? OnSaleAt { get; init; }
 
+    /// <summary>Gets the Jellyfin MusicArtist item GUID when the concert's MBID
+    /// resolves to an artist in the local Jellyfin library (nullable).</summary>
+    public Guid? JellyfinArtistId { get; init; }
+
     /// <summary>Maps a <see cref="ConcertRecord"/> to <see cref="ConcertDto"/>.</summary>
-    public static ConcertDto FromRecord(ConcertRecord r) => new()
+    public static ConcertDto FromRecord(ConcertRecord r, Guid? jellyfinArtistId = null) => new()
     {
-        Id            = r.Id,
-        Source        = r.Source,
-        SourceEventId = r.SourceEventId,
-        SourceUrl     = r.SourceUrl,
-        ArtistMbid    = r.ArtistMbid,
-        ArtistName    = r.ArtistName,
-        EventDateTime = r.EventDateTime,
-        VenueName     = r.VenueName,
-        VenueAddress  = r.VenueAddress,
-        City          = r.City,
-        Region        = r.Region,
-        Country       = r.Country,
-        Lat           = r.Lat,
-        Lon           = r.Lon,
-        Lineup        = r.Lineup,
-        TicketUrl     = r.TicketUrl,
-        PriceMin      = r.PriceMin,
-        PriceMax      = r.PriceMax,
-        Currency      = r.Currency,
-        OnSaleAt      = r.OnSaleAt,
+        Id               = r.Id,
+        Source           = r.Source,
+        SourceEventId    = r.SourceEventId,
+        SourceUrl        = r.SourceUrl,
+        ArtistMbid       = r.ArtistMbid,
+        ArtistName       = r.ArtistName,
+        EventDateTime    = r.EventDateTime,
+        VenueName        = r.VenueName,
+        VenueAddress     = r.VenueAddress,
+        City             = r.City,
+        Region           = r.Region,
+        Country          = r.Country,
+        Lat              = r.Lat,
+        Lon              = r.Lon,
+        Lineup           = r.Lineup,
+        TicketUrl        = r.TicketUrl,
+        PriceMin         = r.PriceMin,
+        PriceMax         = r.PriceMax,
+        Currency         = r.Currency,
+        OnSaleAt         = r.OnSaleAt,
+        JellyfinArtistId = jellyfinArtistId,
     };
 }

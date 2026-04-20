@@ -222,6 +222,48 @@ public sealed class ArtistRepository
     }
 
     /// <summary>
+    /// Returns a map from MusicBrainz artist ID to Jellyfin item GUID for every matching
+    /// artist with a non-null <c>jellyfin_item_id</c>. Input MBIDs not present in the table
+    /// (or rows without a parseable GUID) are omitted.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<string, Guid>> GetJellyfinIdsByMbidsAsync(
+        IEnumerable<string> mbids, CancellationToken ct)
+    {
+        var list = new List<string>();
+        foreach (var m in mbids)
+        {
+            if (!string.IsNullOrWhiteSpace(m)) list.Add(m);
+        }
+        var result = new Dictionary<string, Guid>(list.Count, StringComparer.OrdinalIgnoreCase);
+        if (list.Count == 0) return result;
+
+        await using var conn = await OpenAsync(ct).ConfigureAwait(false);
+        await using var cmd = conn.CreateCommand();
+
+        var placeholders = new string[list.Count];
+        for (int i = 0; i < list.Count; i++)
+        {
+            var p = "@m" + i;
+            placeholders[i] = p;
+            cmd.Parameters.AddWithValue(p, list[i]);
+        }
+        cmd.CommandText =
+            "SELECT mbid, jellyfin_item_id FROM artists "
+            + "WHERE jellyfin_item_id IS NOT NULL AND mbid IN (" + string.Join(",", placeholders) + ")";
+
+        await using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
+        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+        {
+            if (reader.IsDBNull(0) || reader.IsDBNull(1)) continue;
+            if (Guid.TryParse(reader.GetString(1), out var g))
+            {
+                result[reader.GetString(0)] = g;
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Returns the number of artists that have never been checked (<c>last_checked_at IS NULL</c>).
     /// </summary>
     public async Task<int> CountUncheckedAsync(CancellationToken ct)

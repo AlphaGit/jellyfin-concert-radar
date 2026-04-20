@@ -103,7 +103,29 @@ public sealed class ConcertsController : ControllerBase
         var result = await _concertRepository.QueryAsync(query, cancellationToken)
             .ConfigureAwait(false);
 
-        var dtos = result.Items.Select(ConcertDto.FromRecord).ToList();
+        // Resolve MBID → Jellyfin artist GUID so the UI can link each concert's
+        // artist name to the local artist page.
+        var mbids = result.Items
+            .Select(r => r.ArtistMbid)
+            .Where(m => !string.IsNullOrWhiteSpace(m))
+            .Select(m => m!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        IReadOnlyDictionary<string, Guid> jellyfinMap = mbids.Count == 0
+            ? new Dictionary<string, Guid>()
+            : await _artistRepository.GetJellyfinIdsByMbidsAsync(mbids, cancellationToken)
+                .ConfigureAwait(false);
+
+        var dtos = result.Items.Select(r =>
+        {
+            Guid? jid = null;
+            if (!string.IsNullOrWhiteSpace(r.ArtistMbid)
+                && jellyfinMap.TryGetValue(r.ArtistMbid, out var g))
+            {
+                jid = g;
+            }
+            return ConcertDto.FromRecord(r, jid);
+        }).ToList();
         return Ok(new QueryResult<ConcertDto>(dtos, result.Total));
     }
 
