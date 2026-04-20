@@ -35,6 +35,7 @@ coverage/
 *.zip
 package/
 publish/
+artifacts/
 
 # Secrets (fixtures must be scrubbed before commit)
 *.secret

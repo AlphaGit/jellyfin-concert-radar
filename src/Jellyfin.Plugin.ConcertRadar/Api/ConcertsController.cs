@@ -157,8 +157,10 @@ public sealed class ConcertsController : ControllerBase
             if (worker is not null)
             {
                 lastRun = worker.LastExecutionResult?.EndTimeUtc;
-                // IScheduledTaskWorker in Jellyfin 10.11.6 does not expose NextScheduledDateTime.
-                // nextRun stays null; the admin UI can derive it from Triggers if needed.
+
+                // IScheduledTaskWorker in 10.11.6 does not expose NextScheduledDateTime,
+                // so compute nextRun from the earliest fire time across the configured triggers.
+                nextRun = ComputeNextRun(worker.Triggers, DateTimeOffset.UtcNow);
             }
         }
         catch (Exception ex)
@@ -183,4 +185,47 @@ public sealed class ConcertsController : ControllerBase
         DateTimeOffset? LastRun,
         DateTimeOffset? NextRun,
         int QueueSize);
+
+    private static DateTimeOffset? ComputeNextRun(IEnumerable<TaskTriggerInfo>? triggers, DateTimeOffset now)
+    {
+        if (triggers is null) return null;
+
+        DateTimeOffset? soonest = null;
+        foreach (var t in triggers)
+        {
+            DateTimeOffset? candidate = t.Type switch
+            {
+                TaskTriggerInfoType.DailyTrigger    => NextDailyFire(now, t.TimeOfDayTicks),
+                TaskTriggerInfoType.WeeklyTrigger   => NextWeeklyFire(now, t.DayOfWeek, t.TimeOfDayTicks),
+                TaskTriggerInfoType.IntervalTrigger => t.IntervalTicks.HasValue && t.IntervalTicks.Value > 0
+                    ? now + TimeSpan.FromTicks(t.IntervalTicks.Value)
+                    : null,
+                _ => null,
+            };
+            if (candidate.HasValue && (!soonest.HasValue || candidate.Value < soonest.Value))
+            {
+                soonest = candidate;
+            }
+        }
+        return soonest;
+    }
+
+    private static DateTimeOffset? NextDailyFire(DateTimeOffset now, long? timeOfDayTicks)
+    {
+        if (!timeOfDayTicks.HasValue) return null;
+        var tod  = TimeSpan.FromTicks(timeOfDayTicks.Value);
+        var next = new DateTimeOffset(now.UtcDateTime.Date, TimeSpan.Zero) + tod;
+        if (next <= now) next = next.AddDays(1);
+        return next;
+    }
+
+    private static DateTimeOffset? NextWeeklyFire(DateTimeOffset now, DayOfWeek? dow, long? timeOfDayTicks)
+    {
+        if (!dow.HasValue || !timeOfDayTicks.HasValue) return null;
+        var tod  = TimeSpan.FromTicks(timeOfDayTicks.Value);
+        var next = new DateTimeOffset(now.UtcDateTime.Date, TimeSpan.Zero) + tod;
+        int delta = ((int)dow.Value - (int)next.DayOfWeek + 7) % 7;
+        if (delta == 0 && next <= now) delta = 7;
+        return next.AddDays(delta);
+    }
 }

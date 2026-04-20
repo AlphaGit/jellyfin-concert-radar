@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - REST API under `/Plugins/ConcertRadar/api/` — user reads (`[Authorize]`) and admin writes (`[Authorize(Policy = RequiresElevation)]`).
 - JPRM build manifest and GitHub Actions packaging workflow.
 - Test suite: 135 unit + integration + contract tests.
+- Plugin Pages integration — registers a `Concerts` entry in the web client hamburger drawer for all users via the IAmParadox27 Plugin Pages framework; seeds the registration on every startup if Plugin Pages is installed.
+- Month-grouped user concerts view with daybox card layout, filter bar, sort bar, and pagination.
+- Next-run computation on the admin status endpoint (derives from configured task triggers).
+- Per-source-defaults fallback on the rate limits table + defensive filtering of corrupted entries.
+- `MANUAL.md` — end-to-end admin + user walkthrough with screenshots.
 
 ## [0.1.0] — TBD
 

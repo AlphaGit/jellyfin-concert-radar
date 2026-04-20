@@ -2,883 +2,704 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Concert Radar — Upcoming Concerts</title>
-    <style>
-        /* ── Layout ─────────────────────────────────────────────────── */
-        .cr-view-page {
-            max-width: 1100px;
-            padding: 1.5em 1em 3em;
-            margin: 0 auto;
-        }
-        .cr-view-page h1 {
-            font-size: 1.4em;
-            font-weight: 700;
-            margin-bottom: 1em;
-        }
-
-        /* ── Filter bar ─────────────────────────────────────────────── */
-        .cr-filter-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: .6em .8em;
-            align-items: flex-end;
-            margin-bottom: 1.2em;
-            padding: .75em 1em;
-            background: var(--background-input, #1e1e1e);
-            border: 1px solid var(--border-color, #444);
-            border-radius: 6px;
-        }
-        .cr-filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: .2em;
-            min-width: 110px;
-        }
-        .cr-filter-group label {
-            font-size: .78em;
-            font-weight: 600;
-            color: var(--text-color-secondary, #999);
-            text-transform: uppercase;
-            letter-spacing: .04em;
-        }
-        .cr-filter-group input,
-        .cr-filter-group select {
-            padding: .35em .5em;
-            border-radius: 4px;
-            border: 1px solid var(--border-color, #555);
-            background: var(--background-input, #252525);
-            color: var(--text-color, #ddd);
-            font-size: .88em;
-        }
-        .cr-filter-group input[type="date"] { min-width: 130px; }
-        .cr-filter-group input[type="text"] { min-width: 110px; }
-        .cr-filter-actions {
-            display: flex;
-            align-items: flex-end;
-            gap: .4em;
-        }
-
-        /* ── Sort bar ───────────────────────────────────────────────── */
-        .cr-sort-bar {
-            display: flex;
-            align-items: center;
-            gap: .6em;
-            margin-bottom: 1em;
-            font-size: .88em;
-        }
-        .cr-sort-bar label {
-            font-weight: 600;
-            color: var(--text-color-secondary, #999);
-        }
-        .cr-sort-bar select {
-            padding: .3em .5em;
-            border-radius: 4px;
-            border: 1px solid var(--border-color, #555);
-            background: var(--background-input, #1e1e1e);
-            color: var(--text-color, #ddd);
-            font-size: .9em;
-        }
-        .cr-result-count {
-            margin-left: auto;
-            color: var(--text-color-secondary, #999);
-            font-size: .82em;
-        }
-
-        /* ── Concert cards ──────────────────────────────────────────── */
-        .cr-concert-list {
-            display: flex;
-            flex-direction: column;
-            gap: .75em;
-        }
-        .cr-concert-card {
-            background: var(--background-input, #1e1e1e);
-            border: 1px solid var(--border-color, #444);
-            border-radius: 6px;
-            padding: .9em 1.1em;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: .5em .75em;
-        }
-        .cr-card-main { grid-column: 1; }
-        .cr-card-actions {
-            grid-column: 2;
-            display: flex;
-            flex-direction: column;
-            gap: .4em;
-            align-items: flex-end;
-            justify-content: flex-start;
-        }
-
-        /* Date badge */
-        .cr-card-date {
-            font-size: .8em;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            color: var(--text-color-secondary, #999);
-            margin-bottom: .2em;
-        }
-        .cr-card-artist {
-            font-size: 1.1em;
-            font-weight: 700;
-            margin-bottom: .15em;
-        }
-        .cr-card-artist a {
-            color: inherit;
-            text-decoration: none;
-        }
-        .cr-card-artist a:hover { text-decoration: underline; }
-        .cr-card-venue {
-            font-size: .88em;
-            color: var(--text-color-secondary, #ccc);
-            margin-bottom: .15em;
-        }
-        .cr-card-lineup {
-            font-size: .82em;
-            color: var(--text-color-secondary, #999);
-            margin-bottom: .15em;
-        }
-        .cr-card-price {
-            font-size: .82em;
-            color: var(--text-color-secondary, #aaa);
-        }
-
-        /* ── Source pill ────────────────────────────────────────────── */
-        .cr-source-pill {
-            display: inline-block;
-            font-size: .68em;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            padding: .15em .5em;
-            border-radius: 10px;
-            background: #3a3a3a;
-            color: #bbb;
-            margin-top: .3em;
-        }
-        .cr-src-ticketmaster { background: #002f6c; color: #8ab4f8; }
-        .cr-src-bandsintown  { background: #1a4a1a; color: #8af898; }
-        .cr-src-edmtrain     { background: #4a1a4a; color: #e898f8; }
-        .cr-src-songkick     { background: #4a2a00; color: #f8c898; }
-        .cr-src-dice         { background: #001a4a; color: #98c8f8; }
-        .cr-src-ra           { background: #2a0000; color: #f89898; }
-
-        /* ── Buttons ────────────────────────────────────────────────── */
-        .cr-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: .3em;
-            padding: .35em .75em;
-            font-size: .82em;
-            border-radius: 4px;
-            border: 1px solid transparent;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        .cr-btn-secondary {
-            background: transparent;
-            border-color: var(--border-color, #555);
-            color: var(--text-color, #ddd);
-        }
-        .cr-btn-secondary:hover { background: var(--hover-background, #333); }
-        .cr-btn-primary {
-            background: var(--accent, #0073e6);
-            border-color: var(--accent, #0073e6);
-            color: #fff;
-        }
-        .cr-btn-primary:hover { filter: brightness(1.1); }
-        .cr-btn-sm {
-            padding: .25em .55em;
-            font-size: .78em;
-        }
-
-        /* ── Pagination ─────────────────────────────────────────────── */
-        .cr-pagination {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: .5em;
-            margin-top: 1.5em;
-            font-size: .9em;
-        }
-        .cr-page-info { color: var(--text-color-secondary, #999); }
-
-        /* ── States ─────────────────────────────────────────────────── */
-        .cr-state {
-            padding: 3em 1em;
-            text-align: center;
-            color: var(--text-color-secondary, #999);
-        }
-        .cr-state-title {
-            font-size: 1.1em;
-            font-weight: 600;
-            margin-bottom: .5em;
-        }
-        .cr-state-sub {
-            font-size: .88em;
-            margin-bottom: 1em;
-        }
-        .cr-spinner {
-            display: inline-block;
-            width: 2em;
-            height: 2em;
-            border: 3px solid var(--border-color, #444);
-            border-top-color: var(--accent, #0073e6);
-            border-radius: 50%;
-            animation: cr-spin .7s linear infinite;
-            margin-bottom: .75em;
-        }
-        @keyframes cr-spin { to { transform: rotate(360deg); } }
-
-        /* ── EdmTrain attribution badge ─────────────────────────────── */
-        .cr-edmtrain-attribution {
-            display: inline-block;
-            font-size: .65em;
-            font-weight: 600;
-            padding: .1em .35em;
-            border-radius: 3px;
-            background: #4a1a4a;
-            color: #e898f8;
-            margin-left: .35em;
-            vertical-align: middle;
-            letter-spacing: .02em;
-        }
-
-        /* ── Live region ────────────────────────────────────────────── */
-        #cr-live { position: absolute; left: -9999px; }
-    </style>
 </head>
 <body>
-<div data-role="page" id="concertradarViewPage">
-    <div data-role="header" class="ui-header">
-        <div class="viewHeader">
-            <button data-backbutton="true" class="headerButton headerButtonLeft btnBack">
-                <span class="material-icons headerButtonIcon">arrow_back_ios</span>
-            </button>
-            <h2 class="viewHeaderTitle">Upcoming Concerts</h2>
-        </div>
-    </div>
-
-    <div id="cr-live" aria-live="polite" aria-atomic="true"></div>
+<div id="concertradarViewPage"
+     data-role="page"
+     class="page type-interior pluginConfigurationPage"
+     data-require="emby-input,emby-button,emby-select">
 
     <div data-role="content">
-        <div class="cr-view-page">
+        <div class="content-primary">
 
-            <!-- ── Filter bar ────────────────────────────────────── -->
-            <div class="cr-filter-bar" id="cr-filter-bar" role="search" aria-label="Concert filters">
+            <style>
+                #concertradarViewPage .cr-filter-bar {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: .6em 1em;
+                    align-items: flex-end;
+                    margin-bottom: 1.2em;
+                    padding: .75em 1em;
+                    background: rgba(127,127,127,.08);
+                    border: 1px solid rgba(127,127,127,.25);
+                    border-radius: 6px;
+                }
+                #concertradarViewPage .cr-filter-group { min-width: 140px; flex: 1 1 140px; }
+                #concertradarViewPage .cr-filter-group .inputContainer,
+                #concertradarViewPage .cr-filter-group .selectContainer { margin: 0; }
+                #concertradarViewPage .cr-filter-actions {
+                    display: flex; align-items: flex-end; gap: .4em;
+                }
 
+                #concertradarViewPage .cr-sort-bar {
+                    display: flex; align-items: center; gap: .6em;
+                    margin-bottom: 1em; font-size: .9em;
+                }
+                #concertradarViewPage .cr-sort-bar .selectContainer { margin: 0; min-width: 180px; }
+                #concertradarViewPage .cr-result-count { margin-left: auto; opacity: .75; font-size: .88em; }
+
+                #concertradarViewPage .cr-concert-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: .5em;
+                }
+                #concertradarViewPage .cr-month-header {
+                    font-size: 1.05em;
+                    font-weight: 700;
+                    letter-spacing: .02em;
+                    margin: 1.25em 0 .35em;
+                    padding: .3em 0 .35em;
+                    border-bottom: 1px solid rgba(127,127,127,.35);
+                }
+                #concertradarViewPage .cr-month-header:first-child { margin-top: 0; }
+                #concertradarViewPage .cr-concert-card {
+                    background: rgba(127,127,127,.08);
+                    border: 1px solid rgba(127,127,127,.25);
+                    border-radius: 6px;
+                    padding: .75em 1em;
+                    display: grid;
+                    grid-template-columns: 90px 1fr auto;
+                    gap: .25em 1em;
+                    align-items: start;
+                }
+                #concertradarViewPage .cr-card-daybox {
+                    grid-row: 1 / span 5;
+                    text-align: center;
+                    padding: .25em .4em;
+                    border-right: 1px solid rgba(127,127,127,.2);
+                    min-width: 70px;
+                }
+                #concertradarViewPage .cr-card-daybox .cr-daybox-dow {
+                    font-size: .72em; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: .08em;
+                    opacity: .65;
+                }
+                #concertradarViewPage .cr-card-daybox .cr-daybox-day {
+                    font-size: 1.6em; font-weight: 700; line-height: 1.1;
+                }
+                #concertradarViewPage .cr-card-daybox .cr-daybox-time {
+                    font-size: .75em; opacity: .7; margin-top: .15em;
+                }
+                #concertradarViewPage .cr-card-body {
+                    grid-column: 2; grid-row: 1 / span 5;
+                    display: flex; flex-direction: column; gap: .2em;
+                    min-width: 0;
+                }
+                #concertradarViewPage .cr-card-side {
+                    grid-column: 3; grid-row: 1 / span 5;
+                    display: flex; flex-direction: column; gap: .4em;
+                    align-items: flex-end;
+                }
+                @media (max-width: 640px) {
+                    #concertradarViewPage .cr-concert-card {
+                        grid-template-columns: 70px 1fr;
+                    }
+                    #concertradarViewPage .cr-card-side {
+                        grid-column: 1 / -1; grid-row: 6;
+                        flex-direction: row; align-items: center;
+                    }
+                }
+                #concertradarViewPage .cr-card-date {
+                    font-size: .78em; font-weight: 700;
+                    text-transform: uppercase; letter-spacing: .05em;
+                    opacity: .7;
+                }
+                #concertradarViewPage .cr-card-artist {
+                    font-size: 1.15em; font-weight: 700;
+                }
+                #concertradarViewPage .cr-card-artist a { color: inherit; text-decoration: none; }
+                #concertradarViewPage .cr-card-artist a:hover { text-decoration: underline; }
+                #concertradarViewPage .cr-card-venue { font-size: .9em; opacity: .85; }
+                #concertradarViewPage .cr-card-lineup { font-size: .82em; opacity: .7; }
+                #concertradarViewPage .cr-card-price { font-size: .82em; opacity: .8; }
+                #concertradarViewPage .cr-card-meta {
+                    display: flex; gap: .4em; flex-wrap: wrap; align-items: center;
+                    margin-top: .4em;
+                }
+                #concertradarViewPage .cr-card-actions {
+                    display: flex; gap: .4em; flex-wrap: wrap; margin-top: .6em;
+                }
+                #concertradarViewPage .cr-source-pill {
+                    display: inline-block;
+                    font-size: .68em; font-weight: 700;
+                    text-transform: uppercase; letter-spacing: .05em;
+                    padding: .18em .55em; border-radius: 10px;
+                    background: #3a3a3a; color: #bbb;
+                }
+                #concertradarViewPage .cr-src-ticketmaster { background: #002f6c; color: #8ab4f8; }
+                #concertradarViewPage .cr-src-bandsintown  { background: #1a4a1a; color: #8af898; }
+                #concertradarViewPage .cr-src-edmtrain     { background: #4a1a4a; color: #e898f8; }
+                #concertradarViewPage .cr-src-songkick     { background: #4a2a00; color: #f8c898; }
+                #concertradarViewPage .cr-src-dice         { background: #001a4a; color: #98c8f8; }
+                #concertradarViewPage .cr-src-ra           { background: #2a0000; color: #f89898; }
+                #concertradarViewPage .cr-edmtrain-attribution {
+                    display: inline-block;
+                    font-size: .65em; font-weight: 600;
+                    padding: .12em .4em; border-radius: 3px;
+                    background: #4a1a4a; color: #e898f8;
+                    letter-spacing: .02em;
+                }
+
+                #concertradarViewPage .cr-pagination {
+                    display: flex; align-items: center; justify-content: center;
+                    gap: .75em; margin-top: 1.5em; font-size: .9em;
+                }
+                #concertradarViewPage .cr-page-info { opacity: .75; }
+
+                #concertradarViewPage .cr-state {
+                    padding: 3em 1em; text-align: center; opacity: .8;
+                }
+                #concertradarViewPage .cr-state-title {
+                    font-size: 1.1em; font-weight: 600; margin-bottom: .5em;
+                }
+                #concertradarViewPage .cr-state-sub {
+                    font-size: .9em; margin-bottom: 1em; opacity: .75;
+                }
+                #concertradarViewPage .cr-spinner {
+                    display: inline-block;
+                    width: 2em; height: 2em;
+                    border: 3px solid rgba(127,127,127,.25);
+                    border-top-color: #4b9fff;
+                    border-radius: 50%;
+                    animation: cr-spin .7s linear infinite;
+                    margin-bottom: .75em;
+                }
+                @keyframes cr-spin { to { transform: rotate(360deg); } }
+
+                #concertradarViewPage .cr-live { position: absolute; left: -9999px; }
+            </style>
+
+            <div class="cr-live" aria-live="polite" aria-atomic="true"></div>
+
+            <h1 style="margin:0 0 1em;">Upcoming Concerts</h1>
+
+            <!-- Filter bar -->
+            <div class="cr-filter-bar" role="search" aria-label="Concert filters">
                 <div class="cr-filter-group">
-                    <label for="cr-filter-from">From</label>
-                    <input type="date" id="cr-filter-from" />
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="cr-filter-from">From</label>
+                        <input is="emby-input" type="date" id="cr-filter-from" />
+                    </div>
                 </div>
 
                 <div class="cr-filter-group">
-                    <label for="cr-filter-to">To</label>
-                    <input type="date" id="cr-filter-to" />
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="cr-filter-to">To</label>
+                        <input is="emby-input" type="date" id="cr-filter-to" />
+                    </div>
                 </div>
 
                 <div class="cr-filter-group">
-                    <label for="cr-filter-country">Country</label>
-                    <input type="text" id="cr-filter-country" list="cr-country-list"
-                           placeholder="e.g. US" maxlength="2" autocomplete="off" />
-                    <datalist id="cr-country-list"></datalist>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="cr-filter-country">Country</label>
+                        <input is="emby-input" type="text" id="cr-filter-country" list="cr-country-list"
+                               placeholder="e.g. US" maxlength="2" autocomplete="off" />
+                        <datalist id="cr-country-list"></datalist>
+                    </div>
                 </div>
 
                 <div class="cr-filter-group">
-                    <label for="cr-filter-city">City</label>
-                    <input type="text" id="cr-filter-city" placeholder="e.g. New York" autocomplete="off" />
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="cr-filter-city">City</label>
+                        <input is="emby-input" type="text" id="cr-filter-city" placeholder="e.g. Toronto" autocomplete="off" />
+                    </div>
                 </div>
 
                 <div class="cr-filter-group">
-                    <label for="cr-filter-source">Source</label>
-                    <select id="cr-filter-source">
-                        <option value="">All sources</option>
-                    </select>
+                    <div class="selectContainer">
+                        <label class="selectLabel" for="cr-filter-source">Source</label>
+                        <select is="emby-select" id="cr-filter-source" class="emby-select-withcolor emby-select">
+                            <option value="">All sources</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="cr-filter-group">
-                    <label for="cr-filter-artist">Artist</label>
-                    <input type="text" id="cr-filter-artist" list="cr-artist-list"
-                           placeholder="Search artist…" autocomplete="off" />
-                    <datalist id="cr-artist-list"></datalist>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="cr-filter-artist">Artist</label>
+                        <input is="emby-input" type="text" id="cr-filter-artist" list="cr-artist-list"
+                               placeholder="Search artist…" autocomplete="off" />
+                        <datalist id="cr-artist-list"></datalist>
+                    </div>
                 </div>
 
                 <div class="cr-filter-actions">
-                    <button type="button" class="cr-btn cr-btn-secondary cr-btn-sm" id="cr-btn-clear">
-                        Clear
+                    <button is="emby-button" type="button" class="raised emby-button" id="cr-btn-clear">
+                        <span>Clear</span>
                     </button>
                 </div>
             </div>
 
-            <!-- ── Sort bar ──────────────────────────────────────── -->
+            <!-- Sort bar -->
             <div class="cr-sort-bar">
-                <label for="cr-sort">Sort by</label>
-                <select id="cr-sort">
-                    <option value="date">Date (ascending)</option>
-                    <option value="artist">Artist</option>
-                    <option value="city">City</option>
-                </select>
+                <div class="selectContainer">
+                    <label class="selectLabel" for="cr-sort">Sort by</label>
+                    <select is="emby-select" id="cr-sort" class="emby-select-withcolor emby-select">
+                        <option value="date">Date (ascending)</option>
+                        <option value="artist">Artist</option>
+                        <option value="city">City</option>
+                    </select>
+                </div>
                 <span class="cr-result-count" id="cr-result-count" aria-live="polite"></span>
             </div>
 
-            <!-- ── Results ──────────────────────────────────────── -->
-            <div id="cr-results" aria-live="polite" aria-label="Concert results">
-                <!-- Populated by JS -->
-            </div>
+            <!-- Results -->
+            <div id="cr-results" aria-live="polite" aria-label="Concert results"></div>
 
-            <!-- ── Pagination ────────────────────────────────────── -->
+            <!-- Pagination -->
             <div class="cr-pagination" id="cr-pagination" style="display:none;">
-                <button type="button" class="cr-btn cr-btn-secondary cr-btn-sm" id="cr-btn-prev">
-                    &laquo; Prev
+                <button is="emby-button" type="button" class="raised emby-button" id="cr-btn-prev">
+                    <span>&laquo; Prev</span>
                 </button>
                 <span class="cr-page-info" id="cr-page-info"></span>
-                <button type="button" class="cr-btn cr-btn-secondary cr-btn-sm" id="cr-btn-next">
-                    Next &raquo;
+                <button is="emby-button" type="button" class="raised emby-button" id="cr-btn-next">
+                    <span>Next &raquo;</span>
                 </button>
             </div>
+        </div>
+    </div>
 
-        </div><!-- /cr-view-page -->
-    </div><!-- /data-role=content -->
-</div><!-- /data-role=page -->
+    <script type="text/javascript">
+        (function () {
+            'use strict';
 
-<script>
-(function () {
-    'use strict';
+            var API_BASE  = 'Plugins/ConcertRadar/api';
+            var PAGE_SIZE = 50;
 
-    // ── Constants ────────────────────────────────────────────────────────
-    var PLUGIN_VERSION = '0.1.0';
-    var API_BASE       = '/Plugins/ConcertRadar/api';
-    var PAGE_SIZE      = 50;
+            var page = document.querySelector('#concertradarViewPage');
 
-    // ── Auth / API helper ────────────────────────────────────────────────
-    var api = {
-        token:   null,
-        userId:  null,
-        baseUrl: '',
-        deviceId: null,
-
-        bootstrap: function () {
-            // Case 1: running inside the Jellyfin web shell
-            if (typeof ApiClient !== 'undefined' && ApiClient) {
-                try {
-                    this.token   = ApiClient.accessToken();
-                    this.userId  = ApiClient.getCurrentUserId();
-                    this.baseUrl = '';  // use relative URLs
-                } catch (e) {
-                    // ApiClient present but not fully initialized — fall through to localStorage
-                }
-            }
-
-            // Case 2: direct URL visit
-            if (!this.token) {
-                try {
-                    var raw = localStorage.getItem('jellyfin_credentials');
-                    if (!raw) return false;
-                    var creds = JSON.parse(raw);
-                    var servers = creds.Servers || [];
-                    // Prefer a server whose address matches current origin
-                    var server = null;
-                    var origin = window.location.origin.toLowerCase();
-                    for (var i = 0; i < servers.length; i++) {
-                        var addr = (servers[i].ManualAddress || '').toLowerCase().replace(/\/$/, '');
-                        if (addr === origin || addr === '') { server = servers[i]; break; }
-                    }
-                    if (!server && servers.length > 0) server = servers[0];
-                    if (!server) return false;
-
-                    this.token   = server.AccessToken  || null;
-                    this.userId  = server.UserId       || null;
-                    this.baseUrl = (server.ManualAddress || '').replace(/\/$/, '');
-                } catch (e) {
-                    return false;
-                }
-            }
-
-            if (!this.token) return false;
-
-            // Stable device ID
-            var did = localStorage.getItem('concertRadarDeviceId');
-            if (!did) {
-                did = (typeof crypto !== 'undefined' && crypto.randomUUID)
-                    ? crypto.randomUUID()
-                    : 'cr-' + Math.random().toString(36).slice(2);
-                localStorage.setItem('concertRadarDeviceId', did);
-            }
-            this.deviceId = did;
-
-            return true;
-        },
-
-        authHeader: function () {
-            return 'MediaBrowser Client="ConcertRadar", Device="Web",' +
-                   ' DeviceId="' + this.deviceId + '",' +
-                   ' Version="' + PLUGIN_VERSION + '",' +
-                   ' Token="' + this.token + '"';
-        },
-
-        get: async function (path, query) {
-            var qs = '';
-            if (query) {
+            // ── API helper (uses Jellyfin ApiClient) ─────────────────────
+            function apiGet(path, query) {
                 var parts = [];
-                Object.keys(query).forEach(function (k) {
-                    if (query[k] !== null && query[k] !== undefined && query[k] !== '') {
-                        parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(query[k]));
-                    }
+                if (query) {
+                    Object.keys(query).forEach(function (k) {
+                        var v = query[k];
+                        if (v !== null && v !== undefined && v !== '') {
+                            parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+                        }
+                    });
+                }
+                var qs = parts.length ? '?' + parts.join('&') : '';
+                return ApiClient.ajax({
+                    url: ApiClient.getUrl(API_BASE + path + qs),
+                    type: 'GET',
+                    dataType: 'json'
                 });
-                if (parts.length) qs = '?' + parts.join('&');
             }
-            var url = this.baseUrl + path + qs;
-            var resp = await fetch(url, {
-                headers: { 'X-Emby-Authorization': this.authHeader() }
-            });
-            if (resp.status === 401) {
-                location.href = '/web/index.html#/login.html';
-                throw new Error('Unauthorized');
+
+            // ── Helpers ──────────────────────────────────────────────────
+            function escHtml(str) {
+                if (str == null) return '';
+                var d = document.createElement('div');
+                d.textContent = String(str);
+                return d.innerHTML;
             }
-            if (!resp.ok) {
-                throw new Error('HTTP ' + resp.status + ': ' + resp.statusText);
+
+            var dtFmt    = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+            var timeFmt  = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
+            var dowFmt   = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
+            var monthFmt = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
+
+            function fmtDate(iso) {
+                if (!iso) return '';
+                try { return dtFmt.format(new Date(iso)); }
+                catch (e) { return iso; }
             }
-            return resp.json();
-        }
-    };
 
-    // ── Helpers ──────────────────────────────────────────────────────────
-    function escHtml(str) {
-        if (str == null) return '';
-        var d = document.createElement('div');
-        d.textContent = String(str);
-        return d.innerHTML;
-    }
-
-    var dtFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-
-    function fmtDate(iso) {
-        if (!iso) return '';
-        try { return dtFmt.format(new Date(iso)); }
-        catch (e) { return iso; }
-    }
-
-    function today() {
-        return new Date().toISOString().slice(0, 10);
-    }
-
-    function daysFromNow(n) {
-        var d = new Date();
-        d.setDate(d.getDate() + n);
-        return d.toISOString().slice(0, 10);
-    }
-
-    function safeHref(url) {
-        if (!url || typeof url !== 'string') return '';
-        try {
-            var u = new URL(url, window.location.origin);
-            return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
-        } catch (e) { return ''; }
-    }
-
-    function debounce(fn, ms) {
-        var t;
-        return function () {
-            var args = arguments;
-            var ctx  = this;
-            clearTimeout(t);
-            t = setTimeout(function () { fn.apply(ctx, args); }, ms);
-        };
-    }
-
-    var liveEl = document.getElementById('cr-live');
-    function announce(msg) {
-        liveEl.textContent = '';
-        setTimeout(function () { liveEl.textContent = msg; }, 50);
-    }
-
-    // ── State ────────────────────────────────────────────────────────────
-    var state = {
-        page:   1,
-        total:  0,
-        sort:   'date',
-        // artist autocomplete cache: [{id, mbid, name}]
-        artists: [],
-        // source list from /api/status
-        sources: []
-    };
-
-    // ── Render helpers ───────────────────────────────────────────────────
-    function sourcePillClass(source) {
-        var map = {
-            ticketmaster: 'cr-src-ticketmaster',
-            bandsintown:  'cr-src-bandsintown',
-            edmtrain:     'cr-src-edmtrain',
-            songkick:     'cr-src-songkick',
-            dice:         'cr-src-dice',
-            ra:           'cr-src-ra'
-        };
-        return 'cr-source-pill ' + (map[(source || '').toLowerCase()] || '');
-    }
-
-    function renderCard(concert) {
-        var dateStr  = fmtDate(concert.eventDatetime || concert.EventDatetime);
-        var artist   = concert.artistName   || concert.ArtistName   || '';
-        var venue    = concert.venueName    || concert.VenueName    || '';
-        var addr     = concert.venueAddress || concert.VenueAddress || '';
-        var city     = concert.city         || concert.City         || '';
-        var country  = concert.country      || concert.Country      || '';
-        var lineup   = concert.lineup       || concert.Lineup       || [];
-        var pMin     = concert.priceMin     || concert.PriceMin;
-        var pMax     = concert.priceMax     || concert.PriceMax;
-        var currency = concert.currency     || concert.Currency     || '';
-        var source   = concert.source       || concert.Source       || '';
-        var srcUrl   = concert.sourceUrl    || concert.SourceUrl    || '';
-        var ticketUrl = concert.ticketUrl   || concert.TicketUrl    || '';
-        var mbid     = concert.artistMbid   || concert.ArtistMbid   || '';
-        var jellyfinId = concert.jellyfinArtistId || concert.JellyfinArtistId || '';
-
-        // Venue line
-        var venueParts = [venue, addr].filter(Boolean).join(', ');
-        var locationParts = [city, country].filter(Boolean).join(', ');
-
-        // Lineup: show supporting acts when more than just the headliner
-        var lineupHtml = '';
-        if (Array.isArray(lineup) && lineup.length > 1) {
-            // Filter out the headliner if present, else show all
-            var supporting = lineup.filter(function (n) {
-                return n.toLowerCase() !== artist.toLowerCase();
-            });
-            if (supporting.length > 0) {
-                lineupHtml = '<div class="cr-card-lineup">with ' + escHtml(supporting.join(', ')) + '</div>';
+            function pick(obj, pascal, camel) {
+                if (!obj) return undefined;
+                return obj[pascal] !== undefined ? obj[pascal] : obj[camel];
             }
-        }
 
-        // Price
-        var priceHtml = '';
-        if (pMin != null || pMax != null) {
-            var priceStr = '';
-            if (pMin != null && pMax != null && pMin !== pMax) {
-                priceStr = pMin + '–' + pMax;
-            } else {
-                priceStr = pMin != null ? pMin : pMax;
+            function monthKey(d) {
+                return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
             }
-            if (currency) priceStr += ' ' + currency;
-            priceHtml = '<div class="cr-card-price">' + escHtml(priceStr) + '</div>';
-        }
 
-        // Artist link: link to Jellyfin artist page if jellyfinArtistId is available
-        var artistHtml;
-        if (jellyfinId) {
-            artistHtml = '<a href="/web/index.html#/details?id=' + encodeURIComponent(jellyfinId) + '">' +
-                         escHtml(artist) + '</a>';
-        } else {
-            artistHtml = escHtml(artist);
-        }
-
-        // Buttons — use safeHref to block javascript: and other non-http(s) schemes
-        var safeSrcUrl    = safeHref(srcUrl);
-        var safeTicketUrl = safeHref(ticketUrl);
-
-        var btnViewHtml = '';
-        if (srcUrl) {
-            var srcLabel = source ? 'View on ' + source.charAt(0).toUpperCase() + source.slice(1) : 'View Source';
-            if (safeSrcUrl) {
-                btnViewHtml = '<a href="' + escHtml(safeSrcUrl) + '" target="_blank" rel="noopener noreferrer" ' +
-                              'class="cr-btn cr-btn-secondary cr-btn-sm">' + escHtml(srcLabel) + '</a>';
-            } else {
-                // URL failed the scheme allowlist — render disabled
-                btnViewHtml = '<span class="cr-btn cr-btn-secondary cr-btn-sm" ' +
-                              'style="opacity:.45;cursor:not-allowed;" aria-disabled="true">' +
-                              escHtml(srcLabel) + '</span>';
+            function today() {
+                return new Date().toISOString().slice(0, 10);
             }
-        }
-        var btnTicketHtml = '';
-        if (ticketUrl && ticketUrl !== srcUrl) {
-            if (safeTicketUrl) {
-                btnTicketHtml = '<a href="' + escHtml(safeTicketUrl) + '" target="_blank" rel="noopener noreferrer" ' +
-                                'class="cr-btn cr-btn-primary cr-btn-sm">Buy Tickets</a>';
-            } else {
-                // URL failed the scheme allowlist — render disabled
-                btnTicketHtml = '<span class="cr-btn cr-btn-primary cr-btn-sm" ' +
-                                'style="opacity:.45;cursor:not-allowed;" aria-disabled="true">Buy Tickets</span>';
-            }
-        }
 
-        return '<article class="cr-concert-card">' +
-            '<div class="cr-card-main">' +
-                '<div class="cr-card-date">' + escHtml(dateStr) + '</div>' +
-                '<div class="cr-card-artist">' + artistHtml + '</div>' +
-                (venueParts ? '<div class="cr-card-venue">' + escHtml(venueParts) + '</div>' : '') +
-                (locationParts ? '<div class="cr-card-venue">' + escHtml(locationParts) + '</div>' : '') +
-                lineupHtml +
-                priceHtml +
-                '<div><span class="' + escHtml(sourcePillClass(source)) + '">' + escHtml(source) + '</span>' +
-                    (source.toLowerCase() === 'edmtrain'
-                        ? '<span class="cr-edmtrain-attribution" aria-label="Data provided by EdmTrain">Data: EdmTrain</span>'
+            function daysFromNow(n) {
+                var d = new Date();
+                d.setDate(d.getDate() + n);
+                return d.toISOString().slice(0, 10);
+            }
+
+            function safeHref(url) {
+                if (!url || typeof url !== 'string') return '';
+                try {
+                    var u = new URL(url, window.location.origin);
+                    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
+                } catch (e) { return ''; }
+            }
+
+            function debounce(fn, ms) {
+                var t;
+                return function () {
+                    var args = arguments, ctx = this;
+                    clearTimeout(t);
+                    t = setTimeout(function () { fn.apply(ctx, args); }, ms);
+                };
+            }
+
+            function announce(msg) {
+                var el = page.querySelector('.cr-live');
+                if (!el) return;
+                el.textContent = '';
+                setTimeout(function () { el.textContent = msg; }, 50);
+            }
+
+            // ── State ────────────────────────────────────────────────────
+            var state = {
+                page: 1,
+                total: 0,
+                sort: 'date',
+                artists: [],
+                sources: []
+            };
+
+            // ── Render ───────────────────────────────────────────────────
+            function sourcePillClass(source) {
+                var map = {
+                    ticketmaster: 'cr-src-ticketmaster',
+                    bandsintown:  'cr-src-bandsintown',
+                    edmtrain:     'cr-src-edmtrain',
+                    songkick:     'cr-src-songkick',
+                    dice:         'cr-src-dice',
+                    ra:           'cr-src-ra'
+                };
+                return 'cr-source-pill ' + (map[(source || '').toLowerCase()] || '');
+            }
+
+            function renderCard(c) {
+                var isoDt    = pick(c, 'EventDateTime', 'eventDateTime');
+                var artist   = pick(c, 'ArtistName',   'artistName')   || '';
+                var venue    = pick(c, 'VenueName',    'venueName')    || '';
+                var addr     = pick(c, 'VenueAddress', 'venueAddress') || '';
+                var city     = pick(c, 'City',         'city')         || '';
+                var country  = pick(c, 'Country',      'country')      || '';
+                var lineup   = pick(c, 'Lineup',       'lineup')       || [];
+                var pMin     = pick(c, 'PriceMin',     'priceMin');
+                var pMax     = pick(c, 'PriceMax',     'priceMax');
+                var currency = pick(c, 'Currency',     'currency')     || '';
+                var source   = pick(c, 'Source',       'source')       || '';
+                var srcUrl   = pick(c, 'SourceUrl',    'sourceUrl')    || '';
+                var ticketUrl = pick(c, 'TicketUrl',   'ticketUrl')    || '';
+                var jellyfinId = pick(c, 'JellyfinArtistId', 'jellyfinArtistId') || '';
+
+                var dt = isoDt ? new Date(isoDt) : null;
+                var dowStr  = dt ? dowFmt.format(dt)   : '';
+                var dayStr  = dt ? String(dt.getDate()) : '';
+                var timeStr = dt ? timeFmt.format(dt)  : '';
+
+                var venueParts    = [venue, addr].filter(Boolean).join(', ');
+                var locationParts = [city, country].filter(Boolean).join(', ');
+
+                var lineupHtml = '';
+                if (Array.isArray(lineup) && lineup.length > 1) {
+                    var supporting = lineup.filter(function (n) {
+                        return n && n.toLowerCase() !== artist.toLowerCase();
+                    });
+                    if (supporting.length > 0) {
+                        lineupHtml = '<div class="cr-card-lineup">with ' + escHtml(supporting.join(', ')) + '</div>';
+                    }
+                }
+
+                var priceHtml = '';
+                if (pMin != null || pMax != null) {
+                    var priceStr = (pMin != null && pMax != null && pMin !== pMax)
+                        ? pMin + '–' + pMax
+                        : (pMin != null ? pMin : pMax);
+                    if (currency) priceStr += ' ' + currency;
+                    priceHtml = '<div class="cr-card-price">' + escHtml(priceStr) + '</div>';
+                }
+
+                var artistHtml = jellyfinId
+                    ? '<a href="#/details?id=' + encodeURIComponent(jellyfinId) + '">' + escHtml(artist) + '</a>'
+                    : escHtml(artist);
+
+                var safeSrcUrl    = safeHref(srcUrl);
+                var safeTicketUrl = safeHref(ticketUrl);
+
+                var btnViewHtml = '';
+                if (srcUrl && safeSrcUrl) {
+                    var srcLabel = source
+                        ? 'View on ' + source.charAt(0).toUpperCase() + source.slice(1)
+                        : 'View Source';
+                    btnViewHtml = '<a is="emby-linkbutton" href="' + escHtml(safeSrcUrl) +
+                                  '" target="_blank" rel="noopener noreferrer" class="raised emby-button">' +
+                                  '<span>' + escHtml(srcLabel) + '</span></a>';
+                }
+
+                var btnTicketHtml = '';
+                if (ticketUrl && ticketUrl !== srcUrl && safeTicketUrl) {
+                    btnTicketHtml = '<a is="emby-linkbutton" href="' + escHtml(safeTicketUrl) +
+                                    '" target="_blank" rel="noopener noreferrer" class="raised button-submit emby-button">' +
+                                    '<span>Buy Tickets</span></a>';
+                }
+
+                var pillHtml = '<span class="' + escHtml(sourcePillClass(source)) + '">' +
+                               escHtml(source) + '</span>';
+                if (source && source.toLowerCase() === 'edmtrain') {
+                    pillHtml += '<span class="cr-edmtrain-attribution" aria-label="Data provided by EdmTrain">Data: EdmTrain</span>';
+                }
+
+                return '<article class="cr-concert-card">' +
+                    '<div class="cr-card-daybox">' +
+                        '<div class="cr-daybox-dow">'  + escHtml(dowStr)  + '</div>' +
+                        '<div class="cr-daybox-day">' + escHtml(dayStr)  + '</div>' +
+                        (timeStr ? '<div class="cr-daybox-time">' + escHtml(timeStr) + '</div>' : '') +
+                    '</div>' +
+                    '<div class="cr-card-body">' +
+                        '<div class="cr-card-artist">' + artistHtml + '</div>' +
+                        (venueParts    ? '<div class="cr-card-venue">' + escHtml(venueParts) + '</div>' : '') +
+                        (locationParts ? '<div class="cr-card-venue">' + escHtml(locationParts) + '</div>' : '') +
+                        lineupHtml +
+                        priceHtml +
+                        '<div class="cr-card-meta">' + pillHtml + '</div>' +
+                    '</div>' +
+                    (btnViewHtml || btnTicketHtml
+                        ? '<div class="cr-card-side">' + btnViewHtml + btnTicketHtml + '</div>'
                         : '') +
-                '</div>' +
-            '</div>' +
-            '<div class="cr-card-actions">' +
-                btnViewHtml +
-                btnTicketHtml +
-            '</div>' +
-        '</article>';
-    }
-
-    function renderLoading() {
-        return '<div class="cr-state">' +
-               '<div class="cr-spinner" aria-hidden="true"></div>' +
-               '<div class="cr-state-title">Loading concerts…</div>' +
-               '</div>';
-    }
-
-    function renderEmpty() {
-        return '<div class="cr-state">' +
-               '<div class="cr-state-title">No upcoming concerts match your filters.</div>' +
-               '<div class="cr-state-sub">Try broadening your date range or clearing the filters.</div>' +
-               '<button type="button" class="cr-btn cr-btn-secondary" id="cr-btn-clear-empty">Clear filters</button>' +
-               '</div>';
-    }
-
-    function renderError(msg) {
-        return '<div class="cr-state">' +
-               '<div class="cr-state-title">Failed to load concerts.</div>' +
-               '<div class="cr-state-sub">' + escHtml(msg) + '</div>' +
-               '<button type="button" class="cr-btn cr-btn-secondary" id="cr-btn-retry">Retry</button>' +
-               '</div>';
-    }
-
-    // ── Build query from filter bar ──────────────────────────────────────
-    function buildQuery() {
-        var from     = document.getElementById('cr-filter-from').value;
-        var to       = document.getElementById('cr-filter-to').value;
-        var country  = document.getElementById('cr-filter-country').value.trim().toUpperCase();
-        var city     = document.getElementById('cr-filter-city').value.trim();
-        var source   = document.getElementById('cr-filter-source').value;
-        var artistInput = document.getElementById('cr-filter-artist').value.trim();
-
-        // Resolve artist input: try to match against known artists for mbid
-        var artistMbid = '';
-        // TODO: name-only filtering is not yet supported by the server; only artistMbid is used.
-        // If the user typed a name that matches a known artist with an MBID, send the MBID.
-        // Otherwise, the filter is ignored server-side (limitation documented here).
-        if (artistInput) {
-            var matched = state.artists.find(function (a) {
-                return a.name && a.name.toLowerCase() === artistInput.toLowerCase();
-            });
-            if (matched && matched.mbid) {
-                artistMbid = matched.mbid;
-            }
-            // If no match found, we cannot filter by name alone — server only accepts artistMbid.
-            // Leave artistMbid empty; all concerts will be returned (suboptimal but correct).
-        }
-
-        return {
-            from:       from  || (today() + 'T00:00:00Z'),
-            to:         to    || (daysFromNow(180) + 'T23:59:59Z'),
-            country:    country,
-            city:       city,
-            source:     source,
-            artistMbid: artistMbid,
-            page:       state.page,
-            pageSize:   PAGE_SIZE,
-            sort:       state.sort
-        };
-    }
-
-    // ── Country datalist from current result page ────────────────────────
-    function updateCountryDatalist(items) {
-        var seen = {};
-        items.forEach(function (c) {
-            var cc = c.country || c.Country;
-            if (cc) seen[cc] = true;
-        });
-        var dl = document.getElementById('cr-country-list');
-        dl.innerHTML = '';
-        Object.keys(seen).sort().forEach(function (cc) {
-            var opt = document.createElement('option');
-            opt.value = cc;
-            dl.appendChild(opt);
-        });
-    }
-
-    // ── Load concerts ────────────────────────────────────────────────────
-    async function loadConcerts() {
-        var resultsEl  = document.getElementById('cr-results');
-        var paginEl    = document.getElementById('cr-pagination');
-        var countEl    = document.getElementById('cr-result-count');
-
-        resultsEl.innerHTML = renderLoading();
-        paginEl.style.display = 'none';
-        countEl.textContent = '';
-        announce('Loading concerts…');
-
-        try {
-            var q    = buildQuery();
-            var data = await api.get(API_BASE + '/concerts', q);
-            var items = data.items || data.Items || [];
-            var total = data.total != null ? data.total : (data.Total != null ? data.Total : items.length);
-
-            state.total = total;
-
-            updateCountryDatalist(items);
-
-            if (items.length === 0) {
-                resultsEl.innerHTML = renderEmpty();
-                // Wire clear button inside empty state
-                var clearEmptyBtn = document.getElementById('cr-btn-clear-empty');
-                if (clearEmptyBtn) clearEmptyBtn.addEventListener('click', clearFilters);
-                countEl.textContent = '0 concerts';
-                announce('No concerts found.');
-                return;
+                '</article>';
             }
 
-            var html = '<div class="cr-concert-list" role="list">';
-            items.forEach(function (c) {
-                html += renderCard(c);
+            function renderLoading() {
+                return '<div class="cr-state">' +
+                    '<div class="cr-spinner" aria-hidden="true"></div>' +
+                    '<div class="cr-state-title">Loading concerts…</div>' +
+                '</div>';
+            }
+
+            function renderEmpty() {
+                return '<div class="cr-state">' +
+                    '<div class="cr-state-title">No upcoming concerts match your filters.</div>' +
+                    '<div class="cr-state-sub">Try broadening the date range or clearing filters.</div>' +
+                    '<button is="emby-button" type="button" class="raised emby-button" id="cr-btn-clear-empty"><span>Clear filters</span></button>' +
+                '</div>';
+            }
+
+            function renderError(msg) {
+                return '<div class="cr-state">' +
+                    '<div class="cr-state-title">Failed to load concerts.</div>' +
+                    '<div class="cr-state-sub">' + escHtml(msg) + '</div>' +
+                    '<button is="emby-button" type="button" class="raised emby-button" id="cr-btn-retry"><span>Retry</span></button>' +
+                '</div>';
+            }
+
+            // ── Query builder ────────────────────────────────────────────
+            function buildQuery() {
+                var from       = page.querySelector('#cr-filter-from').value;
+                var to         = page.querySelector('#cr-filter-to').value;
+                var country    = page.querySelector('#cr-filter-country').value.trim().toUpperCase();
+                var city       = page.querySelector('#cr-filter-city').value.trim();
+                var source     = page.querySelector('#cr-filter-source').value;
+                var artistIn   = page.querySelector('#cr-filter-artist').value.trim();
+
+                var artistMbid = '';
+                if (artistIn) {
+                    var match = state.artists.find(function (a) {
+                        return a.name && a.name.toLowerCase() === artistIn.toLowerCase();
+                    });
+                    if (match && match.mbid) artistMbid = match.mbid;
+                }
+
+                return {
+                    from:       from ? from + 'T00:00:00Z' : today() + 'T00:00:00Z',
+                    to:         to   ? to   + 'T23:59:59Z' : daysFromNow(365) + 'T23:59:59Z',
+                    country:    country,
+                    city:       city,
+                    source:     source,
+                    artistMbid: artistMbid,
+                    page:       state.page,
+                    pageSize:   PAGE_SIZE,
+                    sort:       state.sort
+                };
+            }
+
+            function updateCountryDatalist(items) {
+                var seen = {};
+                items.forEach(function (c) {
+                    var cc = pick(c, 'Country', 'country');
+                    if (cc) seen[cc] = true;
+                });
+                var dl = page.querySelector('#cr-country-list');
+                dl.innerHTML = '';
+                Object.keys(seen).sort().forEach(function (cc) {
+                    var opt = document.createElement('option');
+                    opt.value = cc;
+                    dl.appendChild(opt);
+                });
+            }
+
+            // ── Loaders ──────────────────────────────────────────────────
+            function loadConcerts() {
+                var resultsEl = page.querySelector('#cr-results');
+                var paginEl   = page.querySelector('#cr-pagination');
+                var countEl   = page.querySelector('#cr-result-count');
+
+                resultsEl.innerHTML = renderLoading();
+                paginEl.style.display = 'none';
+                countEl.textContent = '';
+                announce('Loading concerts…');
+
+                apiGet('/concerts', buildQuery()).then(function (data) {
+                    data = data || {};
+                    var items = pick(data, 'Items', 'items') || [];
+                    var total = pick(data, 'TotalRecordCount', 'totalRecordCount');
+                    if (total == null) total = pick(data, 'Total', 'total');
+                    if (total == null) total = items.length;
+                    state.total = total;
+
+                    updateCountryDatalist(items);
+
+                    if (items.length === 0) {
+                        resultsEl.innerHTML = renderEmpty();
+                        var clearEmptyBtn = page.querySelector('#cr-btn-clear-empty');
+                        if (clearEmptyBtn) clearEmptyBtn.addEventListener('click', clearFilters);
+                        countEl.textContent = '0 concerts';
+                        announce('No concerts found.');
+                        return;
+                    }
+
+                    // Group by month when sorting by date; otherwise flat list.
+                    var html = '<div class="cr-concert-list" role="list">';
+                    if (state.sort === 'date') {
+                        var currentKey = null;
+                        items.forEach(function (c) {
+                            var iso = pick(c, 'EventDateTime', 'eventDateTime');
+                            var dt  = iso ? new Date(iso) : null;
+                            var key = dt ? monthKey(dt) : 'unknown';
+                            if (key !== currentKey) {
+                                currentKey = key;
+                                var label = dt ? monthFmt.format(dt) : 'Unknown date';
+                                html += '<div class="cr-month-header">' + escHtml(label) + '</div>';
+                            }
+                            html += renderCard(c);
+                        });
+                    } else {
+                        items.forEach(function (c) { html += renderCard(c); });
+                    }
+                    html += '</div>';
+                    resultsEl.innerHTML = html;
+
+                    var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+                    countEl.textContent = total + ' concert' + (total !== 1 ? 's' : '');
+                    announce(total + ' concerts loaded.');
+
+                    var prevBtn  = page.querySelector('#cr-btn-prev');
+                    var nextBtn  = page.querySelector('#cr-btn-next');
+                    var pageInfo = page.querySelector('#cr-page-info');
+                    pageInfo.textContent = 'Page ' + state.page + ' of ' + totalPages;
+                    prevBtn.disabled = state.page <= 1;
+                    nextBtn.disabled = state.page >= totalPages;
+                    paginEl.style.display = total > PAGE_SIZE ? '' : 'none';
+                }).catch(function (err) {
+                    var msg = (err && (err.statusText || err.message)) || 'Unknown error';
+                    resultsEl.innerHTML = renderError(msg);
+                    var retryBtn = page.querySelector('#cr-btn-retry');
+                    if (retryBtn) retryBtn.addEventListener('click', loadConcerts);
+                    announce('Error loading concerts: ' + msg);
+                });
+            }
+
+            function loadSources() {
+                apiGet('/status').then(function (data) {
+                    var sources = pick(data, 'Sources', 'sources') || [];
+                    state.sources = sources;
+                    var sel = page.querySelector('#cr-filter-source');
+                    while (sel.options.length > 1) sel.remove(1);
+                    sources.forEach(function (s) {
+                        var opt = document.createElement('option');
+                        opt.value       = pick(s, 'Source', 'source') || pick(s, 'Id', 'id') || '';
+                        opt.textContent = pick(s, 'DisplayName', 'displayName') || opt.value;
+                        sel.appendChild(opt);
+                    });
+                }).catch(function () { /* non-fatal */ });
+            }
+
+            function loadArtists() {
+                apiGet('/artists').then(function (data) {
+                    var arr = pick(data, 'Items', 'items') || [];
+                    // Normalize to lowercase keys for consumer code.
+                    state.artists = arr.map(function (a) {
+                        return {
+                            id:   pick(a, 'Id',   'id'),
+                            mbid: pick(a, 'Mbid', 'mbid'),
+                            name: pick(a, 'Name', 'name') || ''
+                        };
+                    });
+                    var dl = page.querySelector('#cr-artist-list');
+                    dl.innerHTML = '';
+                    state.artists.forEach(function (a) {
+                        if (!a.name) return;
+                        var opt = document.createElement('option');
+                        opt.value = a.name;
+                        dl.appendChild(opt);
+                    });
+                }).catch(function () { /* non-fatal */ });
+            }
+
+            function clearFilters() {
+                page.querySelector('#cr-filter-from').value    = today();
+                page.querySelector('#cr-filter-to').value      = daysFromNow(365);
+                page.querySelector('#cr-filter-country').value = '';
+                page.querySelector('#cr-filter-city').value    = '';
+                page.querySelector('#cr-filter-source').value  = '';
+                page.querySelector('#cr-filter-artist').value  = '';
+                state.page = 1;
+                loadConcerts();
+            }
+
+            var debouncedLoad = debounce(function () {
+                state.page = 1;
+                loadConcerts();
+            }, 300);
+
+            // ── Page lifecycle ──────────────────────────────────────────
+            var wired = false;
+            function wireEvents() {
+                if (wired) return;
+                wired = true;
+
+                ['cr-filter-from', 'cr-filter-to', 'cr-filter-country', 'cr-filter-city', 'cr-filter-artist']
+                    .forEach(function (id) {
+                        page.querySelector('#' + id).addEventListener('input', debouncedLoad);
+                    });
+                page.querySelector('#cr-filter-source').addEventListener('change', debouncedLoad);
+
+                page.querySelector('#cr-sort').addEventListener('change', function () {
+                    state.sort = this.value;
+                    state.page = 1;
+                    loadConcerts();
+                });
+
+                page.querySelector('#cr-btn-prev').addEventListener('click', function () {
+                    if (state.page > 1) { state.page--; loadConcerts(); }
+                });
+                page.querySelector('#cr-btn-next').addEventListener('click', function () {
+                    var totalPages = Math.ceil(state.total / PAGE_SIZE);
+                    if (state.page < totalPages) { state.page++; loadConcerts(); }
+                });
+
+                page.querySelector('#cr-btn-clear').addEventListener('click', clearFilters);
+            }
+
+            page.addEventListener('pageshow', function () {
+                // Default dates on first show
+                var fromEl = page.querySelector('#cr-filter-from');
+                var toEl   = page.querySelector('#cr-filter-to');
+                if (!fromEl.value) fromEl.value = today();
+                if (!toEl.value)   toEl.value   = daysFromNow(365);
+
+                wireEvents();
+                loadSources();
+                loadArtists();
+                loadConcerts();
             });
-            html += '</div>';
-            resultsEl.innerHTML = html;
-
-            var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-            countEl.textContent = total + ' concert' + (total !== 1 ? 's' : '');
-            announce(total + ' concerts loaded.');
-
-            // Pagination
-            var prevBtn   = document.getElementById('cr-btn-prev');
-            var nextBtn   = document.getElementById('cr-btn-next');
-            var pageInfo  = document.getElementById('cr-page-info');
-            pageInfo.textContent = 'Page ' + state.page + ' of ' + totalPages;
-            prevBtn.disabled = state.page <= 1;
-            nextBtn.disabled = state.page >= totalPages;
-            paginEl.style.display = total > PAGE_SIZE ? '' : 'none';
-
-        } catch (err) {
-            if (err.message === 'Unauthorized') return; // already redirected
-            resultsEl.innerHTML = renderError(err.message || 'Unknown error');
-            var retryBtn = document.getElementById('cr-btn-retry');
-            if (retryBtn) retryBtn.addEventListener('click', loadConcerts);
-            announce('Error loading concerts: ' + (err.message || 'Unknown error'));
-        }
-    }
-
-    // ── Load sources for filter dropdown ────────────────────────────────
-    async function loadSources() {
-        try {
-            var data    = await api.get(API_BASE + '/status', null);
-            var sources = data.sources || data.Sources || [];
-            state.sources = sources;
-            var sel = document.getElementById('cr-filter-source');
-            // Keep the "All sources" option, then append
-            while (sel.options.length > 1) sel.remove(1);
-            sources.forEach(function (s) {
-                var opt = document.createElement('option');
-                opt.value       = s.id || s.Id || s.source || s.Source || '';
-                opt.textContent = s.displayName || s.DisplayName || opt.value;
-                sel.appendChild(opt);
-            });
-        } catch (e) {
-            // Non-fatal: filter dropdown will only show "All sources"
-        }
-    }
-
-    // ── Load artist list for autocomplete ────────────────────────────────
-    async function loadArtists() {
-        try {
-            var data = await api.get(API_BASE + '/artists', null);
-            state.artists = data.items || data.Items || [];
-            var dl = document.getElementById('cr-artist-list');
-            dl.innerHTML = '';
-            state.artists.forEach(function (a) {
-                var opt = document.createElement('option');
-                opt.value = a.name || a.Name || '';
-                dl.appendChild(opt);
-            });
-        } catch (e) {
-            // Non-fatal
-        }
-    }
-
-    // ── Clear filters ────────────────────────────────────────────────────
-    function clearFilters() {
-        document.getElementById('cr-filter-from').value    = today();
-        document.getElementById('cr-filter-to').value      = daysFromNow(180);
-        document.getElementById('cr-filter-country').value = '';
-        document.getElementById('cr-filter-city').value    = '';
-        document.getElementById('cr-filter-source').value  = '';
-        document.getElementById('cr-filter-artist').value  = '';
-        state.page = 1;
-        loadConcerts();
-    }
-
-    // ── Debounced reload ─────────────────────────────────────────────────
-    var debouncedLoad = debounce(function () {
-        state.page = 1;
-        loadConcerts();
-    }, 300);
-
-    // ── Init ─────────────────────────────────────────────────────────────
-    function init() {
-        // Auth bootstrap
-        if (!api.bootstrap()) {
-            location.href = '/web/index.html#/login.html';
-            return;
-        }
-
-        // Default dates
-        document.getElementById('cr-filter-from').value = today();
-        document.getElementById('cr-filter-to').value   = daysFromNow(180);
-
-        // Kick off background data loads
-        loadSources();
-        loadArtists();
-        loadConcerts();
-
-        // Filter bar events
-        ['cr-filter-from', 'cr-filter-to', 'cr-filter-country', 'cr-filter-city'].forEach(function (id) {
-            document.getElementById(id).addEventListener('input', debouncedLoad);
-        });
-        document.getElementById('cr-filter-source').addEventListener('change', debouncedLoad);
-
-        // Artist autocomplete: debounce, then reload
-        document.getElementById('cr-filter-artist').addEventListener('input', debouncedLoad);
-
-        // Sort
-        document.getElementById('cr-sort').addEventListener('change', function () {
-            state.sort = this.value;
-            state.page = 1;
-            loadConcerts();
-        });
-
-        // Pagination
-        document.getElementById('cr-btn-prev').addEventListener('click', function () {
-            if (state.page > 1) { state.page--; loadConcerts(); }
-        });
-        document.getElementById('cr-btn-next').addEventListener('click', function () {
-            var totalPages = Math.ceil(state.total / PAGE_SIZE);
-            if (state.page < totalPages) { state.page++; loadConcerts(); }
-        });
-
-        // Clear button
-        document.getElementById('cr-btn-clear').addEventListener('click', clearFilters);
-    }
-
-    // ── Page lifecycle ───────────────────────────────────────────────────
-    // Works both when loaded inside Jellyfin shell (pageshow event) and direct visit (DOMContentLoaded).
-    var initialized = false;
-    function maybeInit() {
-        if (!initialized) { initialized = true; init(); }
-    }
-
-    document.addEventListener('pageshow', function (e) {
-        if (e.detail && e.detail.page && e.detail.page.id !== 'concertradarViewPage') return;
-        maybeInit();
-    });
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', maybeInit);
-    } else {
-        maybeInit();
-    }
-
-})();
-</script>
+        })();
+    </script>
+</div>
 </body>
 </html>

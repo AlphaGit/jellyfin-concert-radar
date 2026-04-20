@@ -1,0 +1,614 @@
+<div id="cr-user-view">
+    <style>
+        #cr-user-view h1 { margin: 0 0 1em; font-size: 1.5em; font-weight: 700; }
+
+        #cr-user-view .cr-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .6em 1em;
+            align-items: flex-end;
+            margin-bottom: 1.2em;
+            padding: .75em 1em;
+            background: rgba(127,127,127,.08);
+            border: 1px solid rgba(127,127,127,.25);
+            border-radius: 6px;
+        }
+        #cr-user-view .cr-filter-group { min-width: 140px; flex: 1 1 140px; }
+        #cr-user-view .cr-filter-group label {
+            display: block;
+            font-size: .78em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            opacity: .7;
+            margin-bottom: .25em;
+        }
+        #cr-user-view .cr-filter-group input,
+        #cr-user-view .cr-filter-group select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: .4em .55em;
+            border-radius: 4px;
+            border: 1px solid rgba(127,127,127,.4);
+            background: rgba(0,0,0,.25);
+            color: inherit;
+            font-size: .9em;
+        }
+        #cr-user-view .cr-filter-actions {
+            display: flex; align-items: flex-end; gap: .4em;
+        }
+
+        #cr-user-view .cr-sort-bar {
+            display: flex; align-items: center; gap: .6em;
+            margin-bottom: 1em; font-size: .9em;
+        }
+        #cr-user-view .cr-sort-bar select {
+            padding: .3em .55em;
+            border-radius: 4px;
+            border: 1px solid rgba(127,127,127,.4);
+            background: rgba(0,0,0,.25);
+            color: inherit;
+        }
+        #cr-user-view .cr-result-count { margin-left: auto; opacity: .75; font-size: .88em; }
+
+        #cr-user-view .cr-concert-list { display: flex; flex-direction: column; gap: .5em; }
+
+        #cr-user-view .cr-month-header {
+            font-size: 1.05em; font-weight: 700;
+            margin: 1.25em 0 .35em;
+            padding: .3em 0 .35em;
+            border-bottom: 1px solid rgba(127,127,127,.35);
+        }
+        #cr-user-view .cr-month-header:first-child { margin-top: 0; }
+
+        #cr-user-view .cr-concert-card {
+            background: rgba(127,127,127,.08);
+            border: 1px solid rgba(127,127,127,.25);
+            border-radius: 6px;
+            padding: .75em 1em;
+            display: grid;
+            grid-template-columns: 90px 1fr auto;
+            gap: .25em 1em;
+            align-items: start;
+        }
+        #cr-user-view .cr-card-daybox {
+            grid-row: 1 / span 5;
+            text-align: center;
+            padding: .25em .4em;
+            border-right: 1px solid rgba(127,127,127,.2);
+            min-width: 70px;
+        }
+        #cr-user-view .cr-daybox-dow {
+            font-size: .72em; font-weight: 600;
+            text-transform: uppercase; letter-spacing: .08em;
+            opacity: .65;
+        }
+        #cr-user-view .cr-daybox-day { font-size: 1.6em; font-weight: 700; line-height: 1.1; }
+        #cr-user-view .cr-daybox-time { font-size: .75em; opacity: .7; margin-top: .15em; }
+
+        #cr-user-view .cr-card-body {
+            grid-column: 2; grid-row: 1 / span 5;
+            display: flex; flex-direction: column; gap: .2em;
+            min-width: 0;
+        }
+        #cr-user-view .cr-card-artist { font-size: 1.15em; font-weight: 700; }
+        #cr-user-view .cr-card-artist a { color: inherit; text-decoration: none; }
+        #cr-user-view .cr-card-artist a:hover { text-decoration: underline; }
+        #cr-user-view .cr-card-venue { font-size: .9em; opacity: .85; }
+        #cr-user-view .cr-card-lineup { font-size: .82em; opacity: .7; }
+        #cr-user-view .cr-card-price { font-size: .82em; opacity: .8; }
+
+        #cr-user-view .cr-card-meta { display: flex; gap: .4em; flex-wrap: wrap; align-items: center; margin-top: .4em; }
+        #cr-user-view .cr-card-side {
+            grid-column: 3; grid-row: 1 / span 5;
+            display: flex; flex-direction: column; gap: .4em;
+            align-items: flex-end;
+        }
+        @media (max-width: 640px) {
+            #cr-user-view .cr-concert-card { grid-template-columns: 70px 1fr; }
+            #cr-user-view .cr-card-side { grid-column: 1 / -1; grid-row: 6; flex-direction: row; align-items: center; }
+        }
+
+        #cr-user-view .cr-source-pill {
+            display: inline-block;
+            font-size: .68em; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .05em;
+            padding: .18em .55em; border-radius: 10px;
+            background: #3a3a3a; color: #bbb;
+        }
+        #cr-user-view .cr-src-ticketmaster { background: #002f6c; color: #8ab4f8; }
+        #cr-user-view .cr-src-bandsintown  { background: #1a4a1a; color: #8af898; }
+        #cr-user-view .cr-src-edmtrain     { background: #4a1a4a; color: #e898f8; }
+        #cr-user-view .cr-src-songkick     { background: #4a2a00; color: #f8c898; }
+        #cr-user-view .cr-src-dice         { background: #001a4a; color: #98c8f8; }
+        #cr-user-view .cr-src-ra           { background: #2a0000; color: #f89898; }
+        #cr-user-view .cr-edmtrain-attribution {
+            display: inline-block;
+            font-size: .65em; font-weight: 600;
+            padding: .12em .4em; border-radius: 3px;
+            background: #4a1a4a; color: #e898f8;
+            letter-spacing: .02em;
+        }
+
+        #cr-user-view .cr-pagination {
+            display: flex; align-items: center; justify-content: center;
+            gap: .75em; margin-top: 1.5em; font-size: .9em;
+        }
+        #cr-user-view .cr-page-info { opacity: .75; }
+
+        #cr-user-view .cr-state { padding: 3em 1em; text-align: center; opacity: .8; }
+        #cr-user-view .cr-state-title { font-size: 1.1em; font-weight: 600; margin-bottom: .5em; }
+        #cr-user-view .cr-state-sub { font-size: .9em; margin-bottom: 1em; opacity: .75; }
+        #cr-user-view .cr-spinner {
+            display: inline-block;
+            width: 2em; height: 2em;
+            border: 3px solid rgba(127,127,127,.25);
+            border-top-color: #4b9fff;
+            border-radius: 50%;
+            animation: cr-user-spin .7s linear infinite;
+            margin-bottom: .75em;
+        }
+        @keyframes cr-user-spin { to { transform: rotate(360deg); } }
+
+        #cr-user-view .cr-live { position: absolute; left: -9999px; }
+    </style>
+
+    <h1>Upcoming Concerts</h1>
+
+    <div class="cr-live" aria-live="polite" aria-atomic="true"></div>
+
+    <div class="cr-filter-bar" role="search" aria-label="Concert filters">
+        <div class="cr-filter-group">
+            <label for="cr-uv-from">From</label>
+            <input type="date" id="cr-uv-from" />
+        </div>
+        <div class="cr-filter-group">
+            <label for="cr-uv-to">To</label>
+            <input type="date" id="cr-uv-to" />
+        </div>
+        <div class="cr-filter-group">
+            <label for="cr-uv-country">Country</label>
+            <input type="text" id="cr-uv-country" list="cr-uv-country-list" placeholder="e.g. US" maxlength="2" autocomplete="off" />
+            <datalist id="cr-uv-country-list"></datalist>
+        </div>
+        <div class="cr-filter-group">
+            <label for="cr-uv-city">City</label>
+            <input type="text" id="cr-uv-city" placeholder="e.g. Toronto" autocomplete="off" />
+        </div>
+        <div class="cr-filter-group">
+            <label for="cr-uv-source">Source</label>
+            <select id="cr-uv-source"><option value="">All sources</option></select>
+        </div>
+        <div class="cr-filter-group">
+            <label for="cr-uv-artist">Artist</label>
+            <input type="text" id="cr-uv-artist" list="cr-uv-artist-list" placeholder="Search artist…" autocomplete="off" />
+            <datalist id="cr-uv-artist-list"></datalist>
+        </div>
+        <div class="cr-filter-actions">
+            <button type="button" id="cr-uv-clear" class="raised emby-button"><span>Clear</span></button>
+        </div>
+    </div>
+
+    <div class="cr-sort-bar">
+        <label for="cr-uv-sort" style="font-weight:600; opacity:.75;">Sort by</label>
+        <select id="cr-uv-sort">
+            <option value="date">Date (ascending)</option>
+            <option value="artist">Artist</option>
+            <option value="city">City</option>
+        </select>
+        <span class="cr-result-count" id="cr-uv-count" aria-live="polite"></span>
+    </div>
+
+    <div id="cr-uv-results" aria-live="polite" aria-label="Concert results"></div>
+
+    <div class="cr-pagination" id="cr-uv-pagination" style="display:none;">
+        <button type="button" id="cr-uv-prev" class="raised emby-button"><span>&laquo; Prev</span></button>
+        <span class="cr-page-info" id="cr-uv-page-info"></span>
+        <button type="button" id="cr-uv-next" class="raised emby-button"><span>Next &raquo;</span></button>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    var API_BASE  = 'Plugins/ConcertRadar/api';
+    var PAGE_SIZE = 50;
+
+    var root = document.getElementById('cr-user-view');
+    if (!root) return;
+
+    // ── API helper (uses Jellyfin ApiClient) ────────────────────────────
+    function apiGet(path, query) {
+        var parts = [];
+        if (query) {
+            Object.keys(query).forEach(function (k) {
+                var v = query[k];
+                if (v !== null && v !== undefined && v !== '') {
+                    parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+                }
+            });
+        }
+        var qs = parts.length ? '?' + parts.join('&') : '';
+        return ApiClient.ajax({
+            url: ApiClient.getUrl(API_BASE + path + qs),
+            type: 'GET',
+            dataType: 'json'
+        });
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────
+    function escHtml(str) {
+        if (str == null) return '';
+        var d = document.createElement('div');
+        d.textContent = String(str);
+        return d.innerHTML;
+    }
+
+    var dtFmt    = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    var timeFmt  = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
+    var dowFmt   = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
+    var monthFmt = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
+
+    function fmtDate(iso) {
+        if (!iso) return '';
+        try { return dtFmt.format(new Date(iso)); } catch (e) { return iso; }
+    }
+
+    function pick(obj, pascal, camel) {
+        if (!obj) return undefined;
+        return obj[pascal] !== undefined ? obj[pascal] : obj[camel];
+    }
+
+    function monthKey(d) {
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+
+    function today()        { return new Date().toISOString().slice(0, 10); }
+    function daysFromNow(n) { var d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+
+    function safeHref(url) {
+        if (!url || typeof url !== 'string') return '';
+        try {
+            var u = new URL(url, window.location.origin);
+            return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
+        } catch (e) { return ''; }
+    }
+
+    function debounce(fn, ms) {
+        var t;
+        return function () {
+            var args = arguments, ctx = this;
+            clearTimeout(t);
+            t = setTimeout(function () { fn.apply(ctx, args); }, ms);
+        };
+    }
+
+    function announce(msg) {
+        var el = root.querySelector('.cr-live');
+        if (!el) return;
+        el.textContent = '';
+        setTimeout(function () { el.textContent = msg; }, 50);
+    }
+
+    // ── State ───────────────────────────────────────────────────────────
+    var state = { page: 1, total: 0, sort: 'date', artists: [], sources: [] };
+
+    // ── Render helpers ──────────────────────────────────────────────────
+    function sourcePillClass(source) {
+        var map = {
+            ticketmaster: 'cr-src-ticketmaster',
+            bandsintown:  'cr-src-bandsintown',
+            edmtrain:     'cr-src-edmtrain',
+            songkick:     'cr-src-songkick',
+            dice:         'cr-src-dice',
+            ra:           'cr-src-ra'
+        };
+        return 'cr-source-pill ' + (map[(source || '').toLowerCase()] || '');
+    }
+
+    function renderCard(c) {
+        var isoDt    = pick(c, 'EventDateTime', 'eventDateTime');
+        var artist   = pick(c, 'ArtistName',   'artistName')   || '';
+        var venue    = pick(c, 'VenueName',    'venueName')    || '';
+        var addr     = pick(c, 'VenueAddress', 'venueAddress') || '';
+        var city     = pick(c, 'City',         'city')         || '';
+        var country  = pick(c, 'Country',      'country')      || '';
+        var lineup   = pick(c, 'Lineup',       'lineup')       || [];
+        var pMin     = pick(c, 'PriceMin',     'priceMin');
+        var pMax     = pick(c, 'PriceMax',     'priceMax');
+        var currency = pick(c, 'Currency',     'currency')     || '';
+        var source   = pick(c, 'Source',       'source')       || '';
+        var srcUrl   = pick(c, 'SourceUrl',    'sourceUrl')    || '';
+        var ticketUrl = pick(c, 'TicketUrl',   'ticketUrl')    || '';
+        var jellyfinId = pick(c, 'JellyfinArtistId', 'jellyfinArtistId') || '';
+
+        var dt = isoDt ? new Date(isoDt) : null;
+        var dowStr  = dt ? dowFmt.format(dt) : '';
+        var dayStr  = dt ? String(dt.getDate()) : '';
+        var timeStr = dt ? timeFmt.format(dt) : '';
+
+        var venueParts    = [venue, addr].filter(Boolean).join(', ');
+        var locationParts = [city, country].filter(Boolean).join(', ');
+
+        var lineupHtml = '';
+        if (Array.isArray(lineup) && lineup.length > 1) {
+            var supporting = lineup.filter(function (n) {
+                return n && n.toLowerCase() !== artist.toLowerCase();
+            });
+            if (supporting.length > 0) {
+                lineupHtml = '<div class="cr-card-lineup">with ' + escHtml(supporting.join(', ')) + '</div>';
+            }
+        }
+
+        var priceHtml = '';
+        if (pMin != null || pMax != null) {
+            var priceStr = (pMin != null && pMax != null && pMin !== pMax)
+                ? pMin + '–' + pMax
+                : (pMin != null ? pMin : pMax);
+            if (currency) priceStr += ' ' + currency;
+            priceHtml = '<div class="cr-card-price">' + escHtml(priceStr) + '</div>';
+        }
+
+        var artistHtml = jellyfinId
+            ? '<a href="#/details?id=' + encodeURIComponent(jellyfinId) + '">' + escHtml(artist) + '</a>'
+            : escHtml(artist);
+
+        var safeSrcUrl    = safeHref(srcUrl);
+        var safeTicketUrl = safeHref(ticketUrl);
+
+        var btnViewHtml = '';
+        if (srcUrl && safeSrcUrl) {
+            var srcLabel = source
+                ? 'View on ' + source.charAt(0).toUpperCase() + source.slice(1)
+                : 'View Source';
+            btnViewHtml = '<a href="' + escHtml(safeSrcUrl) +
+                          '" target="_blank" rel="noopener noreferrer" class="raised emby-button">' +
+                          '<span>' + escHtml(srcLabel) + '</span></a>';
+        }
+
+        var btnTicketHtml = '';
+        if (ticketUrl && ticketUrl !== srcUrl && safeTicketUrl) {
+            btnTicketHtml = '<a href="' + escHtml(safeTicketUrl) +
+                            '" target="_blank" rel="noopener noreferrer" class="raised button-submit emby-button">' +
+                            '<span>Buy Tickets</span></a>';
+        }
+
+        var pillHtml = '<span class="' + escHtml(sourcePillClass(source)) + '">' + escHtml(source) + '</span>';
+        if (source && source.toLowerCase() === 'edmtrain') {
+            pillHtml += '<span class="cr-edmtrain-attribution" aria-label="Data provided by EdmTrain">Data: EdmTrain</span>';
+        }
+
+        return '<article class="cr-concert-card">' +
+            '<div class="cr-card-daybox">' +
+                '<div class="cr-daybox-dow">'  + escHtml(dowStr) + '</div>' +
+                '<div class="cr-daybox-day">' + escHtml(dayStr)  + '</div>' +
+                (timeStr ? '<div class="cr-daybox-time">' + escHtml(timeStr) + '</div>' : '') +
+            '</div>' +
+            '<div class="cr-card-body">' +
+                '<div class="cr-card-artist">' + artistHtml + '</div>' +
+                (venueParts    ? '<div class="cr-card-venue">' + escHtml(venueParts) + '</div>' : '') +
+                (locationParts ? '<div class="cr-card-venue">' + escHtml(locationParts) + '</div>' : '') +
+                lineupHtml +
+                priceHtml +
+                '<div class="cr-card-meta">' + pillHtml + '</div>' +
+            '</div>' +
+            (btnViewHtml || btnTicketHtml
+                ? '<div class="cr-card-side">' + btnViewHtml + btnTicketHtml + '</div>'
+                : '') +
+        '</article>';
+    }
+
+    function renderLoading() {
+        return '<div class="cr-state">' +
+            '<div class="cr-spinner" aria-hidden="true"></div>' +
+            '<div class="cr-state-title">Loading concerts…</div>' +
+        '</div>';
+    }
+    function renderEmpty() {
+        return '<div class="cr-state">' +
+            '<div class="cr-state-title">No upcoming concerts match your filters.</div>' +
+            '<div class="cr-state-sub">Try broadening the date range or clearing filters.</div>' +
+            '<button type="button" class="raised emby-button" id="cr-uv-clear-empty"><span>Clear filters</span></button>' +
+        '</div>';
+    }
+    function renderError(msg) {
+        return '<div class="cr-state">' +
+            '<div class="cr-state-title">Failed to load concerts.</div>' +
+            '<div class="cr-state-sub">' + escHtml(msg) + '</div>' +
+            '<button type="button" class="raised emby-button" id="cr-uv-retry"><span>Retry</span></button>' +
+        '</div>';
+    }
+
+    function buildQuery() {
+        var from   = root.querySelector('#cr-uv-from').value;
+        var to     = root.querySelector('#cr-uv-to').value;
+        var country= root.querySelector('#cr-uv-country').value.trim().toUpperCase();
+        var city   = root.querySelector('#cr-uv-city').value.trim();
+        var source = root.querySelector('#cr-uv-source').value;
+        var artIn  = root.querySelector('#cr-uv-artist').value.trim();
+
+        var artistMbid = '';
+        if (artIn) {
+            var match = state.artists.find(function (a) {
+                return a.name && a.name.toLowerCase() === artIn.toLowerCase();
+            });
+            if (match && match.mbid) artistMbid = match.mbid;
+        }
+
+        return {
+            from:       from ? from + 'T00:00:00Z' : today() + 'T00:00:00Z',
+            to:         to   ? to   + 'T23:59:59Z' : daysFromNow(365) + 'T23:59:59Z',
+            country:    country,
+            city:       city,
+            source:     source,
+            artistMbid: artistMbid,
+            page:       state.page,
+            pageSize:   PAGE_SIZE,
+            sort:       state.sort
+        };
+    }
+
+    function updateCountryDatalist(items) {
+        var seen = {};
+        items.forEach(function (c) {
+            var cc = pick(c, 'Country', 'country');
+            if (cc) seen[cc] = true;
+        });
+        var dl = root.querySelector('#cr-uv-country-list');
+        dl.innerHTML = '';
+        Object.keys(seen).sort().forEach(function (cc) {
+            var opt = document.createElement('option');
+            opt.value = cc;
+            dl.appendChild(opt);
+        });
+    }
+
+    function loadConcerts() {
+        var resultsEl = root.querySelector('#cr-uv-results');
+        var paginEl   = root.querySelector('#cr-uv-pagination');
+        var countEl   = root.querySelector('#cr-uv-count');
+
+        resultsEl.innerHTML = renderLoading();
+        paginEl.style.display = 'none';
+        countEl.textContent = '';
+        announce('Loading concerts…');
+
+        apiGet('/concerts', buildQuery()).then(function (data) {
+            data = data || {};
+            var items = pick(data, 'Items', 'items') || [];
+            var total = pick(data, 'TotalRecordCount', 'totalRecordCount');
+            if (total == null) total = pick(data, 'Total', 'total');
+            if (total == null) total = items.length;
+            state.total = total;
+
+            updateCountryDatalist(items);
+
+            if (items.length === 0) {
+                resultsEl.innerHTML = renderEmpty();
+                var clearEmptyBtn = root.querySelector('#cr-uv-clear-empty');
+                if (clearEmptyBtn) clearEmptyBtn.addEventListener('click', clearFilters);
+                countEl.textContent = '0 concerts';
+                announce('No concerts found.');
+                return;
+            }
+
+            var html = '<div class="cr-concert-list" role="list">';
+            if (state.sort === 'date') {
+                var currentKey = null;
+                items.forEach(function (c) {
+                    var iso = pick(c, 'EventDateTime', 'eventDateTime');
+                    var dt  = iso ? new Date(iso) : null;
+                    var key = dt ? monthKey(dt) : 'unknown';
+                    if (key !== currentKey) {
+                        currentKey = key;
+                        var label = dt ? monthFmt.format(dt) : 'Unknown date';
+                        html += '<div class="cr-month-header">' + escHtml(label) + '</div>';
+                    }
+                    html += renderCard(c);
+                });
+            } else {
+                items.forEach(function (c) { html += renderCard(c); });
+            }
+            html += '</div>';
+            resultsEl.innerHTML = html;
+
+            var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            countEl.textContent = total + ' concert' + (total !== 1 ? 's' : '');
+            announce(total + ' concerts loaded.');
+
+            var prevBtn  = root.querySelector('#cr-uv-prev');
+            var nextBtn  = root.querySelector('#cr-uv-next');
+            var pageInfo = root.querySelector('#cr-uv-page-info');
+            pageInfo.textContent = 'Page ' + state.page + ' of ' + totalPages;
+            prevBtn.disabled = state.page <= 1;
+            nextBtn.disabled = state.page >= totalPages;
+            paginEl.style.display = total > PAGE_SIZE ? '' : 'none';
+        }).catch(function (err) {
+            var msg = (err && (err.statusText || err.message)) || 'Unknown error';
+            resultsEl.innerHTML = renderError(msg);
+            var retryBtn = root.querySelector('#cr-uv-retry');
+            if (retryBtn) retryBtn.addEventListener('click', loadConcerts);
+            announce('Error loading concerts: ' + msg);
+        });
+    }
+
+    function loadSources() {
+        apiGet('/status').then(function (data) {
+            var sources = pick(data, 'Sources', 'sources') || [];
+            state.sources = sources;
+            var sel = root.querySelector('#cr-uv-source');
+            while (sel.options.length > 1) sel.remove(1);
+            sources.forEach(function (s) {
+                var opt = document.createElement('option');
+                opt.value       = pick(s, 'Source', 'source') || pick(s, 'Id', 'id') || '';
+                opt.textContent = pick(s, 'DisplayName', 'displayName') || opt.value;
+                sel.appendChild(opt);
+            });
+        }).catch(function () {});
+    }
+
+    function loadArtists() {
+        apiGet('/artists').then(function (data) {
+            var arr = pick(data, 'Items', 'items') || [];
+            state.artists = arr.map(function (a) {
+                return {
+                    id:   pick(a, 'Id',   'id'),
+                    mbid: pick(a, 'Mbid', 'mbid'),
+                    name: pick(a, 'Name', 'name') || ''
+                };
+            });
+            var dl = root.querySelector('#cr-uv-artist-list');
+            dl.innerHTML = '';
+            state.artists.forEach(function (a) {
+                if (!a.name) return;
+                var opt = document.createElement('option');
+                opt.value = a.name;
+                dl.appendChild(opt);
+            });
+        }).catch(function () {});
+    }
+
+    function clearFilters() {
+        root.querySelector('#cr-uv-from').value    = today();
+        root.querySelector('#cr-uv-to').value      = daysFromNow(365);
+        root.querySelector('#cr-uv-country').value = '';
+        root.querySelector('#cr-uv-city').value    = '';
+        root.querySelector('#cr-uv-source').value  = '';
+        root.querySelector('#cr-uv-artist').value  = '';
+        state.page = 1;
+        loadConcerts();
+    }
+
+    var debouncedLoad = debounce(function () { state.page = 1; loadConcerts(); }, 300);
+
+    // ── Init ────────────────────────────────────────────────────────────
+    root.querySelector('#cr-uv-from').value = today();
+    root.querySelector('#cr-uv-to').value   = daysFromNow(365);
+
+    ['cr-uv-from', 'cr-uv-to', 'cr-uv-country', 'cr-uv-city', 'cr-uv-artist'].forEach(function (id) {
+        root.querySelector('#' + id).addEventListener('input', debouncedLoad);
+    });
+    root.querySelector('#cr-uv-source').addEventListener('change', debouncedLoad);
+
+    root.querySelector('#cr-uv-sort').addEventListener('change', function () {
+        state.sort = this.value;
+        state.page = 1;
+        loadConcerts();
+    });
+
+    root.querySelector('#cr-uv-prev').addEventListener('click', function () {
+        if (state.page > 1) { state.page--; loadConcerts(); }
+    });
+    root.querySelector('#cr-uv-next').addEventListener('click', function () {
+        var totalPages = Math.ceil(state.total / PAGE_SIZE);
+        if (state.page < totalPages) { state.page++; loadConcerts(); }
+    });
+
+    root.querySelector('#cr-uv-clear').addEventListener('click', clearFilters);
+
+    loadSources();
+    loadArtists();
+    loadConcerts();
+})();
+</script>

@@ -1,273 +1,172 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Concert Radar</title>
-    <style>
-        /* ── Layout ─────────────────────────────────────────────────── */
-        .cr-page { max-width: 900px; padding: 1.5em 1em 3em; }
-
-        /* ── Section headings ───────────────────────────────────────── */
-        .cr-section { margin-bottom: 2.5em; }
-        .cr-section h2 {
-            font-size: 1.1em;
-            font-weight: 600;
-            border-bottom: 1px solid var(--border-color, #444);
-            padding-bottom: .4em;
-            margin-bottom: 1em;
-        }
-
-        /* ── Status cards ────────────────────────────────────────────── */
-        .cr-source-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: .75em;
-            margin-bottom: 1em;
-        }
-        .cr-source-card {
-            background: var(--background-input, #2a2a2a);
-            border: 1px solid var(--border-color, #444);
-            border-radius: 6px;
-            padding: .75em 1em;
-            min-width: 200px;
-            flex: 1 1 200px;
-        }
-        .cr-source-name {
-            font-weight: 600;
-            margin-bottom: .4em;
-            display: flex;
-            align-items: center;
-            gap: .5em;
-        }
-        .cr-badge {
-            display: inline-block;
-            font-size: .72em;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .04em;
-            padding: .15em .5em;
-            border-radius: 3px;
-        }
-        .cr-badge-ok         { background: #1a6a2e; color: #9ef7ae; }
-        .cr-badge-degraded   { background: #6a5a1a; color: #f7de9e; }
-        .cr-badge-failing    { background: #6a1a1a; color: #f79e9e; }
-        .cr-badge-disabled   { background: #3a3a3a; color: #999;    }
-        .cr-badge-unconfigured {
-            background: transparent;
-            color: #888;
-            border: 1px dashed #555;
-        }
-        .cr-source-meta {
-            font-size: .82em;
-            color: var(--text-color-secondary, #999);
-            line-height: 1.6;
-        }
-        .cr-source-actions { margin-top: .6em; }
-
-        /* ── Buttons ─────────────────────────────────────────────────── */
-        .cr-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: .3em;
-            padding: .35em .8em;
-            font-size: .82em;
-            border-radius: 4px;
-            border: 1px solid transparent;
-            cursor: pointer;
-        }
-        .cr-btn-secondary {
-            background: transparent;
-            border-color: var(--border-color, #555);
-            color: var(--text-color, #ddd);
-        }
-        .cr-btn-secondary:hover { background: var(--hover-background, #333); }
-        .cr-btn-danger {
-            background: transparent;
-            border-color: #a33;
-            color: #f99;
-        }
-        .cr-btn-danger:hover { background: #2a1111; }
-        .cr-admin-actions { display: flex; gap: .5em; flex-wrap: wrap; margin-bottom: 1em; }
-
-        /* ── Form fields ─────────────────────────────────────────────── */
-        .cr-field { margin-bottom: 1em; }
-        .cr-field label {
-            display: block;
-            font-size: .85em;
-            margin-bottom: .3em;
-            font-weight: 500;
-        }
-        .cr-field input[type="text"],
-        .cr-field input[type="password"],
-        .cr-field input[type="number"],
-        .cr-field select,
-        .cr-field textarea {
-            width: 100%;
-            max-width: 480px;
-            box-sizing: border-box;
-            padding: .45em .6em;
-            border-radius: 4px;
-            border: 1px solid var(--border-color, #555);
-            background: var(--background-input, #1e1e1e);
-            color: var(--text-color, #ddd);
-            font-size: .9em;
-        }
-        .cr-field-inline {
-            display: flex;
-            align-items: center;
-            gap: .5em;
-        }
-        .cr-field-inline input { flex: 1; max-width: 440px; }
-        .cr-hint {
-            font-size: .78em;
-            color: var(--text-color-secondary, #888);
-            margin-top: .2em;
-        }
-        .cr-error-msg {
-            font-size: .8em;
-            color: #f99;
-            margin-top: .2em;
-            display: none;
-        }
-        .cr-error-msg.cr-visible { display: block; }
-
-        /* ── Checkbox rows ───────────────────────────────────────────── */
-        .cr-check-row {
-            display: flex;
-            align-items: flex-start;
-            gap: .6em;
-            margin-bottom: .8em;
-        }
-        .cr-check-row input[type="checkbox"] { margin-top: .2em; flex-shrink: 0; }
-        .cr-check-row label { font-size: .9em; }
-        .cr-tos-warning {
-            background: #2a1a00;
-            border: 1px solid #a06020;
-            border-radius: 4px;
-            padding: .5em .75em;
-            font-size: .82em;
-            color: #f7c87a;
-            margin: .3em 0 .6em 1.6em;
-        }
-        .cr-tos-warning.cr-tos-danger {
-            background: #2a0000;
-            border-color: #a03030;
-            color: #f7a0a0;
-        }
-        .cr-source-toggle-group { margin-bottom: .5em; }
-        .cr-source-toggle-group.cr-tos-disabled label { opacity: .5; }
-
-        /* ── Location table ──────────────────────────────────────────── */
-        .cr-location-table { width: 100%; border-collapse: collapse; font-size: .85em; margin-bottom: .6em; }
-        .cr-location-table th {
-            text-align: left;
-            padding: .3em .4em;
-            border-bottom: 1px solid var(--border-color, #444);
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        .cr-location-table td { padding: .3em .4em; }
-        .cr-location-table td input {
-            width: 100%;
-            box-sizing: border-box;
-            padding: .25em .4em;
-            border-radius: 3px;
-            border: 1px solid var(--border-color, #555);
-            background: var(--background-input, #1e1e1e);
-            color: var(--text-color, #ddd);
-            font-size: .9em;
-        }
-        .cr-location-table td input[type="number"] { width: 70px; }
-
-        /* ── Rate limits table ───────────────────────────────────────── */
-        .cr-rate-table { width: 100%; border-collapse: collapse; font-size: .87em; }
-        .cr-rate-table th {
-            text-align: left;
-            padding: .4em .6em;
-            border-bottom: 1px solid var(--border-color, #444);
-            font-weight: 600;
-        }
-        .cr-rate-table td { padding: .35em .6em; }
-        .cr-rate-table tbody tr:nth-child(even) { background: var(--background-input, #1e1e1e); }
-        .cr-rate-table input[type="number"] {
-            width: 90px;
-            padding: .25em .4em;
-            border-radius: 3px;
-            border: 1px solid var(--border-color, #555);
-            background: var(--background-input, #1e1e1e);
-            color: var(--text-color, #ddd);
-            font-size: .9em;
-        }
-        .cr-placeholder {
-            color: var(--text-color-secondary, #888);
-            font-size: .88em;
-            padding: .75em 0;
-        }
-
-        /* ── EdmTrain attribution badge ──────────────────────────────── */
-        .cr-attribution-badge {
-            display: inline-block;
-            font-size: .68em;
-            font-weight: 600;
-            padding: .1em .4em;
-            border-radius: 3px;
-            background: #4a1a4a;
-            color: #e898f8;
-            margin-top: .25em;
-            letter-spacing: .02em;
-        }
-
-        /* ── Numeric grid ────────────────────────────────────────────── */
-        .cr-num-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: .75em 1.5em;
-        }
-        .cr-num-grid .cr-field { margin-bottom: 0; }
-        .cr-num-grid .cr-field input { max-width: 100%; }
-
-        /* ── Status bar ──────────────────────────────────────────────── */
-        .cr-status-bar {
-            font-size: .82em;
-            color: var(--text-color-secondary, #888);
-            margin-bottom: 1em;
-        }
-        .cr-run-info { display: flex; gap: 1.5em; flex-wrap: wrap; margin-bottom: .5em; }
-
-        /* ── Toast (aria-live region) ────────────────────────────────── */
-        #cr-live { position: absolute; left: -9999px; }
-    </style>
 </head>
 <body>
-<div data-role="page" id="concertradarConfigPage">
-    <div data-role="header" class="ui-header">
-        <div class="viewHeader">
-            <button data-backbutton="true" class="headerButton headerButtonLeft btnBack">
-                <span class="material-icons headerButtonIcon">arrow_back_ios</span>
-            </button>
-            <h2 class="viewHeaderTitle">Concert Radar</h2>
-        </div>
-    </div>
-
-    <div id="cr-live" aria-live="polite" aria-atomic="true"></div>
+<div id="concertradarConfigPage"
+     data-role="page"
+     class="page type-interior pluginConfigurationPage"
+     data-require="emby-input,emby-button,emby-select,emby-checkbox,emby-collapse">
 
     <div data-role="content">
-        <div id="concertradarConfigDiv" class="cr-page">
+        <div class="content-primary">
+
+            <style>
+                /* Custom styles scoped to Concert Radar config only. */
+                #concertradarConfigPage .cr-section { margin-bottom: 2.5em; }
+                #concertradarConfigPage .cr-section > h2 {
+                    font-size: 1.15em;
+                    margin: 0 0 .75em;
+                    padding-bottom: .25em;
+                    border-bottom: 1px solid rgba(127,127,127,.25);
+                }
+                #concertradarConfigPage .cr-source-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                    gap: .75em;
+                    margin-bottom: 1em;
+                }
+                #concertradarConfigPage .cr-source-card {
+                    background: rgba(127,127,127,.08);
+                    border: 1px solid rgba(127,127,127,.25);
+                    border-radius: 6px;
+                    padding: .75em 1em;
+                }
+                #concertradarConfigPage .cr-source-name {
+                    font-weight: 600;
+                    margin-bottom: .4em;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: .5em;
+                }
+                #concertradarConfigPage .cr-badge {
+                    font-size: .72em;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: .04em;
+                    padding: .15em .5em;
+                    border-radius: 3px;
+                }
+                #concertradarConfigPage .cr-badge-ok         { background: #1a6a2e; color: #9ef7ae; }
+                #concertradarConfigPage .cr-badge-degraded   { background: #6a5a1a; color: #f7de9e; }
+                #concertradarConfigPage .cr-badge-failing    { background: #6a1a1a; color: #f79e9e; }
+                #concertradarConfigPage .cr-badge-disabled   { background: rgba(127,127,127,.25); color: #999; }
+                #concertradarConfigPage .cr-badge-unconfigured {
+                    background: transparent;
+                    color: #888;
+                    border: 1px dashed #555;
+                }
+                #concertradarConfigPage .cr-source-meta {
+                    font-size: .82em;
+                    opacity: .75;
+                    line-height: 1.6;
+                }
+                #concertradarConfigPage .cr-source-actions { margin-top: .6em; }
+                #concertradarConfigPage .cr-run-info {
+                    display: flex; gap: 1.5em; flex-wrap: wrap; margin-bottom: .75em;
+                    font-size: .9em; opacity: .85;
+                }
+                #concertradarConfigPage .cr-admin-actions {
+                    display: flex; gap: .5em; flex-wrap: wrap; margin-bottom: 1em;
+                }
+                #concertradarConfigPage .cr-tos-warning {
+                    background: rgba(160,96,32,.15);
+                    border: 1px solid rgba(160,96,32,.6);
+                    border-radius: 4px;
+                    padding: .5em .75em;
+                    font-size: .85em;
+                    color: #f7c87a;
+                    margin: .3em 0 .6em 1.6em;
+                }
+                #concertradarConfigPage .cr-tos-warning.cr-tos-danger {
+                    background: rgba(160,48,48,.15);
+                    border-color: rgba(160,48,48,.6);
+                    color: #f7a0a0;
+                }
+                #concertradarConfigPage .cr-location-table,
+                #concertradarConfigPage .cr-rate-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: .9em;
+                }
+                #concertradarConfigPage .cr-location-table th,
+                #concertradarConfigPage .cr-rate-table th {
+                    text-align: left;
+                    padding: .35em .5em;
+                    border-bottom: 1px solid rgba(127,127,127,.3);
+                    font-weight: 600;
+                }
+                #concertradarConfigPage .cr-location-table td,
+                #concertradarConfigPage .cr-rate-table td {
+                    padding: .35em .5em;
+                    vertical-align: middle;
+                }
+                #concertradarConfigPage .cr-location-table input,
+                #concertradarConfigPage .cr-rate-table input {
+                    width: 100%;
+                    box-sizing: border-box;
+                    padding: .35em .5em;
+                    border-radius: 3px;
+                    border: 1px solid rgba(127,127,127,.4);
+                    background: rgba(0,0,0,.25);
+                    color: inherit;
+                    font-size: .9em;
+                }
+                #concertradarConfigPage .cr-rate-table input { max-width: 110px; }
+                #concertradarConfigPage .cr-location-table input[type="number"] { max-width: 90px; }
+                #concertradarConfigPage .cr-attribution-badge {
+                    display: inline-block;
+                    font-size: .68em;
+                    font-weight: 600;
+                    padding: .1em .4em;
+                    border-radius: 3px;
+                    background: #4a1a4a;
+                    color: #e898f8;
+                    margin-top: .25em;
+                    letter-spacing: .02em;
+                }
+                #concertradarConfigPage .cr-hint { font-size: .82em; opacity: .7; margin-top: .2em; }
+                #concertradarConfigPage .cr-error-msg {
+                    color: #f66; font-size: .85em; margin-top: .25em; display: none;
+                }
+                #concertradarConfigPage .cr-error-msg.cr-visible { display: block; }
+                #concertradarConfigPage .cr-num-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                    gap: 0 1.5em;
+                }
+                #concertradarConfigPage .cr-placeholder {
+                    opacity: .6;
+                    font-size: .9em;
+                    padding: .5em 0;
+                }
+                #concertradarConfigPage .cr-live { position: absolute; left: -9999px; }
+                #concertradarConfigPage .cr-tos-disabled .inputContainer,
+                #concertradarConfigPage .cr-tos-disabled .checkboxContainer { opacity: .5; }
+            </style>
+
+            <div class="cr-live" aria-live="polite" aria-atomic="true"></div>
 
             <!-- ── Status ─────────────────────────────────────────── -->
-            <section class="cr-section" id="cr-section-status">
+            <section class="cr-section">
                 <h2>Status</h2>
 
-                <div class="cr-run-info" id="cr-run-info">
+                <div class="cr-run-info">
                     <span>Last run: <strong id="cr-last-run">—</strong></span>
                     <span>Next run: <strong id="cr-next-run">—</strong></span>
                     <span>Queue: <strong id="cr-queue">—</strong></span>
                 </div>
 
                 <div class="cr-admin-actions">
-                    <button type="button" class="cr-btn cr-btn-secondary" id="cr-btn-run-now">Run Now</button>
-                    <button type="button" class="cr-btn cr-btn-danger"  id="cr-btn-purge">Purge All Concerts</button>
+                    <button is="emby-button" type="button" class="raised button-cancel emby-button" id="cr-btn-run-now">
+                        <span>Run Now</span>
+                    </button>
+                    <button is="emby-button" type="button" class="raised button-delete emby-button" id="cr-btn-purge">
+                        <span>Purge All Concerts</span>
+                    </button>
                 </div>
 
                 <div class="cr-source-grid" id="cr-source-grid">
@@ -279,133 +178,132 @@
             <form id="cr-config-form" novalidate>
 
                 <!-- ── Credentials ────────────────────────────── -->
-                <section class="cr-section" id="cr-section-credentials">
+                <section class="cr-section">
                     <h2>Credentials</h2>
 
-                    <div class="cr-field">
-                        <label for="cr-tm-key">Ticketmaster API Key</label>
-                        <div class="cr-field-inline">
-                            <input type="password" id="cr-tm-key" name="TicketmasterApiKey"
-                                   autocomplete="off" placeholder="(not set)" />
-                            <button type="button" class="cr-btn cr-btn-secondary cr-toggle-pw"
-                                    data-target="cr-tm-key" aria-label="Toggle visibility">Show</button>
-                        </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="cr-tm-key">Ticketmaster API Key</label>
+                        <input is="emby-input" type="password" id="cr-tm-key"
+                               autocomplete="off" placeholder="(not set)" />
+                        <div class="fieldDescription">Leave blank to disable this source.</div>
                     </div>
 
-                    <div class="cr-field">
-                        <label for="cr-bit-key">Bandsintown App ID</label>
-                        <div class="cr-field-inline">
-                            <input type="password" id="cr-bit-key" name="BandsintownAppId"
-                                   autocomplete="off" placeholder="(not set)" />
-                            <button type="button" class="cr-btn cr-btn-secondary cr-toggle-pw"
-                                    data-target="cr-bit-key" aria-label="Toggle visibility">Show</button>
-                        </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="cr-bit-key">Bandsintown App ID</label>
+                        <input is="emby-input" type="password" id="cr-bit-key"
+                               autocomplete="off" placeholder="(not set)" />
+                        <div class="fieldDescription">Leave blank to disable this source.</div>
                     </div>
 
-                    <div class="cr-field">
-                        <label for="cr-edt-key">EdmTrain API Key</label>
-                        <div class="cr-field-inline">
-                            <input type="password" id="cr-edt-key" name="EdmTrainApiKey"
-                                   autocomplete="off" placeholder="(not set)" />
-                            <button type="button" class="cr-btn cr-btn-secondary cr-toggle-pw"
-                                    data-target="cr-edt-key" aria-label="Toggle visibility">Show</button>
-                        </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="cr-edt-key">EdmTrain API Key</label>
+                        <input is="emby-input" type="password" id="cr-edt-key"
+                               autocomplete="off" placeholder="(not set)" />
+                        <div class="fieldDescription">Leave blank to disable this source.</div>
                     </div>
                 </section>
 
                 <!-- ── Sources ────────────────────────────────── -->
-                <section class="cr-section" id="cr-section-sources">
+                <section class="cr-section">
                     <h2>Sources</h2>
 
-                    <div class="cr-source-toggle-group" id="cr-src-ticketmaster">
-                        <div class="cr-check-row">
-                            <input type="checkbox" id="cr-src-chk-ticketmaster" data-source="ticketmaster" />
-                            <label for="cr-src-chk-ticketmaster">Ticketmaster (official API)</label>
-                        </div>
+                    <div class="checkboxContainer" id="cr-src-ticketmaster">
+                        <label class="emby-checkbox-label">
+                            <input is="emby-checkbox" type="checkbox" id="cr-src-chk-ticketmaster" data-source="ticketmaster" />
+                            <span>Ticketmaster (official API)</span>
+                        </label>
                     </div>
 
-                    <div class="cr-source-toggle-group" id="cr-src-bandsintown">
-                        <div class="cr-check-row">
-                            <input type="checkbox" id="cr-src-chk-bandsintown" data-source="bandsintown" />
-                            <label for="cr-src-chk-bandsintown">Bandsintown (public API)</label>
-                        </div>
+                    <div class="checkboxContainer" id="cr-src-bandsintown">
+                        <label class="emby-checkbox-label">
+                            <input is="emby-checkbox" type="checkbox" id="cr-src-chk-bandsintown" data-source="bandsintown" />
+                            <span>Bandsintown (public API)</span>
+                        </label>
                     </div>
 
-                    <div class="cr-source-toggle-group" id="cr-src-edmtrain">
-                        <div class="cr-check-row">
-                            <input type="checkbox" id="cr-src-chk-edmtrain" data-source="edmtrain" />
-                            <label for="cr-src-chk-edmtrain">EdmTrain (official API — EDM only)</label>
-                        </div>
+                    <div class="checkboxContainer" id="cr-src-edmtrain">
+                        <label class="emby-checkbox-label">
+                            <input is="emby-checkbox" type="checkbox" id="cr-src-chk-edmtrain" data-source="edmtrain" />
+                            <span>EdmTrain (official API — EDM only)</span>
+                        </label>
                     </div>
 
                     <!-- Songkick: ToS opt-in required -->
-                    <div class="cr-source-toggle-group cr-tos-gated" id="cr-src-songkick">
-                        <div class="cr-check-row">
-                            <input type="checkbox" id="cr-tos-songkick" name="AcceptSongkickScrapeTos" />
-                            <label for="cr-tos-songkick">I accept the Songkick scrape terms of service</label>
+                    <div id="cr-src-songkick" class="cr-tos-gated">
+                        <div class="checkboxContainer">
+                            <label class="emby-checkbox-label">
+                                <input is="emby-checkbox" type="checkbox" id="cr-tos-songkick" />
+                                <span>I accept the Songkick scrape terms of service</span>
+                            </label>
                         </div>
                         <div class="cr-tos-warning">
-                            This source has no official API. Scraping may violate Songkick's terms of service.
-                            Use at your own risk.
+                            This source has no official API. Scraping may violate Songkick's terms of service. Use at your own risk.
                         </div>
-                        <div class="cr-check-row" id="cr-src-songkick-row">
-                            <input type="checkbox" id="cr-src-chk-songkick" data-source="songkick" disabled />
-                            <label for="cr-src-chk-songkick" id="cr-src-songkick-label">Songkick (HTML scrape) — accept ToS above to enable</label>
+                        <div class="checkboxContainer">
+                            <label class="emby-checkbox-label">
+                                <input is="emby-checkbox" type="checkbox" id="cr-src-chk-songkick" data-source="songkick" disabled />
+                                <span id="cr-src-songkick-label">Songkick (HTML scrape) — accept ToS above to enable</span>
+                            </label>
                         </div>
                     </div>
 
                     <!-- Dice: ToS opt-in required -->
-                    <div class="cr-source-toggle-group cr-tos-gated" id="cr-src-dice">
-                        <div class="cr-check-row">
-                            <input type="checkbox" id="cr-tos-dice" name="AcceptDiceScrapeTos" />
-                            <label for="cr-tos-dice">I accept the Dice.fm scrape terms of service</label>
+                    <div id="cr-src-dice" class="cr-tos-gated">
+                        <div class="checkboxContainer">
+                            <label class="emby-checkbox-label">
+                                <input is="emby-checkbox" type="checkbox" id="cr-tos-dice" />
+                                <span>I accept the Dice.fm scrape terms of service</span>
+                            </label>
                         </div>
                         <div class="cr-tos-warning">
-                            This source has no official API. Scraping may violate Dice.fm's terms of service.
-                            Use at your own risk.
+                            This source has no official API. Scraping may violate Dice.fm's terms of service. Use at your own risk.
                         </div>
-                        <div class="cr-check-row" id="cr-src-dice-row">
-                            <input type="checkbox" id="cr-src-chk-dice" data-source="dice" disabled />
-                            <label for="cr-src-chk-dice" id="cr-src-dice-label">Dice.fm (HTML scrape) — accept ToS above to enable</label>
+                        <div class="checkboxContainer">
+                            <label class="emby-checkbox-label">
+                                <input is="emby-checkbox" type="checkbox" id="cr-src-chk-dice" data-source="dice" disabled />
+                                <span id="cr-src-dice-label">Dice.fm (HTML scrape) — accept ToS above to enable</span>
+                            </label>
                         </div>
                     </div>
 
                     <!-- Resident Advisor: ToS opt-in + red warning -->
-                    <div class="cr-source-toggle-group cr-tos-gated" id="cr-src-ra">
-                        <div class="cr-check-row">
-                            <input type="checkbox" id="cr-tos-ra" name="AcceptRaScrapeTos" />
-                            <label for="cr-tos-ra">I accept the Resident Advisor scrape terms of service</label>
+                    <div id="cr-src-ra" class="cr-tos-gated">
+                        <div class="checkboxContainer">
+                            <label class="emby-checkbox-label">
+                                <input is="emby-checkbox" type="checkbox" id="cr-tos-ra" />
+                                <span>I accept the Resident Advisor scrape terms of service</span>
+                            </label>
                         </div>
                         <div class="cr-tos-warning cr-tos-danger">
                             WARNING: Resident Advisor's reverse-engineered GraphQL API may violate their ToS.
-                            This source is disabled by default. Use at your own risk. Repeated scraping may
-                            result in your IP being blocked.
+                            Disabled by default. Use at your own risk. Repeated scraping may result in your IP being blocked.
                         </div>
-                        <div class="cr-check-row" id="cr-src-ra-row">
-                            <input type="checkbox" id="cr-src-chk-ra" data-source="ra" disabled />
-                            <label for="cr-src-chk-ra" id="cr-src-ra-label">Resident Advisor (GraphQL scrape) — accept ToS above to enable</label>
+                        <div class="checkboxContainer">
+                            <label class="emby-checkbox-label">
+                                <input is="emby-checkbox" type="checkbox" id="cr-src-chk-ra" data-source="ra" disabled />
+                                <span id="cr-src-ra-label">Resident Advisor (GraphQL scrape) — accept ToS above to enable</span>
+                            </label>
                         </div>
                     </div>
                 </section>
 
                 <!-- ── Filters ───────────────────────────────── -->
-                <section class="cr-section" id="cr-section-filters">
+                <section class="cr-section">
                     <h2>Filters</h2>
 
-                    <!-- Locations -->
-                    <div class="cr-field">
-                        <label>Locations</label>
-                        <p class="cr-hint">Add city/region/country + optional GPS coordinates and radius. Leave lat/lon blank to use city name only.</p>
-                        <div style="overflow-x:auto;">
-                            <table class="cr-location-table" id="cr-location-table">
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused">Locations</label>
+                        <div class="fieldDescription">Add city/region/country + optional GPS coordinates and radius. Leave lat/lon blank to use city name only.</div>
+                        <div style="overflow-x:auto; margin-top:.5em;">
+                            <table class="cr-location-table">
                                 <thead>
                                     <tr>
                                         <th>City</th>
                                         <th>Region</th>
-                                        <th>Country (alpha-2)</th>
+                                        <th>Country</th>
                                         <th>Lat</th>
                                         <th>Lon</th>
-                                        <th>Radius (km)</th>
+                                        <th>Radius&nbsp;(km)</th>
                                         <th></th>
                                     </tr>
                                 </thead>
@@ -414,92 +312,92 @@
                                 </tbody>
                             </table>
                         </div>
-                        <button type="button" class="cr-btn cr-btn-secondary" id="cr-add-location" style="margin-top:.5em;">
-                            + Add Location
+                        <button is="emby-button" type="button" class="raised emby-button" id="cr-add-location" style="margin-top:.5em;">
+                            <span>+ Add Location</span>
                         </button>
                         <div id="cr-no-locations" class="cr-hint" style="display:none;">No locations configured — all concerts are returned.</div>
                     </div>
 
-                    <!-- Country allowlist -->
-                    <div class="cr-field">
-                        <label for="cr-country-allowlist">Country Allowlist (ISO-3166 alpha-2)</label>
-                        <input type="text" id="cr-country-allowlist" name="CountryAllowlist"
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="cr-country-allowlist">Country Allowlist (ISO-3166 alpha-2)</label>
+                        <input is="emby-input" type="text" id="cr-country-allowlist"
                                placeholder="e.g. US, GB, DE (comma-separated; blank = all)" />
-                        <p class="cr-hint">Comma-separated country codes. Leave blank to allow all countries.</p>
+                        <div class="fieldDescription">Comma-separated country codes. Leave blank to allow all countries.</div>
                     </div>
 
-                    <!-- Genre allowlist -->
-                    <div class="cr-field">
-                        <label for="cr-genre-allowlist">Genre Allowlist</label>
-                        <input type="text" id="cr-genre-allowlist" name="GenreAllowlist"
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="cr-genre-allowlist">Genre Allowlist</label>
+                        <input is="emby-input" type="text" id="cr-genre-allowlist"
                                placeholder="e.g. Rock, Electronic, Jazz (comma-separated; blank = all)" />
-                        <p class="cr-hint">Comma-separated genres. Leave blank to allow all genres.</p>
+                        <div class="fieldDescription">Comma-separated genres. Leave blank to allow all genres.</div>
                     </div>
 
-                    <!-- Days ahead -->
-                    <div class="cr-num-grid" style="max-width:420px; margin-bottom:1em;">
-                        <div class="cr-field">
-                            <label for="cr-min-days">Min Days Ahead</label>
-                            <input type="number" id="cr-min-days" name="MinDaysAhead" min="0" step="1" />
+                    <div class="cr-num-grid" style="max-width:500px;">
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="cr-min-days">Min Days Ahead</label>
+                            <input is="emby-input" type="number" id="cr-min-days" min="0" step="1" value="0" />
                             <div class="cr-error-msg" id="cr-err-min-days">Must be 0 or greater.</div>
                         </div>
-                        <div class="cr-field">
-                            <label for="cr-max-days">Max Days Ahead</label>
-                            <input type="number" id="cr-max-days" name="MaxDaysAhead" min="1" step="1" />
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="cr-max-days">Max Days Ahead</label>
+                            <input is="emby-input" type="number" id="cr-max-days" min="1" step="1" value="365" />
                             <div class="cr-error-msg" id="cr-err-max-days">Must be at least 1 and ≥ Min Days.</div>
                         </div>
                     </div>
 
-                    <!-- Skip flags -->
-                    <div class="cr-check-row">
-                        <input type="checkbox" id="cr-skip-festivals" name="SkipFestivals" />
-                        <label for="cr-skip-festivals">Skip festival events</label>
+                    <div class="checkboxContainer">
+                        <label class="emby-checkbox-label">
+                            <input is="emby-checkbox" type="checkbox" id="cr-skip-festivals" />
+                            <span>Skip festival events</span>
+                        </label>
                     </div>
-                    <div class="cr-check-row">
-                        <input type="checkbox" id="cr-skip-soldout" name="SkipSoldOut" />
-                        <label for="cr-skip-soldout">Skip sold-out events</label>
+                    <div class="checkboxContainer">
+                        <label class="emby-checkbox-label">
+                            <input is="emby-checkbox" type="checkbox" id="cr-skip-soldout" />
+                            <span>Skip sold-out events</span>
+                        </label>
                     </div>
                 </section>
 
                 <!-- ── Scheduler ─────────────────────────────── -->
-                <section class="cr-section" id="cr-section-scheduler">
+                <section class="cr-section">
                     <h2>Scheduler</h2>
 
                     <div class="cr-num-grid">
-                        <div class="cr-field">
-                            <label for="cr-max-artists">Max Artists Per Run</label>
-                            <input type="number" id="cr-max-artists" name="MaxArtistsPerRun" min="1" step="1" />
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="cr-max-artists">Max Artists Per Run</label>
+                            <input is="emby-input" type="number" id="cr-max-artists" min="1" step="1" value="50" />
                             <div class="cr-error-msg" id="cr-err-max-artists">Must be at least 1.</div>
                         </div>
-                        <div class="cr-field">
-                            <label for="cr-daily-budget">Per-Source Daily Budget</label>
-                            <input type="number" id="cr-daily-budget" name="PerSourceDailyBudget" min="1" step="1" />
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="cr-daily-budget">Daily API Call Limit (per source)</label>
+                            <input is="emby-input" type="number" id="cr-daily-budget" min="1" step="1" value="500" />
                             <div class="cr-error-msg" id="cr-err-daily-budget">Must be at least 1.</div>
                         </div>
-                        <div class="cr-field">
-                            <label for="cr-stale-days">Stale Record Days</label>
-                            <input type="number" id="cr-stale-days" name="StaleRecordDays" min="1" step="1" />
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="cr-stale-days">Delete Unseen Concerts After (days)</label>
+                            <input is="emby-input" type="number" id="cr-stale-days" min="1" step="1" value="14" />
                             <div class="cr-error-msg" id="cr-err-stale-days">Must be at least 1.</div>
                         </div>
-                        <div class="cr-field">
-                            <label for="cr-cb-threshold">Circuit Breaker Threshold</label>
-                            <input type="number" id="cr-cb-threshold" name="CircuitBreakerThreshold" min="1" step="1" />
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="cr-cb-threshold">Circuit Breaker Threshold</label>
+                            <input is="emby-input" type="number" id="cr-cb-threshold" min="1" step="1" value="5" />
                             <div class="cr-error-msg" id="cr-err-cb-threshold">Must be at least 1.</div>
                         </div>
-                        <div class="cr-field">
-                            <label for="cr-cb-cooldown">Circuit Breaker Cooldown (hours)</label>
-                            <input type="number" id="cr-cb-cooldown" name="CircuitBreakerCooldownHours" min="1" max="168" step="1" />
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="cr-cb-cooldown">Circuit Breaker Cooldown (hours)</label>
+                            <input is="emby-input" type="number" id="cr-cb-cooldown" min="1" max="168" step="1" value="24" />
                             <div class="cr-error-msg" id="cr-err-cb-cooldown">Must be between 1 and 168.</div>
                         </div>
                     </div>
                 </section>
 
                 <!-- ── Rate Limits ───────────────────────────── -->
-                <section class="cr-section" id="cr-section-ratelimits">
+                <section class="cr-section">
                     <h2>Rate Limits</h2>
-                    <p class="cr-hint" style="margin-bottom:.75em;">
+                    <div class="fieldDescription" style="margin-bottom:.75em;">
                         Blank "Req/day" means unlimited. Changes take effect on the next run.
-                    </p>
+                    </div>
 
                     <div id="cr-rate-limits-wrap">
                         <p class="cr-placeholder" id="cr-rate-placeholder">Loading rate limits…</p>
@@ -511,590 +409,560 @@
                                     <th>Req / day</th>
                                 </tr>
                             </thead>
-                            <tbody id="cr-rate-tbody">
-                                <!-- rows inserted by JS -->
-                            </tbody>
+                            <tbody id="cr-rate-tbody"></tbody>
                         </table>
-                        <button type="button" class="cr-btn cr-btn-secondary"
+                        <button is="emby-button" type="button" class="raised emby-button"
                                 id="cr-seed-defaults" style="margin-top:.75em; display:none;">
-                            Seed Defaults
+                            <span>Seed Defaults</span>
                         </button>
                     </div>
                 </section>
 
                 <!-- ── Save ──────────────────────────────────── -->
                 <div style="display:flex; gap:.75em; align-items:center; margin-top:1em;">
-                    <button type="submit" class="raised button-submit block emby-button">Save</button>
+                    <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                        <span>Save</span>
+                    </button>
                     <span id="cr-save-status" aria-live="polite"></span>
                 </div>
                 <div id="cr-form-error" class="cr-error-msg" style="margin-top:.5em;"></div>
 
-            </form><!-- /cr-config-form -->
+            </form>
 
-        </div><!-- /cr-page -->
-    </div><!-- /data-role=content -->
-</div><!-- /data-role=page -->
+        </div>
+    </div>
 
-<script>
-(function () {
-    'use strict';
+    <script type="text/javascript">
+        (function () {
+            'use strict';
 
-    // ── Constants ────────────────────────────────────────────────────────
-    var PLUGIN_ID = '65bb36d5-70d5-4121-8771-3dd404d20287';
-    var API_BASE  = '/Plugins/ConcertRadar/api';
+            var PLUGIN_ID = '65bb36d5-70d5-4121-8771-3dd404d20287';
+            var API_BASE  = 'Plugins/ConcertRadar/api';
 
-    var ALL_SOURCES = ['ticketmaster', 'bandsintown', 'edmtrain', 'songkick', 'dice', 'ra'];
+            var ALL_SOURCES = ['ticketmaster', 'bandsintown', 'edmtrain', 'songkick', 'dice', 'ra'];
 
-    var DEFAULT_RATE_LIMITS = [
-        { source: 'ticketmaster', requestsPerSecond: 5,   requestsPerDay: 5000 },
-        { source: 'bandsintown',  requestsPerSecond: 1,   requestsPerDay: null  },
-        { source: 'edmtrain',     requestsPerSecond: 1,   requestsPerDay: null  },
-        { source: 'songkick',     requestsPerSecond: 1,   requestsPerDay: null  },
-        { source: 'dice',         requestsPerSecond: 0.5, requestsPerDay: null  },
-        { source: 'ra',           requestsPerSecond: 0.5, requestsPerDay: null  }
-    ];
+            var DEFAULT_RATE_LIMITS = [
+                { source: 'ticketmaster', requestsPerSecond: 5,   requestsPerDay: 5000 },
+                { source: 'bandsintown',  requestsPerSecond: 1,   requestsPerDay: null },
+                { source: 'edmtrain',     requestsPerSecond: 1,   requestsPerDay: null },
+                { source: 'songkick',     requestsPerSecond: 1,   requestsPerDay: null },
+                { source: 'dice',         requestsPerSecond: 0.5, requestsPerDay: null },
+                { source: 'ra',           requestsPerSecond: 0.5, requestsPerDay: null }
+            ];
 
-    // ── Date formatting ──────────────────────────────────────────────────
-    var dtFmt = new Intl.DateTimeFormat(undefined, {
-        year: 'numeric', month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    });
+            var page = document.querySelector('#concertradarConfigPage');
+            var statusInterval = null;
 
-    function fmtDate(iso) {
-        if (!iso) return '—';
-        try { return dtFmt.format(new Date(iso)); }
-        catch (e) { return iso; }
-    }
-
-    // ── Live region announce ─────────────────────────────────────────────
-    var liveEl = document.getElementById('cr-live');
-    function announce(msg) {
-        liveEl.textContent = '';
-        // Force re-read by toggling content
-        setTimeout(function () { liveEl.textContent = msg; }, 50);
-    }
-
-    // ── Admin API call helper (uses Jellyfin's ApiClient) ────────────────
-    function adminPost(path) {
-        return ApiClient.ajax({ url: ApiClient.getUrl(API_BASE + path), type: 'POST' });
-    }
-
-    function adminGet(path) {
-        return ApiClient.ajax({ url: ApiClient.getUrl(API_BASE + path), type: 'GET' });
-    }
-
-    // ── Status section ───────────────────────────────────────────────────
-    var statusInterval = null;
-
-    function badgeClass(status) {
-        var map = {
-            Ok:           'cr-badge-ok',
-            Degraded:     'cr-badge-degraded',
-            Failing:      'cr-badge-failing',
-            Disabled:     'cr-badge-disabled',
-            Unconfigured: 'cr-badge-unconfigured'
-        };
-        return 'cr-badge ' + (map[status] || 'cr-badge-unconfigured');
-    }
-
-    function renderSourceCards(sources) {
-        var grid = document.getElementById('cr-source-grid');
-        if (!sources || sources.length === 0) {
-            grid.innerHTML = '<p class="cr-placeholder">No source data available.</p>';
-            return;
-        }
-
-        var html = '';
-        sources.forEach(function (s) {
-            var badgeCls  = badgeClass(s.status);
-            var sourceId  = (s.source || s.id || '').toLowerCase();
-            var disabledUntilStr = s.disabledUntil ? 'Disabled until: ' + escHtml(fmtDate(s.disabledUntil)) + '<br>' : '';
-            // EdmTrain ToS attribution badge — shown when the source is enabled (not Disabled/Unconfigured)
-            var edmAttrib = (sourceId === 'edmtrain' && s.status !== 'Disabled' && s.status !== 'Unconfigured')
-                ? '<div><span class="cr-attribution-badge">Data: EdmTrain</span></div>'
-                : '';
-            html += '<div class="cr-source-card">' +
-                '<div class="cr-source-name">' +
-                    '<span>' + escHtml(s.displayName || sourceId) + '</span>' +
-                    '<span class="' + escHtml(badgeCls) + '">' + escHtml(s.status || 'Unknown') + '</span>' +
-                '</div>' +
-                edmAttrib +
-                '<div class="cr-source-meta">' +
-                    'Last success: ' + escHtml(fmtDate(s.lastSuccessAt)) + '<br>' +
-                    'Calls today: ' + escHtml(s.callsToday != null ? String(s.callsToday) : '—') + '<br>' +
-                    disabledUntilStr +
-                    (s.lastError ? 'Last error: ' + escHtml(s.lastError) + '<br>' : '') +
-                '</div>' +
-                '<div class="cr-source-actions">' +
-                    '<button type="button" class="cr-btn cr-btn-secondary cr-reset-source" ' +
-                        'data-source-id="' + escHtml(sourceId) + '">Reset</button>' +
-                '</div>' +
-            '</div>';
-        });
-        grid.innerHTML = html;
-
-        // Wire reset buttons
-        grid.querySelectorAll('.cr-reset-source').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var sid = btn.getAttribute('data-source-id');
-                adminPost('/admin/sources/' + encodeURIComponent(sid) + '/reset')
-                    .then(function () {
-                        announce('Source ' + sid + ' reset.');
-                        loadStatus();
-                    })
-                    .catch(function (err) {
-                        announce('Reset failed: ' + (err.message || err));
-                    });
+            // ── Formatting ──────────────────────────────────────────────
+            var dtFmt = new Intl.DateTimeFormat(undefined, {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
             });
-        });
-    }
 
-    function loadStatus() {
-        adminGet('/status').then(function (data) {
-            var d = data || {};
-            document.getElementById('cr-last-run').textContent  = fmtDate(d.lastRun);
-            document.getElementById('cr-next-run').textContent  = fmtDate(d.nextRun);
-            document.getElementById('cr-queue').textContent     = d.queueSize != null ? d.queueSize : '—';
-            renderSourceCards(d.sources || []);
-        }).catch(function () {
-            document.getElementById('cr-source-grid').innerHTML =
-                '<p class="cr-placeholder">Could not load status.</p>';
-        });
-    }
+            function fmtDate(iso) {
+                if (!iso) return '—';
+                try { return dtFmt.format(new Date(iso)); }
+                catch (e) { return iso; }
+            }
 
-    function startStatusPolling() {
-        loadStatus();
-        statusInterval = setInterval(loadStatus, 5000);
-    }
+            function announce(msg) {
+                var el = page.querySelector('.cr-live');
+                if (!el) return;
+                el.textContent = '';
+                setTimeout(function () { el.textContent = msg; }, 50);
+            }
 
-    function stopStatusPolling() {
-        if (statusInterval) { clearInterval(statusInterval); statusInterval = null; }
-    }
+            function escHtml(str) {
+                var d = document.createElement('div');
+                d.textContent = str == null ? '' : String(str);
+                return d.innerHTML;
+            }
 
-    // ── Helpers ──────────────────────────────────────────────────────────
-    function escHtml(str) {
-        var d = document.createElement('div');
-        d.textContent = str;
-        return d.innerHTML;
-    }
+            function parseCommaList(str) {
+                if (!str || !str.trim()) return [];
+                return str.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+            }
 
-    function parseCommaList(str) {
-        if (!str || !str.trim()) return [];
-        return str.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-    }
+            function joinCommaList(arr) {
+                return Array.isArray(arr) ? arr.join(', ') : '';
+            }
 
-    function joinCommaList(arr) {
-        return Array.isArray(arr) ? arr.join(', ') : '';
-    }
+            function showError(elId, show) {
+                var el = page.querySelector('#' + elId);
+                if (el) { el.classList.toggle('cr-visible', !!show); }
+            }
 
-    function showError(elId, show) {
-        var el = document.getElementById(elId);
-        if (el) { el.classList.toggle('cr-visible', !!show); }
-    }
+            // ── Admin API helpers ────────────────────────────────────────
+            function adminGet(path) {
+                return ApiClient.ajax({
+                    url: ApiClient.getUrl(API_BASE + path),
+                    type: 'GET',
+                    dataType: 'json'
+                });
+            }
 
-    // ── Location rows ────────────────────────────────────────────────────
-    function makeLocInput(type, cls, value, attrs) {
-        var inp = document.createElement('input');
-        inp.type = type;
-        inp.className = cls;
-        inp.value = (value != null) ? String(value) : '';
-        if (attrs) {
-            Object.keys(attrs).forEach(function (k) { inp.setAttribute(k, attrs[k]); });
-        }
-        var td = document.createElement('td');
-        td.appendChild(inp);
-        return td;
-    }
+            function adminPost(path) {
+                return ApiClient.ajax({
+                    url: ApiClient.getUrl(API_BASE + path),
+                    type: 'POST'
+                });
+            }
 
-    function makeLocationRow(loc) {
-        loc = loc || {};
-        var tr = document.createElement('tr');
+            // ── Status rendering ─────────────────────────────────────────
+            function badgeClass(status) {
+                var map = {
+                    Ok: 'cr-badge-ok',
+                    Degraded: 'cr-badge-degraded',
+                    Failing: 'cr-badge-failing',
+                    Disabled: 'cr-badge-disabled',
+                    Unconfigured: 'cr-badge-unconfigured'
+                };
+                return 'cr-badge ' + (map[status] || 'cr-badge-unconfigured');
+            }
 
-        tr.appendChild(makeLocInput('text',   'cr-loc-city',    loc.city    || '', { placeholder: 'City' }));
-        tr.appendChild(makeLocInput('text',   'cr-loc-region',  loc.region  || '', { placeholder: 'Region' }));
-        tr.appendChild(makeLocInput('text',   'cr-loc-country', loc.country || '', { placeholder: 'US', maxlength: '2' }));
-        tr.appendChild(makeLocInput('number', 'cr-loc-lat',     loc.lat  != null ? loc.lat  : '', { placeholder: '—', step: 'any' }));
-        tr.appendChild(makeLocInput('number', 'cr-loc-lon',     loc.lon  != null ? loc.lon  : '', { placeholder: '—', step: 'any' }));
-        tr.appendChild(makeLocInput('number', 'cr-loc-radius',  loc.radiusKm != null ? loc.radiusKm : 80, { min: '1', step: '1' }));
-
-        var removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'cr-btn cr-btn-danger cr-remove-location';
-        removeBtn.setAttribute('aria-label', 'Remove row');
-        removeBtn.textContent = '\u2715';
-        removeBtn.addEventListener('click', function () {
-            tr.parentNode.removeChild(tr);
-            updateLocationPlaceholder();
-        });
-        var tdBtn = document.createElement('td');
-        tdBtn.appendChild(removeBtn);
-        tr.appendChild(tdBtn);
-
-        return tr;
-    }
-
-    function updateLocationPlaceholder() {
-        var tbody = document.getElementById('cr-location-tbody');
-        var noEl  = document.getElementById('cr-no-locations');
-        if (noEl) noEl.style.display = tbody.rows.length === 0 ? '' : 'none';
-    }
-
-    function addLocationRow(loc) {
-        var tbody = document.getElementById('cr-location-tbody');
-        tbody.appendChild(makeLocationRow(loc));
-        updateLocationPlaceholder();
-    }
-
-    function readLocations() {
-        var rows = document.querySelectorAll('#cr-location-tbody tr');
-        var locs = [];
-        rows.forEach(function (tr) {
-            var city    = tr.querySelector('.cr-loc-city').value.trim();
-            var region  = tr.querySelector('.cr-loc-region').value.trim();
-            var country = tr.querySelector('.cr-loc-country').value.trim().toUpperCase();
-            var latStr  = tr.querySelector('.cr-loc-lat').value.trim();
-            var lonStr  = tr.querySelector('.cr-loc-lon').value.trim();
-            var radStr  = tr.querySelector('.cr-loc-radius').value.trim();
-            locs.push({
-                city:     city,
-                region:   region,
-                country:  country,
-                lat:      latStr !== '' ? parseFloat(latStr) : null,
-                lon:      lonStr !== '' ? parseFloat(lonStr) : null,
-                radiusKm: radStr !== '' ? parseInt(radStr, 10) : 80
-            });
-        });
-        return locs;
-    }
-
-    // ── Rate limit table ─────────────────────────────────────────────────
-    function renderRateTable(rateLimits) {
-        var placeholder = document.getElementById('cr-rate-placeholder');
-        var table       = document.getElementById('cr-rate-table');
-        var tbody       = document.getElementById('cr-rate-tbody');
-        var seedBtn     = document.getElementById('cr-seed-defaults');
-
-        if (!rateLimits || rateLimits.length === 0) {
-            placeholder.textContent = 'No rate limits configured.';
-            placeholder.style.display = '';
-            table.style.display = 'none';
-            seedBtn.style.display = '';
-            return;
-        }
-
-        placeholder.style.display = 'none';
-        seedBtn.style.display     = 'none';
-        table.style.display       = '';
-        tbody.innerHTML = '';
-
-        rateLimits.forEach(function (entry) {
-            var cfg = entry.config || entry.Config || {};
-            var rps = cfg.requestsPerSecond != null ? cfg.requestsPerSecond : (cfg.RequestsPerSecond != null ? cfg.RequestsPerSecond : '');
-            var rpd = cfg.requestsPerDay    != null ? cfg.requestsPerDay    : (cfg.RequestsPerDay    != null ? cfg.RequestsPerDay    : '');
-            var srcId = entry.source || entry.Source || '';
-            var tr = document.createElement('tr');
-            tr.innerHTML =
-                '<td>' + escHtml(srcId) + '</td>' +
-                '<td><input type="number" class="cr-rl-rps" data-source="' + escHtml(srcId) +
-                    '" value="' + escHtml(String(rps)) + '" min="0.1" step="0.1" /></td>' +
-                '<td><input type="number" class="cr-rl-rpd" data-source="' + escHtml(srcId) +
-                    '" value="' + escHtml(rpd !== null && rpd !== '' && rpd !== undefined ? String(rpd) : '') +
-                    '" min="0" step="1" placeholder="unlimited" /></td>';
-            tbody.appendChild(tr);
-        });
-    }
-
-    function readRateLimits() {
-        var entries = [];
-        document.querySelectorAll('#cr-rate-tbody tr').forEach(function (tr) {
-            var rpsEl = tr.querySelector('.cr-rl-rps');
-            var rpdEl = tr.querySelector('.cr-rl-rpd');
-            if (!rpsEl) return;
-            var src    = rpsEl.getAttribute('data-source');
-            var rpsVal = rpsEl.value.trim() !== '' ? parseFloat(rpsEl.value) : 0;
-            var rpdRaw = rpdEl.value.trim();
-            entries.push({
-                source: src,
-                config: {
-                    requestsPerSecond: rpsVal,
-                    requestsPerDay: rpdRaw !== '' ? parseInt(rpdRaw, 10) : null
+            function renderSourceCards(sources) {
+                var grid = page.querySelector('#cr-source-grid');
+                if (!sources || sources.length === 0) {
+                    grid.innerHTML = '<p class="cr-placeholder">No source data available.</p>';
+                    return;
                 }
+
+                var html = '';
+                sources.forEach(function (s) {
+                    var status        = pick(s, 'Status',        'status');
+                    var displayName   = pick(s, 'DisplayName',   'displayName');
+                    var src           = pick(s, 'Source',        'source') || pick(s, 'Id', 'id') || '';
+                    var disabledUntil = pick(s, 'DisabledUntil', 'disabledUntil');
+                    var lastSuccess   = pick(s, 'LastSuccessAt', 'lastSuccessAt');
+                    var callsToday    = pick(s, 'CallsToday',    'callsToday');
+                    var lastError     = pick(s, 'LastError',     'lastError');
+
+                    var badgeCls = badgeClass(status);
+                    var sourceId = String(src).toLowerCase();
+                    var disabledUntilStr = disabledUntil
+                        ? 'Disabled until: ' + escHtml(fmtDate(disabledUntil)) + '<br>' : '';
+                    var edmAttrib = (sourceId === 'edmtrain' && status !== 'Disabled' && status !== 'Unconfigured')
+                        ? '<div><span class="cr-attribution-badge">Data: EdmTrain</span></div>'
+                        : '';
+                    html += '<div class="cr-source-card">' +
+                        '<div class="cr-source-name">' +
+                            '<span>' + escHtml(displayName || sourceId) + '</span>' +
+                            '<span class="' + escHtml(badgeCls) + '">' + escHtml(status || 'Unknown') + '</span>' +
+                        '</div>' +
+                        edmAttrib +
+                        '<div class="cr-source-meta">' +
+                            'Last success: ' + escHtml(fmtDate(lastSuccess)) + '<br>' +
+                            'Calls today: ' + escHtml(callsToday != null ? String(callsToday) : '—') + '<br>' +
+                            disabledUntilStr +
+                            (lastError ? 'Last error: ' + escHtml(lastError) + '<br>' : '') +
+                        '</div>' +
+                        '<div class="cr-source-actions">' +
+                            '<button is="emby-button" type="button" class="raised emby-button cr-reset-source" ' +
+                                'data-source-id="' + escHtml(sourceId) + '"><span>Reset</span></button>' +
+                        '</div>' +
+                    '</div>';
+                });
+                grid.innerHTML = html;
+
+                grid.querySelectorAll('.cr-reset-source').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var sid = btn.getAttribute('data-source-id');
+                        adminPost('/admin/sources/' + encodeURIComponent(sid) + '/reset')
+                            .then(function () {
+                                announce('Source ' + sid + ' reset.');
+                                loadStatus();
+                            })
+                            .catch(function (err) {
+                                announce('Reset failed: ' + (err.message || err));
+                            });
+                    });
+                });
+            }
+
+            function pick(obj, pascal, camel) {
+                if (!obj) return undefined;
+                return obj[pascal] !== undefined ? obj[pascal] : obj[camel];
+            }
+
+            function loadStatus() {
+                adminGet('/status').then(function (data) {
+                    var d = data || {};
+                    var lastRun   = pick(d, 'LastRun',   'lastRun');
+                    var nextRun   = pick(d, 'NextRun',   'nextRun');
+                    var queueSize = pick(d, 'QueueSize', 'queueSize');
+                    var sources   = pick(d, 'Sources',   'sources') || [];
+
+                    page.querySelector('#cr-last-run').textContent = fmtDate(lastRun);
+                    page.querySelector('#cr-next-run').textContent = fmtDate(nextRun);
+                    page.querySelector('#cr-queue').textContent    = queueSize != null ? queueSize : '—';
+                    renderSourceCards(sources);
+                }).catch(function () {
+                    page.querySelector('#cr-source-grid').innerHTML =
+                        '<p class="cr-placeholder">Could not load status.</p>';
+                });
+            }
+
+            function startStatusPolling() {
+                loadStatus();
+                statusInterval = setInterval(loadStatus, 5000);
+            }
+
+            function stopStatusPolling() {
+                if (statusInterval) { clearInterval(statusInterval); statusInterval = null; }
+            }
+
+            // ── Location rows ────────────────────────────────────────────
+            function makeLocInput(type, cls, value, attrs) {
+                var inp = document.createElement('input');
+                inp.type = type;
+                inp.className = cls;
+                inp.value = (value != null) ? String(value) : '';
+                if (attrs) {
+                    Object.keys(attrs).forEach(function (k) { inp.setAttribute(k, attrs[k]); });
+                }
+                var td = document.createElement('td');
+                td.appendChild(inp);
+                return td;
+            }
+
+            function makeLocationRow(loc) {
+                loc = loc || {};
+                var tr = document.createElement('tr');
+                tr.appendChild(makeLocInput('text',   'cr-loc-city',    loc.city    || '', { placeholder: 'City' }));
+                tr.appendChild(makeLocInput('text',   'cr-loc-region',  loc.region  || '', { placeholder: 'Region' }));
+                tr.appendChild(makeLocInput('text',   'cr-loc-country', loc.country || '', { placeholder: 'US', maxlength: '2' }));
+                tr.appendChild(makeLocInput('number', 'cr-loc-lat',     loc.lat  != null ? loc.lat  : '', { placeholder: '—', step: 'any' }));
+                tr.appendChild(makeLocInput('number', 'cr-loc-lon',     loc.lon  != null ? loc.lon  : '', { placeholder: '—', step: 'any' }));
+                tr.appendChild(makeLocInput('number', 'cr-loc-radius',  loc.radiusKm != null ? loc.radiusKm : 80, { min: '1', step: '1' }));
+
+                var removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'raised button-delete emby-button cr-remove-location';
+                removeBtn.setAttribute('is', 'emby-button');
+                removeBtn.setAttribute('aria-label', 'Remove row');
+                removeBtn.innerHTML = '<span>\u2715</span>';
+                removeBtn.addEventListener('click', function () {
+                    tr.parentNode.removeChild(tr);
+                    updateLocationPlaceholder();
+                });
+                var tdBtn = document.createElement('td');
+                tdBtn.appendChild(removeBtn);
+                tr.appendChild(tdBtn);
+
+                return tr;
+            }
+
+            function updateLocationPlaceholder() {
+                var tbody = page.querySelector('#cr-location-tbody');
+                var noEl  = page.querySelector('#cr-no-locations');
+                if (noEl) noEl.style.display = tbody.rows.length === 0 ? '' : 'none';
+            }
+
+            function addLocationRow(loc) {
+                var tbody = page.querySelector('#cr-location-tbody');
+                tbody.appendChild(makeLocationRow(loc));
+                updateLocationPlaceholder();
+            }
+
+            function readLocations() {
+                var rows = page.querySelectorAll('#cr-location-tbody tr');
+                var locs = [];
+                rows.forEach(function (tr) {
+                    var city    = tr.querySelector('.cr-loc-city').value.trim();
+                    var region  = tr.querySelector('.cr-loc-region').value.trim();
+                    var country = tr.querySelector('.cr-loc-country').value.trim().toUpperCase();
+                    var latStr  = tr.querySelector('.cr-loc-lat').value.trim();
+                    var lonStr  = tr.querySelector('.cr-loc-lon').value.trim();
+                    var radStr  = tr.querySelector('.cr-loc-radius').value.trim();
+                    locs.push({
+                        city: city,
+                        region: region,
+                        country: country,
+                        lat:  latStr !== '' ? parseFloat(latStr) : null,
+                        lon:  lonStr !== '' ? parseFloat(lonStr) : null,
+                        radiusKm: radStr !== '' ? parseInt(radStr, 10) : 80
+                    });
+                });
+                return locs;
+            }
+
+            // ── Rate limit table ─────────────────────────────────────────
+            function renderRateTable(rateLimits) {
+                var placeholder = page.querySelector('#cr-rate-placeholder');
+                var table       = page.querySelector('#cr-rate-table');
+                var tbody       = page.querySelector('#cr-rate-tbody');
+                var seedBtn     = page.querySelector('#cr-seed-defaults');
+
+                if (!rateLimits || rateLimits.length === 0) {
+                    placeholder.textContent = 'No rate limits configured.';
+                    placeholder.style.display = '';
+                    table.style.display = 'none';
+                    seedBtn.style.display = '';
+                    return;
+                }
+
+                placeholder.style.display = 'none';
+                seedBtn.style.display     = 'none';
+                table.style.display       = '';
+                tbody.innerHTML = '';
+
+                rateLimits.forEach(function (entry) {
+                    var cfg = entry.config || entry.Config || {};
+                    var rps = cfg.requestsPerSecond != null ? cfg.requestsPerSecond : (cfg.RequestsPerSecond != null ? cfg.RequestsPerSecond : '');
+                    var rpd = cfg.requestsPerDay    != null ? cfg.requestsPerDay    : (cfg.RequestsPerDay    != null ? cfg.RequestsPerDay    : '');
+                    var srcId = entry.source || entry.Source || '';
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td>' + escHtml(srcId) + '</td>' +
+                        '<td><input type="number" class="cr-rl-rps" data-source="' + escHtml(srcId) +
+                            '" value="' + escHtml(String(rps)) + '" min="0.1" step="0.1" /></td>' +
+                        '<td><input type="number" class="cr-rl-rpd" data-source="' + escHtml(srcId) +
+                            '" value="' + escHtml(rpd !== null && rpd !== '' && rpd !== undefined ? String(rpd) : '') +
+                            '" min="0" step="1" placeholder="unlimited" /></td>';
+                    tbody.appendChild(tr);
+                });
+            }
+
+            function readRateLimits() {
+                var entries = [];
+                page.querySelectorAll('#cr-rate-tbody tr').forEach(function (tr) {
+                    var rpsEl = tr.querySelector('.cr-rl-rps');
+                    var rpdEl = tr.querySelector('.cr-rl-rpd');
+                    if (!rpsEl) return;
+                    var src    = rpsEl.getAttribute('data-source') || '';
+                    if (!src) return;
+                    var rpsVal = rpsEl.value.trim() !== '' ? parseFloat(rpsEl.value) : 0;
+                    var rpdRaw = rpdEl.value.trim();
+                    entries.push({
+                        source: src,
+                        config: {
+                            requestsPerSecond: rpsVal,
+                            requestsPerDay: rpdRaw !== '' ? parseInt(rpdRaw, 10) : null
+                        }
+                    });
+                });
+                return entries;
+            }
+
+            // ── Source toggles / ToS gating ──────────────────────────────
+            function applyGate(tosId, srcId, labelId, groupId, onText, offText) {
+                var tosChk = page.querySelector('#' + tosId);
+                var srcChk = page.querySelector('#' + srcId);
+                var label  = page.querySelector('#' + labelId);
+                var group  = page.querySelector('#' + groupId);
+                if (!tosChk || !srcChk) return;
+                var accepted = tosChk.checked;
+                srcChk.disabled = !accepted;
+                if (!accepted) srcChk.checked = false;
+                if (group) group.classList.toggle('cr-tos-disabled', !accepted);
+                if (label) label.textContent = accepted ? onText : offText;
+            }
+
+            function updateDiceGate()     { applyGate('cr-tos-dice',     'cr-src-chk-dice',     'cr-src-dice-label',     'cr-src-dice',     'Dice.fm (HTML scrape)',             'Dice.fm (HTML scrape) — accept ToS above to enable'); }
+            function updateRaGate()       { applyGate('cr-tos-ra',       'cr-src-chk-ra',       'cr-src-ra-label',       'cr-src-ra',       'Resident Advisor (GraphQL scrape)', 'Resident Advisor (GraphQL scrape) — accept ToS above to enable'); }
+            function updateSongkickGate() { applyGate('cr-tos-songkick', 'cr-src-chk-songkick', 'cr-src-songkick-label', 'cr-src-songkick', 'Songkick (HTML scrape)',            'Songkick (HTML scrape) — accept ToS above to enable'); }
+
+            // ── Populate form ────────────────────────────────────────────
+            function populateForm(cfg) {
+                cfg = cfg || {};
+
+                page.querySelector('#cr-tm-key').value  = cfg.TicketmasterApiKey || '';
+                page.querySelector('#cr-bit-key').value = cfg.BandsintownAppId   || '';
+                page.querySelector('#cr-edt-key').value = cfg.EdmTrainApiKey     || '';
+
+                var enabled = cfg.EnabledSources || [];
+                ALL_SOURCES.forEach(function (src) {
+                    var chk = page.querySelector('#cr-src-chk-' + src);
+                    if (chk) chk.checked = enabled.indexOf(src) !== -1;
+                });
+
+                var tosDice     = page.querySelector('#cr-tos-dice');
+                var tosRa       = page.querySelector('#cr-tos-ra');
+                var tosSongkick = page.querySelector('#cr-tos-songkick');
+                if (tosDice)     tosDice.checked     = !!cfg.AcceptDiceScrapeTos;
+                if (tosRa)       tosRa.checked       = !!cfg.AcceptRaScrapeTos;
+                if (tosSongkick) tosSongkick.checked = !!cfg.AcceptSongkickScrapeTos;
+
+                updateDiceGate();
+                updateRaGate();
+                updateSongkickGate();
+
+                var tbody = page.querySelector('#cr-location-tbody');
+                tbody.innerHTML = '';
+                (cfg.Locations || []).forEach(function (loc) { addLocationRow(loc); });
+                updateLocationPlaceholder();
+
+                page.querySelector('#cr-country-allowlist').value = joinCommaList(cfg.CountryAllowlist);
+                page.querySelector('#cr-genre-allowlist').value   = joinCommaList(cfg.GenreAllowlist);
+
+                page.querySelector('#cr-min-days').value = cfg.MinDaysAhead != null ? cfg.MinDaysAhead : 0;
+                page.querySelector('#cr-max-days').value = cfg.MaxDaysAhead != null ? cfg.MaxDaysAhead : 365;
+
+                page.querySelector('#cr-skip-festivals').checked = !!cfg.SkipFestivals;
+                page.querySelector('#cr-skip-soldout').checked   = !!cfg.SkipSoldOut;
+
+                page.querySelector('#cr-max-artists').value  = cfg.MaxArtistsPerRun          != null ? cfg.MaxArtistsPerRun          : 50;
+                page.querySelector('#cr-daily-budget').value = cfg.PerSourceDailyBudget      != null ? cfg.PerSourceDailyBudget      : 500;
+                page.querySelector('#cr-stale-days').value   = cfg.StaleRecordDays           != null ? cfg.StaleRecordDays           : 14;
+                page.querySelector('#cr-cb-threshold').value = cfg.CircuitBreakerThreshold   != null ? cfg.CircuitBreakerThreshold   : 5;
+                page.querySelector('#cr-cb-cooldown').value  = cfg.CircuitBreakerCooldownHours != null ? cfg.CircuitBreakerCooldownHours : 24;
+
+                var rates = (cfg.RateLimits || []).filter(function (e) {
+                    var src = (e && (e.Source || e.source)) || '';
+                    return src !== '';
+                });
+                if (rates.length === 0) {
+                    rates = DEFAULT_RATE_LIMITS.map(function (d) {
+                        return { source: d.source, config: { requestsPerSecond: d.requestsPerSecond, requestsPerDay: d.requestsPerDay } };
+                    });
+                }
+                renderRateTable(rates);
+            }
+
+            function readForm() {
+                var enabled = [];
+                ALL_SOURCES.forEach(function (src) {
+                    var chk = page.querySelector('#cr-src-chk-' + src);
+                    if (chk && chk.checked) enabled.push(src);
+                });
+
+                var tosDice     = page.querySelector('#cr-tos-dice');
+                var tosRa       = page.querySelector('#cr-tos-ra');
+                var tosSongkick = page.querySelector('#cr-tos-songkick');
+
+                return {
+                    TicketmasterApiKey:          page.querySelector('#cr-tm-key').value.trim(),
+                    BandsintownAppId:            page.querySelector('#cr-bit-key').value.trim(),
+                    EdmTrainApiKey:              page.querySelector('#cr-edt-key').value.trim(),
+                    EnabledSources:              enabled,
+                    AcceptDiceScrapeTos:         !!(tosDice     && tosDice.checked),
+                    AcceptRaScrapeTos:           !!(tosRa       && tosRa.checked),
+                    AcceptSongkickScrapeTos:     !!(tosSongkick && tosSongkick.checked),
+                    Locations:                   readLocations(),
+                    CountryAllowlist:            parseCommaList(page.querySelector('#cr-country-allowlist').value),
+                    GenreAllowlist:              parseCommaList(page.querySelector('#cr-genre-allowlist').value),
+                    MinDaysAhead:                parseInt(page.querySelector('#cr-min-days').value, 10)  || 0,
+                    MaxDaysAhead:                parseInt(page.querySelector('#cr-max-days').value, 10)  || 365,
+                    SkipFestivals:               page.querySelector('#cr-skip-festivals').checked,
+                    SkipSoldOut:                 page.querySelector('#cr-skip-soldout').checked,
+                    MaxArtistsPerRun:            parseInt(page.querySelector('#cr-max-artists').value,  10) || 50,
+                    PerSourceDailyBudget:        parseInt(page.querySelector('#cr-daily-budget').value, 10) || 500,
+                    StaleRecordDays:             parseInt(page.querySelector('#cr-stale-days').value,   10) || 14,
+                    CircuitBreakerThreshold:     parseInt(page.querySelector('#cr-cb-threshold').value, 10) || 5,
+                    CircuitBreakerCooldownHours: parseInt(page.querySelector('#cr-cb-cooldown').value,  10) || 24,
+                    RateLimits:                  readRateLimits()
+                };
+            }
+
+            function validateForm(cfg) {
+                var valid = true;
+                var formErrEl = page.querySelector('#cr-form-error');
+                formErrEl.textContent = '';
+                formErrEl.classList.remove('cr-visible');
+
+                function fail(errId, show) { showError(errId, show); if (show) valid = false; }
+
+                fail('cr-err-min-days',      cfg.MinDaysAhead < 0);
+                fail('cr-err-max-days',      cfg.MaxDaysAhead < 1 || cfg.MaxDaysAhead < cfg.MinDaysAhead);
+                fail('cr-err-max-artists',   cfg.MaxArtistsPerRun < 1);
+                fail('cr-err-daily-budget',  cfg.PerSourceDailyBudget < 1);
+                fail('cr-err-stale-days',    cfg.StaleRecordDays < 1);
+                fail('cr-err-cb-threshold',  cfg.CircuitBreakerThreshold < 1);
+                fail('cr-err-cb-cooldown',   cfg.CircuitBreakerCooldownHours < 1 || cfg.CircuitBreakerCooldownHours > 168);
+
+                if (!valid) {
+                    formErrEl.textContent = 'Please fix the highlighted errors before saving.';
+                    formErrEl.classList.add('cr-visible');
+                }
+                return valid;
+            }
+
+            // ── Page lifecycle ──────────────────────────────────────────
+            page.addEventListener('pageshow', function () {
+                stopStatusPolling();
+
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(PLUGIN_ID).then(function (cfg) {
+                    populateForm(cfg);
+                    Dashboard.hideLoadingMsg();
+                }).catch(function (err) {
+                    Dashboard.hideLoadingMsg();
+                    var formErr = page.querySelector('#cr-form-error');
+                    formErr.textContent = 'Failed to load configuration: ' + (err.message || err);
+                    formErr.classList.add('cr-visible');
+                });
+
+                startStatusPolling();
             });
-        });
-        return entries;
-    }
 
-    // ── Source toggles and ToS gating ────────────────────────────────────
-    function updateDiceGate() {
-        var tosChk   = document.getElementById('cr-tos-dice');
-        var srcChk   = document.getElementById('cr-src-chk-dice');
-        var srcLabel = document.getElementById('cr-src-dice-label');
-        var group    = document.getElementById('cr-src-dice');
-        if (!tosChk || !srcChk) return;
-        var accepted = tosChk.checked;
-        srcChk.disabled = !accepted;
-        if (!accepted) srcChk.checked = false;
-        group.classList.toggle('cr-tos-disabled', !accepted);
-        if (srcLabel) {
-            srcLabel.textContent = accepted
-                ? 'Dice.fm (HTML scrape)'
-                : 'Dice.fm (HTML scrape) — accept ToS above to enable';
-        }
-    }
+            page.addEventListener('pagebeforehide', function () {
+                stopStatusPolling();
+            });
 
-    function updateRaGate() {
-        var tosChk   = document.getElementById('cr-tos-ra');
-        var srcChk   = document.getElementById('cr-src-chk-ra');
-        var srcLabel = document.getElementById('cr-src-ra-label');
-        var group    = document.getElementById('cr-src-ra');
-        if (!tosChk || !srcChk) return;
-        var accepted = tosChk.checked;
-        srcChk.disabled = !accepted;
-        if (!accepted) srcChk.checked = false;
-        group.classList.toggle('cr-tos-disabled', !accepted);
-        if (srcLabel) {
-            srcLabel.textContent = accepted
-                ? 'Resident Advisor (GraphQL scrape)'
-                : 'Resident Advisor (GraphQL scrape) — accept ToS above to enable';
-        }
-    }
+            // ── Submit / buttons ─────────────────────────────────────────
+            page.querySelector('#cr-config-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                var cfg = readForm();
+                if (!validateForm(cfg)) return false;
 
-    function updateSongkickGate() {
-        var tosChk   = document.getElementById('cr-tos-songkick');
-        var srcChk   = document.getElementById('cr-src-chk-songkick');
-        var srcLabel = document.getElementById('cr-src-songkick-label');
-        var group    = document.getElementById('cr-src-songkick');
-        if (!tosChk || !srcChk) return;
-        var accepted = tosChk.checked;
-        srcChk.disabled = !accepted;
-        if (!accepted) srcChk.checked = false;
-        group.classList.toggle('cr-tos-disabled', !accepted);
-        if (srcLabel) {
-            srcLabel.textContent = accepted
-                ? 'Songkick (HTML scrape)'
-                : 'Songkick (HTML scrape) — accept ToS above to enable';
-        }
-    }
+                Dashboard.showLoadingMsg();
+                var statusEl = page.querySelector('#cr-save-status');
+                statusEl.textContent = 'Saving…';
 
-    // ── Populate form from config ────────────────────────────────────────
-    function populateForm(cfg) {
-        // Credentials
-        document.getElementById('cr-tm-key').value  = cfg.TicketmasterApiKey  || '';
-        document.getElementById('cr-bit-key').value = cfg.BandsintownAppId    || '';
-        document.getElementById('cr-edt-key').value = cfg.EdmTrainApiKey      || '';
+                ApiClient.updatePluginConfiguration(PLUGIN_ID, cfg).then(function (result) {
+                    statusEl.textContent = '';
+                    Dashboard.hideLoadingMsg();
+                    announce('Configuration saved.');
+                    Dashboard.processPluginConfigurationUpdateResult(result);
+                }).catch(function (err) {
+                    statusEl.textContent = '';
+                    Dashboard.hideLoadingMsg();
+                    var msg = 'Save failed: ' + (err.message || err);
+                    var formErr = page.querySelector('#cr-form-error');
+                    formErr.textContent = msg;
+                    formErr.classList.add('cr-visible');
+                    announce(msg);
+                });
+                return false;
+            });
 
-        // Source toggles
-        var enabled = cfg.EnabledSources || [];
-        ALL_SOURCES.forEach(function (src) {
-            var chk = document.getElementById('cr-src-chk-' + src);
-            if (chk) chk.checked = enabled.indexOf(src) !== -1;
-        });
+            page.querySelector('#cr-btn-run-now').addEventListener('click', function () {
+                adminPost('/admin/run-now').then(function () {
+                    announce('Refresh queued.');
+                    Dashboard.alert({ message: 'Refresh queued. The task will run shortly.' });
+                }).catch(function (err) {
+                    Dashboard.alert({ message: 'Run-now failed: ' + (err.message || err) });
+                });
+            });
 
-        // ToS flags
-        var tosDice     = document.getElementById('cr-tos-dice');
-        var tosRa       = document.getElementById('cr-tos-ra');
-        var tosSongkick = document.getElementById('cr-tos-songkick');
-        if (tosDice)     tosDice.checked     = !!cfg.AcceptDiceScrapeTos;
-        if (tosRa)       tosRa.checked       = !!cfg.AcceptRaScrapeTos;
-        if (tosSongkick) tosSongkick.checked = !!cfg.AcceptSongkickScrapeTos;
+            page.querySelector('#cr-btn-purge').addEventListener('click', function () {
+                if (!confirm('This will delete ALL stored concerts and force a full re-fetch on the next run. Are you sure?')) return;
+                adminPost('/admin/purge').then(function () {
+                    announce('All concerts purged.');
+                    Dashboard.alert({ message: 'All concerts have been deleted.' });
+                }).catch(function (err) {
+                    Dashboard.alert({ message: 'Purge failed: ' + (err.message || err) });
+                });
+            });
 
-        // Apply gating after ToS flags are set
-        updateDiceGate();
-        updateRaGate();
-        updateSongkickGate();
+            page.querySelector('#cr-add-location').addEventListener('click', function () {
+                addLocationRow({});
+            });
 
-        // Filters — locations
-        var tbody = document.getElementById('cr-location-tbody');
-        tbody.innerHTML = '';
-        var locs = cfg.Locations || [];
-        locs.forEach(function (loc) { addLocationRow(loc); });
-        updateLocationPlaceholder();
+            page.querySelector('#cr-tos-dice').addEventListener('change', updateDiceGate);
+            page.querySelector('#cr-tos-ra').addEventListener('change', updateRaGate);
+            page.querySelector('#cr-tos-songkick').addEventListener('change', updateSongkickGate);
 
-        // Country & genre allowlists
-        document.getElementById('cr-country-allowlist').value = joinCommaList(cfg.CountryAllowlist);
-        document.getElementById('cr-genre-allowlist').value   = joinCommaList(cfg.GenreAllowlist);
-
-        // Days ahead
-        document.getElementById('cr-min-days').value = cfg.MinDaysAhead != null ? cfg.MinDaysAhead : 0;
-        document.getElementById('cr-max-days').value = cfg.MaxDaysAhead != null ? cfg.MaxDaysAhead : 365;
-
-        // Skip flags
-        document.getElementById('cr-skip-festivals').checked = !!cfg.SkipFestivals;
-        document.getElementById('cr-skip-soldout').checked   = !!cfg.SkipSoldOut;
-
-        // Scheduler
-        document.getElementById('cr-max-artists').value  = cfg.MaxArtistsPerRun          != null ? cfg.MaxArtistsPerRun          : 50;
-        document.getElementById('cr-daily-budget').value = cfg.PerSourceDailyBudget       != null ? cfg.PerSourceDailyBudget       : 500;
-        document.getElementById('cr-stale-days').value   = cfg.StaleRecordDays            != null ? cfg.StaleRecordDays            : 14;
-        document.getElementById('cr-cb-threshold').value = cfg.CircuitBreakerThreshold    != null ? cfg.CircuitBreakerThreshold    : 5;
-        document.getElementById('cr-cb-cooldown').value  = cfg.CircuitBreakerCooldownHours != null ? cfg.CircuitBreakerCooldownHours : 24;
-
-        // Rate limits
-        renderRateTable(cfg.RateLimits || []);
-    }
-
-    // ── Read form into config object ─────────────────────────────────────
-    function readForm() {
-        var enabled = [];
-        ALL_SOURCES.forEach(function (src) {
-            var chk = document.getElementById('cr-src-chk-' + src);
-            if (chk && chk.checked) enabled.push(src);
-        });
-
-        var tosDice     = document.getElementById('cr-tos-dice');
-        var tosRa       = document.getElementById('cr-tos-ra');
-        var tosSongkick = document.getElementById('cr-tos-songkick');
-
-        return {
-            TicketmasterApiKey:          document.getElementById('cr-tm-key').value.trim(),
-            BandsintownAppId:            document.getElementById('cr-bit-key').value.trim(),
-            EdmTrainApiKey:              document.getElementById('cr-edt-key').value.trim(),
-            EnabledSources:              enabled,
-            AcceptDiceScrapeTos:         tosDice     ? tosDice.checked     : false,
-            AcceptRaScrapeTos:           tosRa       ? tosRa.checked       : false,
-            AcceptSongkickScrapeTos:     tosSongkick ? tosSongkick.checked : false,
-            Locations:                   readLocations(),
-            CountryAllowlist:            parseCommaList(document.getElementById('cr-country-allowlist').value),
-            GenreAllowlist:              parseCommaList(document.getElementById('cr-genre-allowlist').value),
-            MinDaysAhead:                parseInt(document.getElementById('cr-min-days').value, 10)  || 0,
-            MaxDaysAhead:                parseInt(document.getElementById('cr-max-days').value, 10)  || 365,
-            SkipFestivals:               document.getElementById('cr-skip-festivals').checked,
-            SkipSoldOut:                 document.getElementById('cr-skip-soldout').checked,
-            MaxArtistsPerRun:            parseInt(document.getElementById('cr-max-artists').value,  10) || 50,
-            PerSourceDailyBudget:        parseInt(document.getElementById('cr-daily-budget').value, 10) || 500,
-            StaleRecordDays:             parseInt(document.getElementById('cr-stale-days').value,   10) || 14,
-            CircuitBreakerThreshold:     parseInt(document.getElementById('cr-cb-threshold').value, 10) || 5,
-            CircuitBreakerCooldownHours: parseInt(document.getElementById('cr-cb-cooldown').value,  10) || 24,
-            RateLimits:                  readRateLimits()
-        };
-    }
-
-    // ── Validation ───────────────────────────────────────────────────────
-    function validateForm(cfg) {
-        var valid = true;
-        var formErrEl = document.getElementById('cr-form-error');
-        formErrEl.textContent = '';
-        formErrEl.classList.remove('cr-visible');
-
-        function fail(errId, show) { showError(errId, show); if (show) valid = false; }
-
-        fail('cr-err-min-days',      cfg.MinDaysAhead < 0);
-        fail('cr-err-max-days',      cfg.MaxDaysAhead < 1 || cfg.MaxDaysAhead < cfg.MinDaysAhead);
-        fail('cr-err-max-artists',   cfg.MaxArtistsPerRun < 1);
-        fail('cr-err-daily-budget',  cfg.PerSourceDailyBudget < 1);
-        fail('cr-err-stale-days',    cfg.StaleRecordDays < 1);
-        fail('cr-err-cb-threshold',  cfg.CircuitBreakerThreshold < 1);
-        fail('cr-err-cb-cooldown',   cfg.CircuitBreakerCooldownHours < 1 || cfg.CircuitBreakerCooldownHours > 168);
-
-        if (!valid) {
-            formErrEl.textContent = 'Please fix the highlighted errors before saving.';
-            formErrEl.classList.add('cr-visible');
-        }
-        return valid;
-    }
-
-    // ── Page lifecycle ───────────────────────────────────────────────────
-    document.addEventListener('pageshow', function (e) {
-        if (e.detail && e.detail.page && e.detail.page.id !== 'concertradarConfigPage') return;
-
-        // Defensive: stop any existing polling before starting a new interval.
-        // Jellyfin's SPA can fire pageshow more than once on the same element.
-        stopStatusPolling();
-
-        // Load config
-        ApiClient.getPluginConfiguration(PLUGIN_ID).then(function (cfg) {
-            populateForm(cfg);
-        }).catch(function (err) {
-            var formErr = document.getElementById('cr-form-error');
-            formErr.textContent = 'Failed to load configuration: ' + (err.message || err);
-            formErr.classList.add('cr-visible');
-        });
-
-        // Start status polling
-        startStatusPolling();
-    });
-
-    document.addEventListener('pagebeforehide', function (e) {
-        if (e.detail && e.detail.page && e.detail.page.id !== 'concertradarConfigPage') return;
-        stopStatusPolling();
-    });
-
-    // ── Form submit ──────────────────────────────────────────────────────
-    document.getElementById('cr-config-form').addEventListener('submit', function (e) {
-        e.preventDefault();
-        var cfg = readForm();
-        if (!validateForm(cfg)) return;
-
-        var statusEl = document.getElementById('cr-save-status');
-        statusEl.textContent = 'Saving…';
-
-        ApiClient.updatePluginConfiguration(PLUGIN_ID, cfg).then(function (result) {
-            statusEl.textContent = '';
-            announce('Configuration saved.');
-            Dashboard.processPluginConfigurationUpdateResult(result);
-        }).catch(function (err) {
-            statusEl.textContent = '';
-            var msg = 'Save failed: ' + (err.message || err);
-            var formErr = document.getElementById('cr-form-error');
-            formErr.textContent = msg;
-            formErr.classList.add('cr-visible');
-            announce(msg);
-        });
-    });
-
-    // ── Run now ──────────────────────────────────────────────────────────
-    document.getElementById('cr-btn-run-now').addEventListener('click', function () {
-        adminPost('/admin/run-now').then(function () {
-            announce('Refresh queued.');
-            Dashboard.alert({ message: 'Refresh queued. The task will run shortly.' });
-        }).catch(function (err) {
-            Dashboard.alert({ message: 'Run-now failed: ' + (err.message || err) });
-        });
-    });
-
-    // ── Purge all ────────────────────────────────────────────────────────
-    document.getElementById('cr-btn-purge').addEventListener('click', function () {
-        if (!confirm('This will delete ALL stored concerts and force a full re-fetch on the next run. Are you sure?')) return;
-        adminPost('/admin/purge').then(function () {
-            announce('All concerts purged.');
-            Dashboard.alert({ message: 'All concerts have been deleted.' });
-        }).catch(function (err) {
-            Dashboard.alert({ message: 'Purge failed: ' + (err.message || err) });
-        });
-    });
-
-    // ── Add location ─────────────────────────────────────────────────────
-    document.getElementById('cr-add-location').addEventListener('click', function () {
-        addLocationRow({});
-    });
-
-    // ── Password toggles ─────────────────────────────────────────────────
-    document.querySelectorAll('.cr-toggle-pw').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var target = document.getElementById(btn.getAttribute('data-target'));
-            if (!target) return;
-            var show = target.type === 'password';
-            target.type = show ? 'text' : 'password';
-            btn.textContent = show ? 'Hide' : 'Show';
-        });
-    });
-
-    // ── ToS gates ────────────────────────────────────────────────────────
-    document.getElementById('cr-tos-dice').addEventListener('change', updateDiceGate);
-    document.getElementById('cr-tos-ra').addEventListener('change', updateRaGate);
-    document.getElementById('cr-tos-songkick').addEventListener('change', updateSongkickGate);
-
-    // ── Seed defaults ────────────────────────────────────────────────────
-    document.getElementById('cr-seed-defaults').addEventListener('click', function () {
-        renderRateTable(DEFAULT_RATE_LIMITS.map(function (d) {
-            return {
-                source: d.source,
-                config: { requestsPerSecond: d.requestsPerSecond, requestsPerDay: d.requestsPerDay }
-            };
-        }));
-    });
-
-})();
-</script>
+            page.querySelector('#cr-seed-defaults').addEventListener('click', function () {
+                renderRateTable(DEFAULT_RATE_LIMITS.map(function (d) {
+                    return {
+                        source: d.source,
+                        config: { requestsPerSecond: d.requestsPerSecond, requestsPerDay: d.requestsPerDay }
+                    };
+                }));
+            });
+        })();
+    </script>
+</div>
 </body>
 </html>

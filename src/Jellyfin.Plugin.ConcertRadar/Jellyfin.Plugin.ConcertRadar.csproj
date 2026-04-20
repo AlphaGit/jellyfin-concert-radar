@@ -11,7 +11,7 @@
     <RootNamespace>Jellyfin.Plugin.ConcertRadar</RootNamespace>
     <Product>Jellyfin Concert Radar</Product>
     <Authors>Alpha</Authors>
-    <Version>0.1.0</Version>
+    <Version>0.1.0.0</Version>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
