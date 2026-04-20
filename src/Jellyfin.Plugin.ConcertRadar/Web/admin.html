@@ -917,8 +917,10 @@
                 return locs;
             }
 
-            // ── Geocoding (Nominatim, client-side, OSM-attributed) ───────
-            var geocodeAbort = null;
+            // ── Geocoding (plugin-side Nominatim proxy, OSM-attributed) ──
+            // Token bumps on each fetch so stale responses that finish out of order
+            // are dropped instead of clobbering newer results.
+            var geocodeToken = 0;
             function geocodeDebounce(fn, ms) {
                 var t;
                 return function () {
@@ -1009,28 +1011,23 @@
                 }
                 setSearchStatus('Searching…');
 
-                if (geocodeAbort) {
-                    try { geocodeAbort.abort(); } catch (e) { /* ignore */ }
-                }
-                geocodeAbort = ('AbortController' in window) ? new AbortController() : null;
+                // Call the plugin proxy rather than Nominatim directly: Nominatim does
+                // not emit CORS headers, and the proxy attaches a compliant User-Agent.
+                var token = ++geocodeToken;
+                var path = API_BASE + '/admin/geocode?q=' + encodeURIComponent(query);
 
-                var url = 'https://nominatim.openstreetmap.org/search'
-                        + '?q=' + encodeURIComponent(query)
-                        + '&format=jsonv2&addressdetails=1&limit=5';
-
-                fetch(url, {
-                    method: 'GET',
-                    signal: geocodeAbort ? geocodeAbort.signal : undefined,
-                    headers: { 'Accept': 'application/json' }
-                }).then(function (resp) {
-                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                    return resp.json();
+                ApiClient.ajax({
+                    url: ApiClient.getUrl(path),
+                    type: 'GET',
+                    dataType: 'json'
                 }).then(function (results) {
+                    if (token !== geocodeToken) return; // newer request superseded this one
                     setSearchStatus('');
                     renderSuggestions(Array.isArray(results) ? results : [], query);
                 }).catch(function (err) {
-                    if (err && err.name === 'AbortError') return;
-                    setSearchStatus('Geocoding failed: ' + (err.message || err)
+                    if (token !== geocodeToken) return;
+                    var msg = (err && (err.statusText || err.message)) || 'request failed';
+                    setSearchStatus('Geocoding failed: ' + msg
                         + ' — use Advanced → manual entry if this persists.', true);
                     hideSuggestions();
                 });

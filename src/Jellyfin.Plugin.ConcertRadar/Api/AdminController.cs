@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.ConcertRadar.ScheduledTasks;
@@ -26,6 +27,7 @@ public sealed class AdminController : ControllerBase
     private readonly ArtistRepository _artistRepository;
     private readonly SourceStateRepository _sourceStateRepository;
     private readonly ITaskManager _taskManager;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<AdminController> _logger;
 
     /// <summary>
@@ -35,18 +37,21 @@ public sealed class AdminController : ControllerBase
     /// <param name="artistRepository">Artist repository.</param>
     /// <param name="sourceStateRepository">Source state repository.</param>
     /// <param name="taskManager">Jellyfin task manager.</param>
+    /// <param name="httpClientFactory">Named HttpClient factory.</param>
     /// <param name="logger">Logger.</param>
     public AdminController(
         ConcertRepository concertRepository,
         ArtistRepository artistRepository,
         SourceStateRepository sourceStateRepository,
         ITaskManager taskManager,
+        IHttpClientFactory httpClientFactory,
         ILogger<AdminController> logger)
     {
         _concertRepository      = concertRepository;
         _artistRepository       = artistRepository;
         _sourceStateRepository  = sourceStateRepository;
         _taskManager            = taskManager;
+        _httpClientFactory      = httpClientFactory;
         _logger                 = logger;
     }
 
@@ -132,4 +137,55 @@ public sealed class AdminController : ControllerBase
 
     /// <summary>Result payload for the purge endpoint.</summary>
     public sealed record PurgeResult(int Deleted);
+
+    /// <summary>
+    /// Proxies a Nominatim geocoding query. The admin page cannot call Nominatim
+    /// directly because the Jellyfin web client runs on a different origin and
+    /// Nominatim does not emit CORS headers; performing the request server-side
+    /// also lets us attach a compliant <c>User-Agent</c> per Nominatim's usage
+    /// policy.
+    /// </summary>
+    /// <param name="q">Free-text location query.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>JSON array passthrough from Nominatim (or an error payload).</returns>
+    [HttpGet("geocode")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult> GeocodeAsync(
+        [FromQuery] string? q,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(q)) return BadRequest("Missing q.");
+        if (q.Length > 200)               return BadRequest("Query too long.");
+
+        var url = "https://nominatim.openstreetmap.org/search"
+                + "?q=" + Uri.EscapeDataString(q)
+                + "&format=jsonv2&addressdetails=1&limit=5";
+
+        try
+        {
+            using var client = _httpClientFactory.CreateClient(PluginHttpClient.ClientName);
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            // Nominatim requires a distinctive User-Agent identifying the application.
+            req.Headers.UserAgent.ParseAdd("JellyfinConcertRadar/0.1 (+https://github.com/alphagit/jellyfin-concert-radar)");
+            req.Headers.Accept.ParseAdd("application/json");
+
+            using var resp = await client.SendAsync(req, cancellationToken).ConfigureAwait(false);
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            if (!resp.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("AdminController: Nominatim returned {Status} for geocode query.", resp.StatusCode);
+                return StatusCode(StatusCodes.Status502BadGateway,
+                    new { error = "Upstream " + (int)resp.StatusCode });
+            }
+            return Content(body, "application/json");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "AdminController: geocode request failed.");
+            return StatusCode(StatusCodes.Status502BadGateway,
+                new { error = "Geocoding request failed." });
+        }
+    }
 }

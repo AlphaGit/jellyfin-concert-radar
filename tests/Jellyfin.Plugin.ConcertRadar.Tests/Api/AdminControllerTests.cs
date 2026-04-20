@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,6 +43,7 @@ public sealed class AdminControllerTests : IAsyncLifetime
             _db.Artists,
             _db.SourceState,
             taskManager ?? Substitute.For<ITaskManager>(),
+            Substitute.For<IHttpClientFactory>(),
             NullLogger<AdminController>.Instance);
 
     // ── Tests ─────────────────────────────────────────────────────────────────
