@@ -129,6 +129,100 @@
                     letter-spacing: .02em;
                 }
                 #concertradarConfigPage .cr-hint { font-size: .82em; opacity: .7; margin-top: .2em; }
+                #concertradarConfigPage .cr-loc-search-wrap {
+                    position: relative;
+                    margin-top: .5em;
+                    max-width: 520px;
+                }
+                #concertradarConfigPage .cr-loc-search-wrap input {
+                    width: 100%;
+                    box-sizing: border-box;
+                    padding: .5em .75em;
+                    border-radius: 4px;
+                    border: 1px solid rgba(127,127,127,.4);
+                    background: rgba(0,0,0,.25);
+                    color: inherit;
+                    font-size: .95em;
+                }
+                #concertradarConfigPage .cr-loc-suggestions {
+                    position: absolute;
+                    top: 100%;
+                    left: 0; right: 0;
+                    margin: 2px 0 0;
+                    padding: 0;
+                    list-style: none;
+                    max-height: 260px;
+                    overflow-y: auto;
+                    background: #1c1c1c;
+                    border: 1px solid rgba(127,127,127,.4);
+                    border-radius: 4px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,.4);
+                    z-index: 50;
+                }
+                #concertradarConfigPage .cr-loc-suggestions li {
+                    padding: .5em .75em;
+                    cursor: pointer;
+                    font-size: .88em;
+                    border-bottom: 1px solid rgba(127,127,127,.15);
+                }
+                #concertradarConfigPage .cr-loc-suggestions li:last-child { border-bottom: none; }
+                #concertradarConfigPage .cr-loc-suggestions li[aria-selected="true"],
+                #concertradarConfigPage .cr-loc-suggestions li:hover {
+                    background: rgba(75,159,255,.15);
+                }
+                #concertradarConfigPage .cr-loc-suggestions .cr-sugg-empty {
+                    opacity: .6; font-style: italic; cursor: default;
+                }
+                #concertradarConfigPage .cr-loc-chips {
+                    display: flex; flex-direction: column; gap: .4em;
+                    margin-top: .75em;
+                }
+                #concertradarConfigPage .cr-loc-chip {
+                    display: flex; align-items: center; gap: .75em; flex-wrap: wrap;
+                    background: rgba(75,159,255,.08);
+                    border: 1px solid rgba(75,159,255,.35);
+                    border-radius: 6px;
+                    padding: .5em .75em;
+                }
+                #concertradarConfigPage .cr-loc-chip-label {
+                    flex: 1 1 220px; min-width: 0;
+                    font-size: .9em;
+                }
+                #concertradarConfigPage .cr-loc-chip-label strong { display: block; }
+                #concertradarConfigPage .cr-loc-chip-label .cr-loc-chip-coords {
+                    font-size: .78em; opacity: .7; font-family: monospace;
+                }
+                #concertradarConfigPage .cr-loc-chip-radius {
+                    display: flex; align-items: center; gap: .35em;
+                    font-size: .85em;
+                }
+                #concertradarConfigPage .cr-loc-chip-radius input {
+                    width: 70px; padding: .3em .5em;
+                    border-radius: 3px;
+                    border: 1px solid rgba(127,127,127,.4);
+                    background: rgba(0,0,0,.25);
+                    color: inherit; font-size: .85em;
+                }
+                #concertradarConfigPage .cr-loc-adv-summary {
+                    cursor: pointer;
+                    font-size: .85em;
+                    padding: .4em 0;
+                    opacity: .75;
+                    user-select: none;
+                }
+                #concertradarConfigPage .cr-loc-adv-summary:hover { opacity: 1; }
+                #concertradarConfigPage .cr-attrib {
+                    font-size: .75em;
+                    opacity: .55;
+                    margin-top: .75em;
+                }
+                #concertradarConfigPage .cr-loc-search-status {
+                    font-size: .78em;
+                    opacity: .7;
+                    margin-top: .25em;
+                    min-height: 1em;
+                }
+                #concertradarConfigPage .cr-loc-search-status.cr-err { color: #f66; opacity: 1; }
                 #concertradarConfigPage .cr-error-msg {
                     color: #f66; font-size: .85em; margin-top: .25em; display: none;
                 }
@@ -292,30 +386,54 @@
                     <h2>Filters</h2>
 
                     <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused">Locations</label>
-                        <div class="fieldDescription">Add city/region/country + optional GPS coordinates and radius. Leave lat/lon blank to use city name only.</div>
-                        <div style="overflow-x:auto; margin-top:.5em;">
-                            <table class="cr-location-table">
-                                <thead>
-                                    <tr>
-                                        <th>City</th>
-                                        <th>Region</th>
-                                        <th>Country</th>
-                                        <th>Lat</th>
-                                        <th>Lon</th>
-                                        <th>Radius&nbsp;(km)</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="cr-location-tbody">
-                                    <!-- rows inserted by JS -->
-                                </tbody>
-                            </table>
+                        <label class="inputLabel inputLabelUnfocused" for="cr-loc-search">Locations</label>
+                        <div class="fieldDescription">Type a city to search — select a suggestion to auto-fill coordinates. Tweak radius per entry. Leave empty to return concerts from every country.</div>
+
+                        <div class="cr-loc-search-wrap">
+                            <input is="emby-input" type="search" id="cr-loc-search"
+                                   placeholder="Search city or place (e.g. Toronto, Canada)"
+                                   autocomplete="off" spellcheck="false" aria-autocomplete="list"
+                                   aria-controls="cr-loc-suggestions" aria-expanded="false" />
+                            <ul class="cr-loc-suggestions" id="cr-loc-suggestions" role="listbox" hidden></ul>
                         </div>
-                        <button is="emby-button" type="button" class="raised emby-button" id="cr-add-location" style="margin-top:.5em;">
-                            <span>+ Add Location</span>
-                        </button>
+                        <div class="cr-loc-search-status" id="cr-loc-search-status" aria-live="polite"></div>
+
+                        <div class="cr-loc-chips" id="cr-loc-chips">
+                            <!-- chips inserted by JS -->
+                        </div>
                         <div id="cr-no-locations" class="cr-hint" style="display:none;">No locations configured — all concerts are returned.</div>
+
+                        <details style="margin-top:1em;">
+                            <summary class="cr-loc-adv-summary">Advanced — manual entry</summary>
+                            <div class="fieldDescription" style="margin-top:.5em;">
+                                For venues or regions the geocoder can't find. Leave lat/lon blank to use city-name matching only.
+                            </div>
+                            <div style="overflow-x:auto; margin-top:.5em;">
+                                <table class="cr-location-table">
+                                    <thead>
+                                        <tr>
+                                            <th>City</th>
+                                            <th>Region</th>
+                                            <th>Country</th>
+                                            <th>Lat</th>
+                                            <th>Lon</th>
+                                            <th>Radius&nbsp;(km)</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cr-location-tbody">
+                                        <!-- rows inserted by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button is="emby-button" type="button" class="raised emby-button" id="cr-add-location" style="margin-top:.5em;">
+                                <span>+ Add Manual Row</span>
+                            </button>
+                        </details>
+
+                        <div class="cr-attrib">
+                            Geocoding by <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener noreferrer">Nominatim</a> · © OpenStreetMap contributors.
+                        </div>
                     </div>
 
                     <div class="inputContainer">
@@ -654,8 +772,11 @@
 
             function updateLocationPlaceholder() {
                 var tbody = page.querySelector('#cr-location-tbody');
+                var chips = page.querySelector('#cr-loc-chips');
                 var noEl  = page.querySelector('#cr-no-locations');
-                if (noEl) noEl.style.display = tbody.rows.length === 0 ? '' : 'none';
+                var count = (tbody ? tbody.rows.length : 0)
+                          + (chips ? chips.querySelectorAll('.cr-loc-chip').length : 0);
+                if (noEl) noEl.style.display = count === 0 ? '' : 'none';
             }
 
             function addLocationRow(loc) {
@@ -664,12 +785,113 @@
                 updateLocationPlaceholder();
             }
 
+            // ── Geocoded location chips ──────────────────────────────────
+            function chipLabel(loc) {
+                var parts = [];
+                if (loc.city)    parts.push(loc.city);
+                if (loc.region)  parts.push(loc.region);
+                if (loc.country) parts.push(loc.country);
+                return parts.join(', ');
+            }
+
+            function makeLocationChip(loc) {
+                loc = loc || {};
+                var chip = document.createElement('div');
+                chip.className = 'cr-loc-chip';
+                chip.dataset.city    = loc.city    || '';
+                chip.dataset.region  = loc.region  || '';
+                chip.dataset.country = loc.country || '';
+                chip.dataset.lat     = loc.lat != null ? String(loc.lat) : '';
+                chip.dataset.lon     = loc.lon != null ? String(loc.lon) : '';
+
+                var coordsStr = (loc.lat != null && loc.lon != null)
+                    ? (Math.round(loc.lat * 1e4) / 1e4) + ', ' + (Math.round(loc.lon * 1e4) / 1e4)
+                    : '—';
+
+                var labelDiv = document.createElement('div');
+                labelDiv.className = 'cr-loc-chip-label';
+                var strong = document.createElement('strong');
+                strong.textContent = chipLabel(loc) || '(unnamed)';
+                var coords = document.createElement('div');
+                coords.className = 'cr-loc-chip-coords';
+                coords.textContent = coordsStr;
+                labelDiv.appendChild(strong);
+                labelDiv.appendChild(coords);
+                chip.appendChild(labelDiv);
+
+                var radiusWrap = document.createElement('label');
+                radiusWrap.className = 'cr-loc-chip-radius';
+                radiusWrap.textContent = 'Radius ';
+                var radiusInput = document.createElement('input');
+                radiusInput.type = 'number';
+                radiusInput.min  = '1';
+                radiusInput.step = '1';
+                radiusInput.value = loc.radiusKm != null ? loc.radiusKm : 80;
+                radiusInput.className = 'cr-loc-chip-radius-input';
+                radiusInput.setAttribute('aria-label', 'Radius in kilometres');
+                radiusWrap.appendChild(radiusInput);
+                var kmSpan = document.createElement('span');
+                kmSpan.textContent = ' km';
+                radiusWrap.appendChild(kmSpan);
+                chip.appendChild(radiusWrap);
+
+                var removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'raised button-delete emby-button';
+                removeBtn.setAttribute('is', 'emby-button');
+                removeBtn.setAttribute('aria-label', 'Remove location');
+                removeBtn.innerHTML = '<span>\u2715</span>';
+                removeBtn.addEventListener('click', function () {
+                    chip.parentNode.removeChild(chip);
+                    updateLocationPlaceholder();
+                });
+                chip.appendChild(removeBtn);
+
+                return chip;
+            }
+
+            function addLocationChip(loc) {
+                var chips = page.querySelector('#cr-loc-chips');
+                if (!chips) return;
+                // Dedupe by city+country+coords.
+                var key = (loc.city || '') + '|' + (loc.country || '') + '|'
+                        + (loc.lat != null ? loc.lat.toFixed(3) : '')
+                        + '|' + (loc.lon != null ? loc.lon.toFixed(3) : '');
+                var dup = false;
+                chips.querySelectorAll('.cr-loc-chip').forEach(function (c) {
+                    var k = (c.dataset.city || '') + '|' + (c.dataset.country || '') + '|'
+                          + (c.dataset.lat ? parseFloat(c.dataset.lat).toFixed(3) : '')
+                          + '|' + (c.dataset.lon ? parseFloat(c.dataset.lon).toFixed(3) : '');
+                    if (k === key) dup = true;
+                });
+                if (dup) return;
+                chips.appendChild(makeLocationChip(loc));
+                updateLocationPlaceholder();
+            }
+
             function readLocations() {
                 // Server deserializes these as LocationFilter (PascalCase C# properties);
                 // emitting lowercase keys silently drops every field on save.
-                var rows = page.querySelectorAll('#cr-location-tbody tr');
                 var locs = [];
-                rows.forEach(function (tr) {
+
+                // 1. Chips (geocoded entries).
+                page.querySelectorAll('#cr-loc-chips .cr-loc-chip').forEach(function (chip) {
+                    var radiusInput = chip.querySelector('.cr-loc-chip-radius-input');
+                    var radStr = radiusInput ? radiusInput.value.trim() : '';
+                    var latStr = chip.dataset.lat || '';
+                    var lonStr = chip.dataset.lon || '';
+                    locs.push({
+                        City:     chip.dataset.city    || '',
+                        Region:   chip.dataset.region  || '',
+                        Country:  chip.dataset.country || '',
+                        Lat:      latStr !== '' ? parseFloat(latStr) : null,
+                        Lon:      lonStr !== '' ? parseFloat(lonStr) : null,
+                        RadiusKm: radStr !== '' ? parseInt(radStr, 10) : 80
+                    });
+                });
+
+                // 2. Manual (Advanced) rows.
+                page.querySelectorAll('#cr-location-tbody tr').forEach(function (tr) {
                     var city    = tr.querySelector('.cr-loc-city').value.trim();
                     var region  = tr.querySelector('.cr-loc-region').value.trim();
                     var country = tr.querySelector('.cr-loc-country').value.trim().toUpperCase();
@@ -678,7 +900,7 @@
                     var radStr  = tr.querySelector('.cr-loc-radius').value.trim();
 
                     // Drop entries with no usable geographic data.
-                    var hasCity = city !== '';
+                    var hasCity   = city !== '';
                     var hasCoords = latStr !== '' && lonStr !== '';
                     if (!hasCity && !hasCoords) return;
 
@@ -691,8 +913,130 @@
                         RadiusKm: radStr !== '' ? parseInt(radStr, 10) : 80
                     });
                 });
+
                 return locs;
             }
+
+            // ── Geocoding (Nominatim, client-side, OSM-attributed) ───────
+            var geocodeAbort = null;
+            function geocodeDebounce(fn, ms) {
+                var t;
+                return function () {
+                    var args = arguments, ctx = this;
+                    clearTimeout(t);
+                    t = setTimeout(function () { fn.apply(ctx, args); }, ms);
+                };
+            }
+
+            function setSearchStatus(msg, isErr) {
+                var el = page.querySelector('#cr-loc-search-status');
+                if (!el) return;
+                el.textContent = msg || '';
+                el.classList.toggle('cr-err', !!isErr);
+            }
+
+            function hideSuggestions() {
+                var list = page.querySelector('#cr-loc-suggestions');
+                var input = page.querySelector('#cr-loc-search');
+                if (list) {
+                    list.hidden = true;
+                    list.innerHTML = '';
+                }
+                if (input) input.setAttribute('aria-expanded', 'false');
+            }
+
+            function renderSuggestions(results, query) {
+                var list = page.querySelector('#cr-loc-suggestions');
+                var input = page.querySelector('#cr-loc-search');
+                if (!list) return;
+                list.innerHTML = '';
+
+                if (!results || results.length === 0) {
+                    var li = document.createElement('li');
+                    li.className = 'cr-sugg-empty';
+                    li.textContent = 'No matches for "' + query + '".';
+                    list.appendChild(li);
+                    list.hidden = false;
+                    if (input) input.setAttribute('aria-expanded', 'true');
+                    return;
+                }
+
+                results.forEach(function (r, idx) {
+                    var li = document.createElement('li');
+                    li.setAttribute('role', 'option');
+                    li.setAttribute('data-idx', String(idx));
+                    li.textContent = r.display_name;
+                    li.addEventListener('click', function () {
+                        selectSuggestion(r);
+                    });
+                    list.appendChild(li);
+                });
+                list.hidden = false;
+                if (input) input.setAttribute('aria-expanded', 'true');
+            }
+
+            function selectSuggestion(r) {
+                var addr = r.address || {};
+                var city = addr.city || addr.town || addr.village || addr.hamlet
+                        || addr.municipality || addr.county || '';
+                var region = addr.state || addr.region || '';
+                var country = (addr.country_code || '').toUpperCase();
+                var lat = parseFloat(r.lat);
+                var lon = parseFloat(r.lon);
+                if (isNaN(lat) || isNaN(lon)) {
+                    setSearchStatus('Selected result has no coordinates.', true);
+                    return;
+                }
+                addLocationChip({
+                    city: city,
+                    region: region,
+                    country: country,
+                    lat: lat,
+                    lon: lon,
+                    radiusKm: 80
+                });
+                var input = page.querySelector('#cr-loc-search');
+                if (input) input.value = '';
+                hideSuggestions();
+                setSearchStatus('');
+            }
+
+            function runGeocode(query) {
+                if (!query || query.length < 3) {
+                    hideSuggestions();
+                    setSearchStatus('');
+                    return;
+                }
+                setSearchStatus('Searching…');
+
+                if (geocodeAbort) {
+                    try { geocodeAbort.abort(); } catch (e) { /* ignore */ }
+                }
+                geocodeAbort = ('AbortController' in window) ? new AbortController() : null;
+
+                var url = 'https://nominatim.openstreetmap.org/search'
+                        + '?q=' + encodeURIComponent(query)
+                        + '&format=jsonv2&addressdetails=1&limit=5';
+
+                fetch(url, {
+                    method: 'GET',
+                    signal: geocodeAbort ? geocodeAbort.signal : undefined,
+                    headers: { 'Accept': 'application/json' }
+                }).then(function (resp) {
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    return resp.json();
+                }).then(function (results) {
+                    setSearchStatus('');
+                    renderSuggestions(Array.isArray(results) ? results : [], query);
+                }).catch(function (err) {
+                    if (err && err.name === 'AbortError') return;
+                    setSearchStatus('Geocoding failed: ' + (err.message || err)
+                        + ' — use Advanced → manual entry if this persists.', true);
+                    hideSuggestions();
+                });
+            }
+
+            var debouncedGeocode = geocodeDebounce(runGeocode, 400);
 
             // ── Rate limit table ─────────────────────────────────────────
             function renderRateTable(rateLimits) {
@@ -798,8 +1142,30 @@
                 updateSongkickGate();
 
                 var tbody = page.querySelector('#cr-location-tbody');
+                var chipsEl = page.querySelector('#cr-loc-chips');
                 tbody.innerHTML = '';
-                (cfg.Locations || []).forEach(function (loc) { addLocationRow(loc); });
+                if (chipsEl) chipsEl.innerHTML = '';
+                (cfg.Locations || []).forEach(function (loc) {
+                    // Tolerate both PascalCase (what we now send) and camelCase (older data).
+                    var normalized = {
+                        city:     pick(loc, 'City',     'city')     || '',
+                        region:   pick(loc, 'Region',   'region')   || '',
+                        country:  pick(loc, 'Country',  'country')  || '',
+                        lat:      pick(loc, 'Lat',      'lat'),
+                        lon:      pick(loc, 'Lon',      'lon'),
+                        radiusKm: pick(loc, 'RadiusKm', 'radiusKm')
+                    };
+                    // Drop fully-empty placeholders that older builds persisted.
+                    if (!normalized.city && (normalized.lat == null || normalized.lon == null)) {
+                        return;
+                    }
+                    // Geocoded entries (have coords) → chip; manual-only → advanced row.
+                    if (normalized.lat != null && normalized.lon != null) {
+                        addLocationChip(normalized);
+                    } else {
+                        addLocationRow(normalized);
+                    }
+                });
                 updateLocationPlaceholder();
 
                 page.querySelector('#cr-country-allowlist').value = joinCommaList(cfg.CountryAllowlist);
@@ -958,6 +1324,57 @@
             page.querySelector('#cr-add-location').addEventListener('click', function () {
                 addLocationRow({});
             });
+
+            // Geocoding search events.
+            (function wireGeocoding() {
+                var input = page.querySelector('#cr-loc-search');
+                var list  = page.querySelector('#cr-loc-suggestions');
+                if (!input || !list) return;
+
+                input.addEventListener('input', function () {
+                    var q = input.value.trim();
+                    debouncedGeocode(q);
+                });
+
+                input.addEventListener('keydown', function (ev) {
+                    var items = list.querySelectorAll('li[role="option"]');
+                    if (items.length === 0) return;
+                    var selIdx = -1;
+                    items.forEach(function (li, i) {
+                        if (li.getAttribute('aria-selected') === 'true') selIdx = i;
+                    });
+
+                    if (ev.key === 'ArrowDown') {
+                        ev.preventDefault();
+                        selIdx = (selIdx + 1) % items.length;
+                    } else if (ev.key === 'ArrowUp') {
+                        ev.preventDefault();
+                        selIdx = (selIdx <= 0 ? items.length - 1 : selIdx - 1);
+                    } else if (ev.key === 'Enter') {
+                        if (selIdx >= 0) {
+                            ev.preventDefault();
+                            items[selIdx].click();
+                        }
+                        return;
+                    } else if (ev.key === 'Escape') {
+                        hideSuggestions();
+                        return;
+                    } else {
+                        return;
+                    }
+
+                    items.forEach(function (li, i) {
+                        li.setAttribute('aria-selected', i === selIdx ? 'true' : 'false');
+                    });
+                    if (items[selIdx]) items[selIdx].scrollIntoView({ block: 'nearest' });
+                });
+
+                document.addEventListener('click', function (ev) {
+                    if (!input.contains(ev.target) && !list.contains(ev.target)) {
+                        hideSuggestions();
+                    }
+                });
+            })();
 
             page.querySelector('#cr-tos-dice').addEventListener('change', updateDiceGate);
             page.querySelector('#cr-tos-ra').addEventListener('change', updateRaGate);
