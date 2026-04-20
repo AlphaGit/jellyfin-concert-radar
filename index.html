@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jellyfin Concert Radar</title>
+<meta name="description" content="Jellyfin plugin that aggregates upcoming concerts for every artist in your music library." />
+<link rel="icon" type="image/png" href="logo.png" />
+<style>
+    :root {
+        color-scheme: dark;
+        --bg: #140525;
+        --surface: rgba(255,255,255,0.05);
+        --border: rgba(255,255,255,0.12);
+        --text: #ece7f5;
+        --dim: #b8a8d8;
+        --accent: #e898f8;
+        --accent-2: #8ab4f8;
+        --code-bg: #0f0420;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; line-height: 1.55; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.9em; }
+    pre { background: var(--code-bg); padding: 1em 1.25em; border-radius: 6px; overflow-x: auto; font-size: 0.88em; border: 1px solid var(--border); }
+    pre code { background: transparent; padding: 0; }
+
+    header { padding: 4em 1.5em 3em; text-align: center; background: linear-gradient(180deg, #140525 0%, #2a0f4a 70%, #140525 100%); }
+    header img.banner { max-width: 1000px; width: 100%; height: auto; border-radius: 8px; }
+    header .tagline { margin: 1.5em auto 0; max-width: 640px; font-size: 1.05em; color: var(--dim); }
+
+    main { max-width: 960px; margin: 0 auto; padding: 2em 1.5em 5em; }
+    section { margin-bottom: 3em; }
+    h1, h2, h3 { font-weight: 700; line-height: 1.2; }
+    h2 { font-size: 1.6em; margin: 0 0 0.6em; padding-bottom: 0.3em; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1.2em; margin: 1.5em 0 0.4em; color: var(--accent-2); }
+    p { margin: 0.5em 0 1em; }
+
+    .install-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25em 1.5em; margin: 1em 0; }
+    .install-box .repo-url { display: block; background: var(--code-bg); padding: 0.6em 0.8em; border-radius: 6px; font-family: ui-monospace, Menlo, Monaco, "Courier New", monospace; font-size: 0.95em; word-break: break-all; border: 1px solid var(--border); user-select: all; }
+    .install-box code { font-family: ui-monospace, Menlo, Monaco, "Courier New", monospace; }
+
+    ul, ol { padding-left: 1.4em; }
+    li { margin-bottom: 0.35em; }
+
+    .screenshots { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1em; margin: 1em 0; }
+    .screenshots figure { margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.5em; }
+    .screenshots img { width: 100%; height: auto; display: block; border-radius: 4px; }
+    .screenshots figcaption { font-size: 0.82em; color: var(--dim); text-align: center; margin-top: 0.4em; }
+
+    .cta-row { display: flex; flex-wrap: wrap; gap: 0.75em; margin: 1.5em 0; }
+    .btn { display: inline-block; padding: 0.65em 1.2em; border-radius: 6px; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--text); text-decoration: none; }
+    .btn-primary { background: linear-gradient(135deg, #4a1a6a 0%, #2a0f4a 100%); border-color: var(--accent); }
+    .btn-primary:hover { filter: brightness(1.15); text-decoration: none; }
+    .btn:hover { text-decoration: none; }
+
+    .meta-row { display: flex; flex-wrap: wrap; gap: 1em 2em; color: var(--dim); font-size: 0.88em; margin-top: 1em; }
+
+    footer { text-align: center; padding: 2em 1.5em 3em; color: var(--dim); font-size: 0.85em; border-top: 1px solid var(--border); }
+
+    @media (max-width: 600px) {
+        header { padding: 2em 1em 2em; }
+        h2 { font-size: 1.35em; }
+    }
+</style>
+</head>
+<body>
+<header>
+    <img class="banner" src="assets/banner.png" alt="Jellyfin Concert Radar" />
+    <p class="tagline">Aggregates upcoming concerts for every artist in your Jellyfin music library — six data sources, one normalized feed, surfaced inside the web client for every user.</p>
+    <div class="cta-row" style="justify-content:center;">
+        <a class="btn btn-primary" href="#install">Install</a>
+        <a class="btn" href="https://github.com/AlphaGit/jellyfin-concert-radar">GitHub repo</a>
+        <a class="btn" href="https://github.com/AlphaGit/jellyfin-concert-radar/blob/main/MANUAL.md">Manual</a>
+    </div>
+</header>
+
+<main>
+
+<section id="install">
+    <h2>Install</h2>
+
+    <h3>1. Add the Concert Radar plugin repository to Jellyfin</h3>
+    <p>In your Jellyfin web client: <strong>Dashboard → Plugins → Repositories → Add</strong>.</p>
+    <div class="install-box">
+        <p><strong>Name:</strong> <code>Concert Radar</code></p>
+        <p><strong>Repository URL:</strong></p>
+        <span class="repo-url">https://alphagit.github.io/jellyfin-concert-radar/manifest.json</span>
+    </div>
+    <p>Open <strong>Catalog → Concert Radar → Install</strong>, then restart Jellyfin.</p>
+
+    <h3>2. Install the prerequisites for the user-facing menu entry</h3>
+    <p>The user-facing <em>Concerts</em> entry in the web client sidebar is built on top of the <a href="https://github.com/IAmParadox27/jellyfin-plugin-pages">Plugin Pages</a> framework. Add the IAmParadox27 plugin repository:</p>
+    <div class="install-box">
+        <p><strong>Name:</strong> <code>IAmParadox27</code></p>
+        <p><strong>Repository URL:</strong></p>
+        <span class="repo-url">https://www.iamparadox.dev/jellyfin/plugins/manifest.json</span>
+    </div>
+    <p>From the catalog, install <strong>File Transformation</strong> and <strong>Plugin Pages</strong> (pick the build whose <code>targetAbi</code> matches your Jellyfin version). Restart Jellyfin.</p>
+    <p>Concert Radar registers its Plugin Pages entry automatically on every startup. If either prerequisite is missing, the admin settings page still works — only the user-facing sidebar entry is skipped.</p>
+</section>
+
+<section>
+    <h2>Features</h2>
+    <ul>
+        <li><strong>Six concert sources</strong> — Ticketmaster, Bandsintown, EdmTrain (official APIs), plus Songkick, Dice.fm, Resident Advisor (opt-in scrapers, ToS-gated).</li>
+        <li><strong>MusicBrainz artist resolution</strong> — per-source external IDs extracted from MBID URL relationships.</li>
+        <li><strong>Round-robin scheduler with circuit breakers</strong> — fair refresh without overloading any source.</li>
+        <li><strong>Per-source daily API call limits</strong> — respects provider quotas (e.g. Ticketmaster 5000/day).</li>
+        <li><strong>Geographic + genre filters</strong> — everything filtered server-side before storage.</li>
+        <li><strong>Month-grouped user view</strong> — chronological list, live filter + sort, direct source + ticket links.</li>
+        <li><strong>Admin dashboard</strong> — source health, run/purge, rate-limit editor, ToS opt-ins.</li>
+    </ul>
+</section>
+
+<section>
+    <h2>Screenshots</h2>
+    <div class="screenshots">
+        <figure>
+            <img src="assets/screenshots/01-sidebar-menu.png" alt="Sidebar menu with Concerts entry" />
+            <figcaption>Sidebar entry (all users)</figcaption>
+        </figure>
+        <figure>
+            <img src="assets/screenshots/02-concerts-view.png" alt="Concerts list" />
+            <figcaption>Month-grouped concerts list</figcaption>
+        </figure>
+        <figure>
+            <img src="assets/screenshots/07-concerts-scrolled.png" alt="Concerts list scrolled" />
+            <figcaption>Multiple months visible</figcaption>
+        </figure>
+        <figure>
+            <img src="assets/screenshots/03-admin-status.png" alt="Admin status dashboard" />
+            <figcaption>Admin status dashboard</figcaption>
+        </figure>
+        <figure>
+            <img src="assets/screenshots/04-admin-sources.png" alt="Admin source toggles" />
+            <figcaption>Source toggles + ToS gates</figcaption>
+        </figure>
+        <figure>
+            <img src="assets/screenshots/06-admin-ratelimits.png" alt="Admin rate limits" />
+            <figcaption>Per-source rate limits</figcaption>
+        </figure>
+    </div>
+</section>
+
+<section>
+    <h2>Manual download</h2>
+    <p>If you'd rather install the plugin by hand:</p>
+    <p><a class="btn btn-primary" href="downloads/jellyfin-concert-radar_0.1.0.0.zip">Download v0.1.0.0 (.zip)</a></p>
+    <pre><code>mkdir -p /var/lib/jellyfin/plugins/ConcertRadar_0.1.0.0/
+unzip jellyfin-concert-radar_0.1.0.0.zip -d /var/lib/jellyfin/plugins/ConcertRadar_0.1.0.0/
+chown -R jellyfin:jellyfin /var/lib/jellyfin/plugins/ConcertRadar_0.1.0.0/
+systemctl restart jellyfin</code></pre>
+</section>
+
+<section>
+    <h2>Compatibility</h2>
+    <ul>
+        <li>Jellyfin <strong>10.11.x</strong> (production-tested on 10.11.6).</li>
+        <li>.NET 9 plugin target framework.</li>
+        <li>Plugin Pages + File Transformation must match your exact Jellyfin ABI for the user-facing menu entry. Admin page works on any 10.11.x.</li>
+    </ul>
+</section>
+
+<section>
+    <h2>Links</h2>
+    <ul>
+        <li><a href="https://github.com/AlphaGit/jellyfin-concert-radar">Source code</a></li>
+        <li><a href="https://github.com/AlphaGit/jellyfin-concert-radar/blob/main/MANUAL.md">Full manual</a> — configure, navigate, troubleshoot, with screenshots</li>
+        <li><a href="https://github.com/AlphaGit/jellyfin-concert-radar/blob/main/CONFIGURATION.md">Configuration reference</a> — every setting, default, range</li>
+        <li><a href="https://github.com/AlphaGit/jellyfin-concert-radar/blob/main/SPEC.md">Technical spec</a></li>
+        <li><a href="https://github.com/AlphaGit/jellyfin-concert-radar/issues">Report a bug / request a feature</a></li>
+    </ul>
+</section>
+
+</main>
+
+<footer>
+    <p>Jellyfin Concert Radar — MIT licensed. Not affiliated with Jellyfin, Ticketmaster, Bandsintown, EdmTrain, Songkick, Dice, or Resident Advisor.</p>
+</footer>
+</body>
+</html>

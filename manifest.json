@@ -1,0 +1,21 @@
+[
+  {
+    "guid": "65bb36d5-70d5-4121-8771-3dd404d20287",
+    "name": "Jellyfin Concert Radar",
+    "description": "Aggregates upcoming concerts for the artists in your Jellyfin music library from multiple sources (Ticketmaster, Bandsintown, EdmTrain, Songkick, Dice.fm, Resident Advisor), normalizes them, and surfaces them in admin and user-accessible views.",
+    "overview": "Upcoming concerts for artists in your music library.",
+    "owner": "Alpha",
+    "category": "General",
+    "imageUrl": "https://alphagit.github.io/jellyfin-concert-radar/logo.png",
+    "versions": [
+      {
+        "version": "0.1.0.0",
+        "changelog": "Initial release. See CHANGELOG.md for the full list of features.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://alphagit.github.io/jellyfin-concert-radar/downloads/jellyfin-concert-radar_0.1.0.0.zip",
+        "checksum": "3939b55c152d0a465406365e9a1cef9f",
+        "timestamp": "2026-04-20T00:03:07Z"
+      }
+    ]
+  }
+]
