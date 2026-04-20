@@ -2,7 +2,7 @@
 # https://github.com/oddstr13/jellyfin-plugin-repository-manager
 name: "Jellyfin Concert Radar"
 guid: "65bb36d5-70d5-4121-8771-3dd404d20287"
-version: "0.1.0"
+version: "0.1.1"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 owner: "Alpha"
@@ -10,7 +10,7 @@ overview: "Upcoming concerts for artists in your music library."
 description: "Aggregates upcoming concerts for the artists in your Jellyfin music library from multiple sources (Ticketmaster, Bandsintown, EdmTrain, Songkick, Dice.fm, Resident Advisor), normalizes them, and surfaces them in admin and user-accessible views."
 category: "General"
 imageUrl: "https://alphagit.github.io/jellyfin-concert-radar/logo.png"
-changelog: "Initial release. See CHANGELOG.md for the full list of features."
+changelog: "Fix settings save clearing Locations/RateLimits; add Nominatim-backed geocoding search for location entry; populate JellyfinArtistId on concert DTO so artist names link to the local Jellyfin artist page."
 artifacts:
   - "Jellyfin.Plugin.ConcertRadar.dll"
   - "AngleSharp.dll"
