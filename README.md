@@ -44,27 +44,18 @@ The plugin runs a scheduled task that round-robins your artists through six data
 
 ## Installation
 
-### 1. Install Concert Radar
+### 1. Install Concert Radar (recommended)
 
-**From a plugin repository (recommended once released):**
+Install via the plugin repository:
 
 1. **Dashboard → Plugins → Repositories → Add**.
-2. Name: `Concert Radar`. URL: the `manifest.json` URL published with each release.
+2. Name: `Concert Radar`. URL: `https://alphagit.github.io/jellyfin-concert-radar/manifest.json`.
 3. **Catalog → Concert Radar → Install**.
 4. Restart Jellyfin.
 
-**Manual install (any build):**
-
-```bash
-# On the Jellyfin server:
-sudo systemctl stop jellyfin
-sudo mkdir -p /var/lib/jellyfin/plugins/ConcertRadar_0.1.0.0/
-sudo unzip jellyfin-concert-radar_0.1.0.0.zip -d /var/lib/jellyfin/plugins/ConcertRadar_0.1.0.0/
-sudo chown -R jellyfin:jellyfin /var/lib/jellyfin/plugins/ConcertRadar_0.1.0.0/
-sudo systemctl start jellyfin
-```
-
 Confirm listed under **Dashboard → Plugins**.
+
+> Air-gapped servers, pre-release testing, or custom builds: see [Manual install](#manual-install) and [Build from source](#build-from-source) below.
 
 ### 2. Prerequisites for the user-facing sidebar entry (strongly recommended)
 
@@ -162,7 +153,26 @@ See [`SPEC.md`](SPEC.md) for the full architecture, schema, and adapter contract
 - **Scrape drift.** Songkick, Dice, and Resident Advisor are scraped. HTML / JSON shapes change; contract tests catch drift in CI but breakage can still happen between releases.
 - **Cloudflare on Dice** may block scrapes with HTTP 403. The circuit breaker disables the source; re-enable from the admin page after the block lifts.
 
+## Manual install
+
+Use this only if you can't reach the plugin repository (air-gapped server, internal mirror, sideloading a pre-release build). The manifest-based install in [§1 Install Concert Radar](#1-install-concert-radar-recommended) is the preferred path.
+
+Grab the latest release zip from [GitHub Releases](https://github.com/AlphaGit/jellyfin-concert-radar/releases/latest), copy it to the server, then:
+
+```bash
+VERSION=0.1.1.0
+sudo systemctl stop jellyfin
+sudo mkdir -p /var/lib/jellyfin/plugins/ConcertRadar_${VERSION}/
+sudo unzip jellyfin-concert-radar_${VERSION}.zip -d /var/lib/jellyfin/plugins/ConcertRadar_${VERSION}/
+sudo chown -R jellyfin:jellyfin /var/lib/jellyfin/plugins/ConcertRadar_${VERSION}/
+sudo systemctl start jellyfin
+```
+
+Confirm listed under **Dashboard → Plugins**.
+
 ## Build from source
+
+Required for plugin development or producing your own release artifact.
 
 Requirements:
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) (9.0.115 or later).
@@ -180,7 +190,7 @@ export PATH="$(brew --prefix)/opt/dotnet@9/bin:$PATH"
 Clone, restore, build, test:
 
 ```bash
-git clone https://github.com/<owner>/jellyfin-concert-radar.git
+git clone https://github.com/AlphaGit/jellyfin-concert-radar.git
 cd jellyfin-concert-radar
 dotnet restore
 dotnet build --configuration Release
@@ -194,6 +204,8 @@ pip install jprm
 jprm plugin build . --version 0.1.0 --output ./artifacts
 # → ./artifacts/jellyfin-concert-radar_0.1.0.0.zip
 ```
+
+To install the resulting zip locally, follow the [Manual install](#manual-install) steps above.
 
 ## Develop
 
