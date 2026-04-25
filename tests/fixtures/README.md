@@ -47,7 +47,7 @@ with real credentials — only commit the scrubbed output.
 ### MusicBrainz artist search
 
 ```bash
-curl -s -A "JellyfinConcertRadar/0.1.0 ( https://github.com/alphagma/jellyfin-concert-radar )" \
+curl -s -A "JellyfinConcertRadar/0.1.1 ( <your-contact-url-or-email> )" \
   "https://musicbrainz.org/ws/2/artist?query=artist:%22Radiohead%22&fmt=json" \
   | jq . > tests/fixtures/musicbrainz/search_multi_score.json
 ```
@@ -55,7 +55,7 @@ curl -s -A "JellyfinConcertRadar/0.1.0 ( https://github.com/alphagma/jellyfin-co
 ### MusicBrainz artist URL-rels
 
 ```bash
-curl -s -A "JellyfinConcertRadar/0.1.0 ( https://github.com/alphagma/jellyfin-concert-radar )" \
+curl -s -A "JellyfinConcertRadar/0.1.1 ( <your-contact-url-or-email> )" \
   "https://musicbrainz.org/ws/2/artist/a74b1b7f-71a5-4011-9441-d0b5e4122711?inc=url-rels&fmt=json" \
   | jq . > tests/fixtures/musicbrainz/artist_with_songkick_rel.json
 ```

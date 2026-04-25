@@ -33,9 +33,6 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
         PropertyNameCaseInsensitive = true,
     };
 
-    private static readonly string UserAgent =
-        "Mozilla/5.0 (compatible; JellyfinConcertRadar/0.1.0; +https://github.com/alphagma/jellyfin-concert-radar)";
-
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly HostRateLimiter _rateLimiter;
     private readonly ArtistRepository _artistRepository;
@@ -407,7 +404,7 @@ public sealed class DiceScrapeAdapter : ISourceAdapter
             await _rateLimiter.AcquireAsync(SourceId, ct).ConfigureAwait(false);
 
             using var client = _httpClientFactory.CreateClient(PluginHttpClient.ClientName);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgentBuilder.BuildBrowser(_configProvider));
             client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
             client.DefaultRequestHeaders.TryAddWithoutValidation(
                 "Accept",

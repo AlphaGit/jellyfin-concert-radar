@@ -295,6 +295,18 @@
                                autocomplete="off" placeholder="(not set)" />
                         <div class="fieldDescription">Leave blank to disable this source.</div>
                     </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="cr-ua-contact">User-Agent contact</label>
+                        <input is="emby-input" type="text" id="cr-ua-contact"
+                               autocomplete="off" placeholder="https://your-server.example/ or you@example.com" />
+                        <div class="fieldDescription">
+                            Embedded in outgoing <code>User-Agent</code> headers so upstream services
+                            (notably MusicBrainz and Bandsintown) can contact you about abuse or policy
+                            issues. Their terms of service require a working contact. Leave blank to
+                            send a neutral User-Agent that identifies only the plugin name and version.
+                        </div>
+                    </div>
                 </section>
 
                 <!-- ── Sources ────────────────────────────────── -->
@@ -1117,9 +1129,10 @@
             function populateForm(cfg) {
                 cfg = cfg || {};
 
-                page.querySelector('#cr-tm-key').value  = cfg.TicketmasterApiKey || '';
-                page.querySelector('#cr-bit-key').value = cfg.BandsintownAppId   || '';
-                page.querySelector('#cr-edt-key').value = cfg.EdmTrainApiKey     || '';
+                page.querySelector('#cr-tm-key').value     = cfg.TicketmasterApiKey || '';
+                page.querySelector('#cr-bit-key').value    = cfg.BandsintownAppId   || '';
+                page.querySelector('#cr-edt-key').value    = cfg.EdmTrainApiKey     || '';
+                page.querySelector('#cr-ua-contact').value = cfg.UserAgentContact   || '';
 
                 var enabled = cfg.EnabledSources || [];
                 ALL_SOURCES.forEach(function (src) {
@@ -1207,6 +1220,7 @@
                     TicketmasterApiKey:          page.querySelector('#cr-tm-key').value.trim(),
                     BandsintownAppId:            page.querySelector('#cr-bit-key').value.trim(),
                     EdmTrainApiKey:              page.querySelector('#cr-edt-key').value.trim(),
+                    UserAgentContact:            page.querySelector('#cr-ua-contact').value.trim(),
                     EnabledSources:              enabled,
                     AcceptDiceScrapeTos:         !!(tosDice     && tosDice.checked),
                     AcceptRaScrapeTos:           !!(tosRa       && tosRa.checked),

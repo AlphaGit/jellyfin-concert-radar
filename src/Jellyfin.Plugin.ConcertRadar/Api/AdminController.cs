@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.ConcertRadar.RateLimiting;
 using Jellyfin.Plugin.ConcertRadar.ScheduledTasks;
 using Jellyfin.Plugin.ConcertRadar.Sources;
 using Jellyfin.Plugin.ConcertRadar.Storage;
@@ -28,6 +29,7 @@ public sealed class AdminController : ControllerBase
     private readonly SourceStateRepository _sourceStateRepository;
     private readonly ITaskManager _taskManager;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IPluginConfigurationProvider _configProvider;
     private readonly ILogger<AdminController> _logger;
 
     /// <summary>
@@ -38,6 +40,7 @@ public sealed class AdminController : ControllerBase
     /// <param name="sourceStateRepository">Source state repository.</param>
     /// <param name="taskManager">Jellyfin task manager.</param>
     /// <param name="httpClientFactory">Named HttpClient factory.</param>
+    /// <param name="configProvider">Plugin configuration provider (used for User-Agent contact).</param>
     /// <param name="logger">Logger.</param>
     public AdminController(
         ConcertRepository concertRepository,
@@ -45,6 +48,7 @@ public sealed class AdminController : ControllerBase
         SourceStateRepository sourceStateRepository,
         ITaskManager taskManager,
         IHttpClientFactory httpClientFactory,
+        IPluginConfigurationProvider configProvider,
         ILogger<AdminController> logger)
     {
         _concertRepository      = concertRepository;
@@ -52,6 +56,7 @@ public sealed class AdminController : ControllerBase
         _sourceStateRepository  = sourceStateRepository;
         _taskManager            = taskManager;
         _httpClientFactory      = httpClientFactory;
+        _configProvider         = configProvider;
         _logger                 = logger;
     }
 
@@ -168,7 +173,7 @@ public sealed class AdminController : ControllerBase
             using var client = _httpClientFactory.CreateClient(PluginHttpClient.ClientName);
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
             // Nominatim requires a distinctive User-Agent identifying the application.
-            req.Headers.UserAgent.ParseAdd("JellyfinConcertRadar/0.1 (+https://github.com/alphagit/jellyfin-concert-radar)");
+            req.Headers.UserAgent.ParseAdd(UserAgentBuilder.BuildBrowser(_configProvider));
             req.Headers.Accept.ParseAdd("application/json");
 
             using var resp = await client.SendAsync(req, cancellationToken).ConfigureAwait(false);

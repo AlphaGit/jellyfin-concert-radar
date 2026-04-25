@@ -51,25 +51,25 @@ public sealed class MusicBrainzResolver
 
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly HostRateLimiter _rateLimiter;
+    private readonly IPluginConfigurationProvider _configProvider;
     private readonly ILogger<MusicBrainzResolver> _logger;
-
-    // TODO: derive version from Plugin.Instance.Version when available.
-    private static readonly string UserAgent =
-        "JellyfinConcertRadar/0.1.0 ( https://github.com/alphagma/jellyfin-concert-radar )";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MusicBrainzResolver"/> class.
     /// </summary>
     /// <param name="httpClientFactory">Factory for creating HTTP clients.</param>
     /// <param name="rateLimiter">Shared rate limiter; uses the "musicbrainz" key.</param>
+    /// <param name="configProvider">Plugin configuration provider (used for User-Agent contact).</param>
     /// <param name="logger">Logger.</param>
     public MusicBrainzResolver(
         IHttpClientFactory httpClientFactory,
         HostRateLimiter rateLimiter,
+        IPluginConfigurationProvider configProvider,
         ILogger<MusicBrainzResolver> logger)
     {
         _httpClientFactory = httpClientFactory;
         _rateLimiter       = rateLimiter;
+        _configProvider    = configProvider;
         _logger            = logger;
     }
 
@@ -210,7 +210,7 @@ public sealed class MusicBrainzResolver
 
             using var client = _httpClientFactory.CreateClient(PluginHttpClient.ClientName);
             client.DefaultRequestHeaders.UserAgent.Clear();
-            client.DefaultRequestHeaders.Add("User-Agent", UserAgent);
+            client.DefaultRequestHeaders.Add("User-Agent", UserAgentBuilder.BuildApi(_configProvider));
 
             HttpResponseMessage response;
             try

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Jellyfin.Plugin.ConcertRadar.Api;
+using Jellyfin.Plugin.ConcertRadar.Configuration;
 using Jellyfin.Plugin.ConcertRadar.Model;
 using Jellyfin.Plugin.ConcertRadar.ScheduledTasks;
 using Jellyfin.Plugin.ConcertRadar.Tests.Support;
@@ -44,6 +45,7 @@ public sealed class AdminControllerTests : IAsyncLifetime
             _db.SourceState,
             taskManager ?? Substitute.For<ITaskManager>(),
             Substitute.For<IHttpClientFactory>(),
+            new StubPluginConfigurationProvider(new PluginConfiguration()),
             NullLogger<AdminController>.Instance);
 
     // ── Tests ─────────────────────────────────────────────────────────────────

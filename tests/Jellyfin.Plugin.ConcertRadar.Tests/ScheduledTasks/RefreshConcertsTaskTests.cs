@@ -127,6 +127,7 @@ public sealed class RefreshConcertsTaskTests : IAsyncLifetime
         var mbResolver = new MusicBrainzResolver(
             mbFactory,
             mbRateLimiter,
+            mbConfigProvider,
             NullLogger<MusicBrainzResolver>.Instance);
 
         return new RefreshConcertsTask(

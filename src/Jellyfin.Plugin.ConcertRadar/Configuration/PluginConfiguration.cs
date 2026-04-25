@@ -22,6 +22,14 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Gets or sets the EdmTrain API key.</summary>
     public string EdmTrainApiKey { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Gets or sets the contact URL or email embedded in outgoing <c>User-Agent</c> headers.
+    /// MusicBrainz and Bandsintown require a meaningful contact so abuse reports reach the
+    /// operator; if left empty, the plugin emits a neutral fallback identifying only the
+    /// product name + version.
+    /// </summary>
+    public string UserAgentContact { get; set; } = string.Empty;
+
     // ── Source toggles ────────────────────────────────────────────────────────
 
     /// <summary>

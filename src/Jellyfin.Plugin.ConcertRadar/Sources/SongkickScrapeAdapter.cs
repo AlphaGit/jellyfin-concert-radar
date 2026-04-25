@@ -33,9 +33,6 @@ public sealed partial class SongkickScrapeAdapter : ISourceAdapter
 
     private static readonly TimeSpan[] RetryDelays = AdapterDefaults.RetryBackoffs;
 
-    private static readonly string UserAgent =
-        "Mozilla/5.0 (compatible; JellyfinConcertRadar/0.1.0; +https://github.com/alphagma/jellyfin-concert-radar)";
-
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly HostRateLimiter _rateLimiter;
     private readonly ArtistRepository _artistRepository;
@@ -375,7 +372,7 @@ public sealed partial class SongkickScrapeAdapter : ISourceAdapter
             await _rateLimiter.AcquireAsync(SourceId, ct).ConfigureAwait(false);
 
             using var client = _httpClientFactory.CreateClient(PluginHttpClient.ClientName);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgentBuilder.BuildBrowser(_configProvider));
             client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
 
             HttpResponseMessage response;

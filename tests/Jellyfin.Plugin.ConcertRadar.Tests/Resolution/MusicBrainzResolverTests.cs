@@ -53,9 +53,10 @@ public class MusicBrainzResolverTests
             },
         };
 
+        var configProvider = new StubPluginConfigurationProvider(cfg);
         var rateLimiter = new HostRateLimiter(
             db.SourceState,
-            new StubPluginConfigurationProvider(cfg),
+            configProvider,
             clock,
             NullLogger<HostRateLimiter>.Instance);
 
@@ -63,6 +64,7 @@ public class MusicBrainzResolverTests
         var resolver = new MusicBrainzResolver(
             factory,
             rateLimiter,
+            configProvider,
             NullLogger<MusicBrainzResolver>.Instance);
 
         return (resolver, db);

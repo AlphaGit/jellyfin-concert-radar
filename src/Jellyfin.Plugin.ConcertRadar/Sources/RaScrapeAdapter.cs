@@ -38,9 +38,6 @@ public sealed class RaScrapeAdapter : ISourceAdapter
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    private static readonly string UserAgent =
-        "Mozilla/5.0 (compatible; JellyfinConcertRadar/0.1.0; +https://github.com/alphagma/jellyfin-concert-radar)";
-
     // The eventListings GraphQL query used to fetch events by artist slug.
     private const string EventListingsQuery = """
         query GET_EVENT_LISTINGS($filters: FilterInputDtoInput!, $pageSize: Int!, $page: Int!) {
@@ -415,7 +412,7 @@ public sealed class RaScrapeAdapter : ISourceAdapter
             await _rateLimiter.AcquireAsync(SourceId, ct).ConfigureAwait(false);
 
             using var client = _httpClientFactory.CreateClient(PluginHttpClient.ClientName);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgentBuilder.BuildBrowser(_configProvider));
             client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
             client.DefaultRequestHeaders.Referrer = new Uri("https://ra.co/events");
 

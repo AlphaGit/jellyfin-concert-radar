@@ -38,10 +38,6 @@ public sealed class EdmTrainAdapter : ISourceAdapter
         PropertyNameCaseInsensitive = true,
     };
 
-    // TODO: derive version from Plugin.Instance.Version when available.
-    private static readonly string UserAgent =
-        "JellyfinConcertRadar/0.1.0 ( https://github.com/alphagma/jellyfin-concert-radar )";
-
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly HostRateLimiter _rateLimiter;
     private readonly ArtistRepository _artistRepository;
@@ -238,7 +234,7 @@ public sealed class EdmTrainAdapter : ISourceAdapter
             await _rateLimiter.AcquireAsync(SourceId, ct).ConfigureAwait(false);
 
             using var client = _httpClientFactory.CreateClient(PluginHttpClient.ClientName);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgentBuilder.BuildApi(_configProvider));
 
             HttpResponseMessage response;
             try
