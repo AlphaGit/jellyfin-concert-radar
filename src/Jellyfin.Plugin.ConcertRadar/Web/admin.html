@@ -253,6 +253,11 @@
                     <span>Next run: <strong id="cr-next-run">—</strong></span>
                     <span>Queue: <strong id="cr-queue">—</strong></span>
                 </div>
+                <div class="cr-run-info" style="margin-top: .25em; opacity: .75; font-size: .9em;">
+                    <span>Server time: <strong id="cr-server-now">—</strong></span>
+                    <span>Server tz: <strong id="cr-server-tz">—</strong></span>
+                    <span>Triggers: <strong id="cr-triggers">—</strong></span>
+                </div>
 
                 <div class="cr-admin-actions">
                     <button is="emby-button" type="button" class="raised button-cancel emby-button" id="cr-btn-run-now">
@@ -717,14 +722,32 @@
             function loadStatus() {
                 adminGet('/status').then(function (data) {
                     var d = data || {};
-                    var lastRun   = pick(d, 'LastRun',   'lastRun');
-                    var nextRun   = pick(d, 'NextRun',   'nextRun');
-                    var queueSize = pick(d, 'QueueSize', 'queueSize');
-                    var sources   = pick(d, 'Sources',   'sources') || [];
+                    var lastRun    = pick(d, 'LastRun',        'lastRun');
+                    var nextRun    = pick(d, 'NextRun',        'nextRun');
+                    var queueSize  = pick(d, 'QueueSize',      'queueSize');
+                    var sources    = pick(d, 'Sources',        'sources')  || [];
+                    var serverNow  = pick(d, 'ServerNow',      'serverNow');
+                    var serverTz   = pick(d, 'ServerTimeZone', 'serverTimeZone');
+                    var triggers   = pick(d, 'Triggers',       'triggers') || [];
 
                     page.querySelector('#cr-last-run').textContent = fmtDate(lastRun);
                     page.querySelector('#cr-next-run').textContent = fmtDate(nextRun);
                     page.querySelector('#cr-queue').textContent    = queueSize != null ? queueSize : '—';
+                    page.querySelector('#cr-server-now').textContent = fmtDate(serverNow);
+                    page.querySelector('#cr-server-tz').textContent  = serverTz || '—';
+                    page.querySelector('#cr-triggers').textContent   = triggers.length === 0
+                        ? 'none'
+                        : triggers.map(function (t) {
+                            var type = pick(t, 'Type',     'type');
+                            var tod  = pick(t, 'TimeOfDay','timeOfDay');
+                            var dow  = pick(t, 'DayOfWeek','dayOfWeek');
+                            var iv   = pick(t, 'IntervalHours','intervalHours');
+                            if (type === 'DailyTrigger')    return 'Daily@' + (tod || '?');
+                            if (type === 'WeeklyTrigger')   return (dow || '?') + '@' + (tod || '?');
+                            if (type === 'IntervalTrigger') return 'Every ' + (iv || '?') + 'h';
+                            return type || '?';
+                        }).join(', ');
+
                     renderSourceCards(sources);
                 }).catch(function () {
                     page.querySelector('#cr-source-grid').innerHTML =

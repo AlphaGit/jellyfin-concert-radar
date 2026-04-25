@@ -165,10 +165,8 @@ public sealed class ConcertsController : ControllerBase
         // Resolve last/next run from ITaskManager.
         DateTimeOffset? lastRun = null;
         DateTimeOffset? nextRun = null;
+        var triggersDebug = new List<TriggerDebugDto>();
 
-        // TODO: ITaskManager.ScheduledTasks exposes IScheduledTaskWorker, which has
-        // LastExecutionResult and NextScheduledDateTime. The exact surface differs between
-        // Jellyfin versions; log a warning and leave null if resolution fails.
         try
         {
             var worker = _taskManager.ScheduledTasks
@@ -180,9 +178,35 @@ public sealed class ConcertsController : ControllerBase
             {
                 lastRun = worker.LastExecutionResult?.EndTimeUtc;
 
-                // IScheduledTaskWorker in 10.11.6 does not expose NextScheduledDateTime,
-                // so compute nextRun from the earliest fire time across the configured triggers.
-                nextRun = ComputeNextRun(worker.Triggers, DateTimeOffset.UtcNow);
+                // Jellyfin DailyTrigger / WeeklyTrigger interpret TimeOfDayTicks as SERVER
+                // LOCAL time (they compare against DateTime.Now). Anchor the computation to
+                // local time so the UI shows what Jellyfin will actually fire.
+                nextRun = ComputeNextRun(worker.Triggers, DateTimeOffset.Now);
+
+                if (worker.Triggers is not null)
+                {
+                    foreach (var t in worker.Triggers)
+                    {
+                        triggersDebug.Add(new TriggerDebugDto(
+                            Type:          t.Type.ToString(),
+                            TimeOfDay:     t.TimeOfDayTicks.HasValue
+                                               ? TimeSpan.FromTicks(t.TimeOfDayTicks.Value).ToString(@"hh\:mm")
+                                               : null,
+                            DayOfWeek:     t.DayOfWeek?.ToString(),
+                            IntervalHours: t.IntervalTicks.HasValue
+                                               ? TimeSpan.FromTicks(t.IntervalTicks.Value).TotalHours
+                                               : null));
+                    }
+                }
+
+                _logger.LogInformation(
+                    "ConcertsController: task '{Key}' has {Count} trigger(s). LastRun={LastRun}, NextRun={NextRun} (server local now={Now}, tz={Tz}).",
+                    worker.ScheduledTask.Key, triggersDebug.Count, lastRun, nextRun,
+                    DateTimeOffset.Now, TimeZoneInfo.Local.Id);
+            }
+            else
+            {
+                _logger.LogWarning("ConcertsController: scheduled task 'ConcertRadar.Refresh' not found in ITaskManager.");
             }
         }
         catch (Exception ex)
@@ -193,10 +217,13 @@ public sealed class ConcertsController : ControllerBase
         // Strip LastError from the user-facing DTO: error strings may reveal internal endpoints
         // or failure modes even after UrlRedactor processing. Admins can check the Jellyfin log.
         var response = new StatusResponse(
-            Sources:   sourceStates.Select(r => SourceStatusDto.FromRecord(r) with { LastError = null }).ToList(),
-            LastRun:   lastRun,
-            NextRun:   nextRun,
-            QueueSize: queueSize);
+            Sources:       sourceStates.Select(r => SourceStatusDto.FromRecord(r) with { LastError = null }).ToList(),
+            LastRun:       lastRun,
+            NextRun:       nextRun,
+            QueueSize:     queueSize,
+            ServerNow:     DateTimeOffset.Now,
+            ServerTimeZone: TimeZoneInfo.Local.Id,
+            Triggers:      triggersDebug);
 
         return Ok(response);
     }
@@ -206,9 +233,19 @@ public sealed class ConcertsController : ControllerBase
         IReadOnlyList<SourceStatusDto> Sources,
         DateTimeOffset? LastRun,
         DateTimeOffset? NextRun,
-        int QueueSize);
+        int QueueSize,
+        DateTimeOffset ServerNow,
+        string ServerTimeZone,
+        IReadOnlyList<TriggerDebugDto> Triggers);
 
-    private static DateTimeOffset? ComputeNextRun(IEnumerable<TaskTriggerInfo>? triggers, DateTimeOffset now)
+    /// <summary>Diagnostic snapshot of a single scheduled-task trigger.</summary>
+    public sealed record TriggerDebugDto(
+        string Type,
+        string? TimeOfDay,
+        string? DayOfWeek,
+        double? IntervalHours);
+
+    private static DateTimeOffset? ComputeNextRun(IEnumerable<TaskTriggerInfo>? triggers, DateTimeOffset localNow)
     {
         if (triggers is null) return null;
 
@@ -217,10 +254,10 @@ public sealed class ConcertsController : ControllerBase
         {
             DateTimeOffset? candidate = t.Type switch
             {
-                TaskTriggerInfoType.DailyTrigger    => NextDailyFire(now, t.TimeOfDayTicks),
-                TaskTriggerInfoType.WeeklyTrigger   => NextWeeklyFire(now, t.DayOfWeek, t.TimeOfDayTicks),
+                TaskTriggerInfoType.DailyTrigger    => NextDailyFire(localNow, t.TimeOfDayTicks),
+                TaskTriggerInfoType.WeeklyTrigger   => NextWeeklyFire(localNow, t.DayOfWeek, t.TimeOfDayTicks),
                 TaskTriggerInfoType.IntervalTrigger => t.IntervalTicks.HasValue && t.IntervalTicks.Value > 0
-                    ? now + TimeSpan.FromTicks(t.IntervalTicks.Value)
+                    ? localNow + TimeSpan.FromTicks(t.IntervalTicks.Value)
                     : null,
                 _ => null,
             };
@@ -232,22 +269,24 @@ public sealed class ConcertsController : ControllerBase
         return soonest;
     }
 
-    private static DateTimeOffset? NextDailyFire(DateTimeOffset now, long? timeOfDayTicks)
+    // Jellyfin's DailyTrigger.Start() uses DateTime.Now (server local), so anchor here
+    // to localNow.DateTime.Date with localNow.Offset — preserves the server's UTC offset.
+    private static DateTimeOffset? NextDailyFire(DateTimeOffset localNow, long? timeOfDayTicks)
     {
         if (!timeOfDayTicks.HasValue) return null;
         var tod  = TimeSpan.FromTicks(timeOfDayTicks.Value);
-        var next = new DateTimeOffset(now.UtcDateTime.Date, TimeSpan.Zero) + tod;
-        if (next <= now) next = next.AddDays(1);
+        var next = new DateTimeOffset(localNow.DateTime.Date, localNow.Offset) + tod;
+        if (next <= localNow) next = next.AddDays(1);
         return next;
     }
 
-    private static DateTimeOffset? NextWeeklyFire(DateTimeOffset now, DayOfWeek? dow, long? timeOfDayTicks)
+    private static DateTimeOffset? NextWeeklyFire(DateTimeOffset localNow, DayOfWeek? dow, long? timeOfDayTicks)
     {
         if (!dow.HasValue || !timeOfDayTicks.HasValue) return null;
         var tod  = TimeSpan.FromTicks(timeOfDayTicks.Value);
-        var next = new DateTimeOffset(now.UtcDateTime.Date, TimeSpan.Zero) + tod;
+        var next = new DateTimeOffset(localNow.DateTime.Date, localNow.Offset) + tod;
         int delta = ((int)dow.Value - (int)next.DayOfWeek + 7) % 7;
-        if (delta == 0 && next <= now) delta = 7;
+        if (delta == 0 && next <= localNow) delta = 7;
         return next.AddDays(delta);
     }
 }

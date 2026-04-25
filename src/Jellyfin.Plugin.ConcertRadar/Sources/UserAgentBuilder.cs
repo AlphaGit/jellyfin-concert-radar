@@ -18,11 +18,15 @@ internal static class UserAgentBuilder
     public const string ProductName = "JellyfinConcertRadar";
 
     /// <summary>
-    /// Hard-coded version string. TODO: derive from <c>Plugin.Instance.Version</c> when
-    /// a stable accessor is available — until then, manually keep this in lock-step with
-    /// <c>build.yaml</c>.
+    /// Fallback version used when <see cref="Plugin.Instance"/> is unavailable (e.g. in unit
+    /// tests that don't construct the full plugin host). Production callers resolve the
+    /// version from <c>Plugin.Instance.Version</c>.
     /// </summary>
-    public const string ProductVersion = "0.1.1";
+    private const string FallbackVersion = "0.1.1";
+
+    /// <summary>Resolves the plugin version at call time so build.yaml is the single source of truth.</summary>
+    public static string ProductVersion
+        => Plugin.Instance?.Version?.ToString(fieldCount: 3) ?? FallbackVersion;
 
     /// <summary>Builds the API-style User-Agent (used by MusicBrainz, Bandsintown, EdmTrain).</summary>
     public static string BuildApi(IPluginConfigurationProvider provider)
