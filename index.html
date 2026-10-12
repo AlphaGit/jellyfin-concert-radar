@@ -86,7 +86,7 @@
     <div class="install-box">
         <p><strong>Name:</strong> <code>Concert Radar</code></p>
         <p><strong>Repository URL:</strong></p>
-        <span class="repo-url">https://alphagit.github.io/jellyfin-concert-radar/manifest.json</span>
+        <span class="repo-url">https://raw.githubusercontent.com/AlphaGit/jellyfin-concert-radar/main/repo/manifest.json</span>
     </div>
     <p>Open <strong>Catalog → Concert Radar → Install</strong>, then restart Jellyfin.</p>
 
@@ -147,19 +147,19 @@
 <section>
     <h2>Manual download</h2>
     <p>If you'd rather install the plugin by hand:</p>
-    <p><a class="btn btn-primary" href="downloads/jellyfin-concert-radar_0.1.0.0.zip">Download v0.1.0.0 (.zip)</a></p>
-    <pre><code>mkdir -p /var/lib/jellyfin/plugins/ConcertRadar_0.1.0.0/
-unzip jellyfin-concert-radar_0.1.0.0.zip -d /var/lib/jellyfin/plugins/ConcertRadar_0.1.0.0/
-chown -R jellyfin:jellyfin /var/lib/jellyfin/plugins/ConcertRadar_0.1.0.0/
+    <p><a class="btn btn-primary" href="https://github.com/AlphaGit/jellyfin-concert-radar/releases/latest">Download the latest release (.zip)</a></p>
+    <pre><code>mkdir -p "/var/lib/jellyfin/plugins/Concert Radar_0.2.0.0/"
+unzip concert-radar.zip -d "/var/lib/jellyfin/plugins/Concert Radar_0.2.0.0/"
+chown -R jellyfin:jellyfin "/var/lib/jellyfin/plugins/Concert Radar_0.2.0.0/"
 systemctl restart jellyfin</code></pre>
 </section>
 
 <section>
     <h2>Compatibility</h2>
     <ul>
-        <li>Jellyfin <strong>10.11.x</strong> (production-tested on 10.11.6).</li>
-        <li>.NET 9 plugin target framework.</li>
-        <li>Plugin Pages + File Transformation must match your exact Jellyfin ABI for the user-facing menu entry. Admin page works on any 10.11.x.</li>
+        <li>Jellyfin <strong>12.x</strong> (0.2.0 and later). Version 0.1.x is the last line for Jellyfin 10.11.</li>
+        <li>.NET 10 plugin target framework.</li>
+        <li>The user-facing menu entry needs Plugin Pages 3.0.0.0 or later and File Transformation. The admin page works without them.</li>
     </ul>
 </section>
 
