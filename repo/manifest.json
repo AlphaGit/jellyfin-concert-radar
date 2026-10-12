@@ -1,0 +1,12 @@
+[
+    {
+        "guid": "65bb36d5-70d5-4121-8771-3dd404d20287",
+        "name": "Concert Radar",
+        "description": "Aggregates upcoming concerts for the artists in your Jellyfin music library from multiple sources (Ticketmaster, Bandsintown, EdmTrain, Songkick, Dice.fm, Resident Advisor), normalizes them, and surfaces them in admin and user-accessible views. Requires Jellyfin 12. The Concerts entry in the web client's avatar menu additionally needs Plugin Pages (3.0.0.0 or later) and File Transformation. See the project README.",
+        "overview": "Upcoming concerts for artists in your music library.",
+        "owner": "Alpha",
+        "category": "General",
+        "imageUrl": "https://alphagit.github.io/jellyfin-concert-radar/logo.png",
+        "versions": []
+    }
+]

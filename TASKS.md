@@ -546,3 +546,18 @@ Findings from second-pass code review (security-focused) + TASKS.md completion a
 #### T14.13 [DOC] Deferred enhancements
 - README "configuration walkthrough with screenshots" pending (minor).
 - `docs/smoke-test.md` post-release install checklist pending.
+
+## Phase 15 — Jellyfin 12 migration (0.2.0)
+
+Jellyfin 12 disables every plugin built for 10.11 during its upgrade, so 0.1.1 stopped loading.
+This phase follows the sibling New Releases plugin's specs 003–006. It supersedes T14.12: the
+catalogue moves from `gh-pages` to a committed `repo/manifest.json`.
+
+- [x] T15.1 [INFRA] Retarget to `net10.0`; `Jellyfin.Controller` / `Jellyfin.Model` / `Jellyfin.Data` 12.0.0; exact pins for `Microsoft.Data.Sqlite` 10.0.12, `AngleSharp` 1.8.3, test packages; lock files regenerated.
+- [x] T15.2 [INFRA] `build.yaml`: name `Concert Radar` (matches `Plugin.Name`), `targetAbi` 12.0.0.0, `framework` net10.0, version 0.2.0. Root `manifest.json` replaced by `repo/manifest.json`.
+- [x] T15.3 [BE] Register the Concerts page through Plugin Pages' `PluginInterface.RegisterPage` / `RemovePage` (reflection, from a hosted service); remove the 0.1.x entry from Plugin Pages' legacy `config.json` once at startup.
+- [x] T15.4 [BE+FE] HTTP surface per `docs/http-surface.md`: PascalCase routes without `api`, camelCase responses declared with `[Produces]`; pages updated.
+- [x] T15.5 [INFRA] CI: `build.yml` on .NET 10 plus Node page tests; `package.yml` creates a GitHub Release with `concert-radar.zip`, adds it to `repo/manifest.json` with `jprm repo add`, and commits the catalogue to `main`. Catalogue text comes from `CHANGELOG.md`.
+- [x] T15.6 [TEST] Plugin Pages registration and legacy cleanup, HTTP surface rules, packaging metadata, changelog extraction.
+- [x] T15.7 [DOC] README, SPEC, MANUAL, TESTS, CHANGELOG updated for Jellyfin 12.
+- [ ] T15.8 [OPS] Tag v0.2.0; retire `manifest.json` and `downloads/` on `gh-pages` (keep `assets/`); install on the production server from the new catalogue and verify.

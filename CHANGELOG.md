@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-10-11
+
+### Upgrading from 0.1.x — once
+
+- **Requires Jellyfin 12.** This version does not load on Jellyfin 10.11. Jellyfin 12 disables
+  0.1.x during its own upgrade; your settings and stored concerts are kept and this version reads
+  them unchanged.
+- **Replace the repository address.** The catalogue is no longer served from GitHub Pages. In
+  Dashboard → Plugins → Repositories, add
+  `https://raw.githubusercontent.com/AlphaGit/jellyfin-concert-radar/main/repo/manifest.json` and
+  remove the old `github.io` address.
+
+### Changed
+
+- **Runs on Jellyfin 12** (.NET 10). Built against the Jellyfin 12.0.0 libraries, so it loads on
+  every 12.x server.
+- **The Concerts menu entry registers through Plugin Pages' own API** (Plugin Pages 3.0.0.0 or
+  later, with File Transformation) and is withdrawn when the server stops. On first start the
+  plugin removes the entry 0.1.x wrote into Plugin Pages' `config.json`, so an uninstall no longer
+  leaves a dead menu entry behind.
+- **API routes follow Jellyfin's own naming.** `Plugins/ConcertRadar/api/concerts` is now
+  `Plugins/ConcertRadar/Concerts`; every segment is PascalCase and the `api` segment is gone (see
+  `docs/http-surface.md`). Responses are always camelCase, whatever the host default. A script
+  calling the old paths must be updated.
+- **The catalogue name is "Concert Radar"**, matching the name the plugin reports, so Jellyfin
+  replaces an older copy on upgrade instead of loading both.
+
 ## [0.1.1] — 2026-04-19
 
 ### Fixed

@@ -127,13 +127,13 @@ The top status bar shows:
 
 ### Opening the concerts page
 
-Any logged-in Jellyfin user can open the concerts list. In the **web client**, click the hamburger icon (top-left) to open the sidebar drawer. Scroll the drawer down past `Home`, `Media`, `Administration`, `User` — you'll find the **Plugin Settings** section.
+Any logged-in Jellyfin user can open the concerts list. In the **web client** on Jellyfin 12, open the user (avatar) menu at the top right — the **Concerts** entry sits below the preferences link. (The screenshot below shows the Jellyfin 10.11 drawer layout.)
 
 ![Sidebar menu with Concerts entry](docs/screenshots/01-sidebar-menu.png)
 
 Click **Concerts**. The concerts listing opens.
 
-> **Mobile and TV apps** don't show this menu entry (Plugin Pages only patches the web bundle). Users on those clients can still bookmark `https://<your-server>/web/#/configurationpage?name=concertradar-view`, but that URL requires admin permissions in Jellyfin 10.11.
+> **Mobile and TV apps** don't show this menu entry (Plugin Pages only patches the web client). Users on those clients can still bookmark `https://<your-server>/web/#/configurationpage?name=concertradar-view`, but that URL requires admin permissions.
 
 ### Reading a concert card
 
@@ -177,9 +177,9 @@ Large result sets paginate at 50 concerts per page. Use the **Prev** / **Next** 
 ### "Concerts" menu entry doesn't appear
 
 1. Check `Dashboard → Plugins` — confirm `File Transformation`, `Plugin Pages`, and `Concert Radar` are all **Active**.
-2. Confirm the three plugins' ABIs match your Jellyfin version. Mismatch shows up as `Failed` plugin status.
+2. Confirm `Plugin Pages` is 3.0.0.0 or later and `Concert Radar` is 0.2.0 or later — both need Jellyfin 12. An older build does not load after a Jellyfin 12 upgrade.
 3. Hard-refresh the browser (`Cmd-Shift-R` / `Ctrl-Shift-R`). Jellyfin's service worker may cache the old `index.html`.
-4. Open the hamburger drawer and **scroll to the bottom** — the entry lives under a `Plugin Settings` section header, below `Home`, `Media`, `Administration`, `User`.
+4. Open the user (avatar) menu at the top right — on Jellyfin 12 the entry lives there, below the preferences link, not in the side drawer.
 
 ### Status shows "—" for Last run / Next run / Queue
 
@@ -199,4 +199,4 @@ Usually means the scheduled task hasn't completed yet. Click **Run Now** and wai
 
 ### After a Jellyfin upgrade, the sidebar entry is gone
 
-Expected behavior. File Transformation and Plugin Pages both ship one build per Jellyfin release. Wait for [IAmParadox27](https://github.com/IAmParadox27) to publish matching builds, then upgrade both prerequisites. Concert Radar itself works in all Jellyfin 10.11.x versions without a rebuild.
+A Jellyfin major upgrade disables plugins built for the previous major. Install builds made for the new major: File Transformation and Plugin Pages from [IAmParadox27](https://github.com/IAmParadox27)'s repository, and Concert Radar 0.2.0 or later for Jellyfin 12. Concert Radar 0.2.x works on every Jellyfin 12.x release without a rebuild.

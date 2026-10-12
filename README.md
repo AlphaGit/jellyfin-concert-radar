@@ -35,12 +35,12 @@ The plugin runs a scheduled task that round-robins your artists through six data
 - **Geographic + genre filters + skip festivals / sold-out** — every match is filtered server-side before storage.
 - **Month-grouped user view** — chronological list, filter by date/country/city/source/artist, direct links to source event pages and ticket URLs.
 - **Admin dashboard** — source health cards, run/purge controls, rate-limit editor, ToS opt-ins.
-- **No live network calls in tests** — 135+ unit / integration / contract tests use temp-file SQLite and stub HTTP handlers.
+- **No live network calls in tests** — 180+ unit / integration / contract tests use temp-file SQLite and stub HTTP handlers.
 
 ## Requirements
 
-- **Jellyfin 10.11.x** (production-tested on 10.11.6). The plugin ships per-ABI builds.
-- **.NET 9** (plugin target framework — your Jellyfin server already ships this runtime).
+- **Jellyfin 12.0 or later** (built against the 12.0.0 libraries; production-tested on 12.1). Version 0.1.x is the last line for Jellyfin 10.11.
+- **.NET 10** (plugin target framework — your Jellyfin server already ships this runtime).
 
 ## Installation
 
@@ -49,7 +49,7 @@ The plugin runs a scheduled task that round-robins your artists through six data
 Install via the plugin repository:
 
 1. **Dashboard → Plugins → Repositories → Add**.
-2. Name: `Concert Radar`. URL: `https://alphagit.github.io/jellyfin-concert-radar/manifest.json`.
+2. Name: `Concert Radar`. URL: `https://raw.githubusercontent.com/AlphaGit/jellyfin-concert-radar/main/repo/manifest.json`.
 3. **Catalog → Concert Radar → Install**.
 4. Restart Jellyfin.
 
@@ -65,26 +65,26 @@ Install both prerequisite plugins:
 
 1. **Dashboard → Plugins → Repositories → Add** with URL `https://www.iamparadox.dev/jellyfin/plugins/manifest.json`.
 2. In the catalog, install these in order:
-   - `File Transformation` (choose the version whose `targetAbi` matches your Jellyfin version)
-   - `Plugin Pages` (same ABI match)
+   - `File Transformation` — it is what loads Plugin Pages' script into the web client; without it the entry never appears
+   - `Plugin Pages` 3.0.0.0 or later
 3. Restart Jellyfin.
 
-Concert Radar writes its Plugin Pages registration on every startup — the `Concerts` menu entry appears automatically once all three plugins are loaded.
+Concert Radar registers its page through Plugin Pages' API on every startup and withdraws it on shutdown — the `Concerts` entry appears in the user (avatar) menu once all three plugins are loaded.
 
 > **Jellyfin manifest has no inter-plugin dependency field.** These prerequisites cannot be auto-installed with Concert Radar; the admin must install them manually.
 >
-> **Per-Jellyfin-version ABI.** `File Transformation` and `Plugin Pages` ship one build per Jellyfin release. After a Jellyfin upgrade, wait for matching prerequisite releases before the sidebar entry reappears. If either is absent, Concert Radar's admin page still works and the plugin keeps scanning; only the user-facing menu is skipped.
+> **Optional.** If either prerequisite is absent, Concert Radar's admin page still works and the plugin keeps scanning; only the user-facing menu entry is skipped, and the log says so once.
 
 ### 3. Upgrade
 
-1. Stop Jellyfin.
-2. Replace the DLL in `/var/lib/jellyfin/plugins/ConcertRadar_<version>/`. The SQLite database at `/var/lib/jellyfin/data/concertradar/concerts.db` carries across versions; migrations run automatically on startup.
-3. Start Jellyfin.
+Install the new version from **Catalog → Concert Radar** and restart Jellyfin. Jellyfin replaces the older copy. The SQLite database at `/var/lib/jellyfin/data/concertradar/concerts.db` and your settings carry across versions; migrations run automatically on startup.
+
+**From 0.1.x (Jellyfin 10.11):** upgrade Jellyfin to 12 first, then replace the repository URL with the one above and install 0.2.0 or later. Settings and stored concerts are kept.
 
 ### 4. Uninstall
 
 1. Stop Jellyfin.
-2. Delete `/var/lib/jellyfin/plugins/ConcertRadar_*/`.
+2. Delete `/var/lib/jellyfin/plugins/Concert Radar_*/`.
 3. Optional: delete `/var/lib/jellyfin/data/concertradar/` to drop cached concerts.
 4. Start Jellyfin.
 
@@ -103,7 +103,7 @@ Quick start:
 
 ### As an end user
 
-Open the web client hamburger drawer → scroll to **Plugin Settings → Concerts**. The view:
+Open the user (avatar) menu in the web client → **Concerts**. The view:
 
 - Defaults to the next 365 days.
 - Sorts by date ascending; date sort renders month headers (e.g. `April 2026`, `May 2026`) above each group.
@@ -138,7 +138,7 @@ Scrape adapters (Songkick, Dice, Resident Advisor) rely on non-public methods. E
 
 Two phases:
 - **Ingest** (scheduled task, daily at 03:00): enumerates music-library artists → resolves MusicBrainz URL relationships → queries each enabled source through rate-limited adapters → normalizes results → upserts into SQLite.
-- **Surface**: admin + user views call the plugin's own REST endpoints under `/Plugins/ConcertRadar/api/` (user reads use `[Authorize]`; admin writes use `[Authorize(Policy = RequiresElevation)]`).
+- **Surface**: admin + user views call the plugin's own REST endpoints under `/Plugins/ConcertRadar/` (user reads use `[Authorize]`; admin writes under `/Plugins/ConcertRadar/Admin/` use `[Authorize(Policy = RequiresElevation)]`). Routes and JSON naming follow [`docs/http-surface.md`](docs/http-surface.md). On Jellyfin 12, scripts must authenticate with the full `Authorization: MediaBrowser Token="…"` header; `X-Emby-Token` and `?api_key=` return 401.
 
 Source adapters share a common `ISourceAdapter` contract. A circuit breaker disables a source after repeated failures and re-enables it after a cooldown. The scheduler runs round-robin over artists so every artist is eventually refreshed without overloading any provider.
 
@@ -148,7 +148,7 @@ See [`SPEC.md`](SPEC.md) for the full architecture, schema, and adapter contract
 
 - **No per-user configuration.** Jellyfin doesn't support per-user plugin config; all users see the same concerts.
 - **User sidebar entry requires 3rd-party plugins.** Jellyfin core has no plugin API for user-facing navigation; see [Prerequisites](#2-prerequisites-for-the-user-facing-sidebar-entry-strongly-recommended). Without them, the view is still reachable at `https://<your-jellyfin>/web/#/configurationpage?name=concertradar-view`, but only by admins.
-- **Mobile / TV clients don't show the sidebar entry.** Plugin Pages patches the web bundle only; native apps are unaffected. Users on mobile/TV clients can still use the admin URL above.
+- **Mobile / TV clients don't show the sidebar entry.** Plugin Pages (through File Transformation) patches the web client only; native apps are unaffected. Users on mobile/TV clients can still use the admin URL above.
 - **Terms of service.** Ticketmaster / Bandsintown / EdmTrain permit non-commercial use only. Check each source's terms for your deployment.
 - **Scrape drift.** Songkick, Dice, and Resident Advisor are scraped. HTML / JSON shapes change; contract tests catch drift in CI but breakage can still happen between releases.
 - **Cloudflare on Dice** may block scrapes with HTTP 403. The circuit breaker disables the source; re-enable from the admin page after the block lifts.
@@ -160,11 +160,12 @@ Use this only if you can't reach the plugin repository (air-gapped server, inter
 Grab the latest release zip from [GitHub Releases](https://github.com/AlphaGit/jellyfin-concert-radar/releases/latest), copy it to the server, then:
 
 ```bash
-VERSION=0.1.1.0
+VERSION=0.2.0.0
+DIR="/var/lib/jellyfin/plugins/Concert Radar_${VERSION}"
 sudo systemctl stop jellyfin
-sudo mkdir -p /var/lib/jellyfin/plugins/ConcertRadar_${VERSION}/
-sudo unzip jellyfin-concert-radar_${VERSION}.zip -d /var/lib/jellyfin/plugins/ConcertRadar_${VERSION}/
-sudo chown -R jellyfin:jellyfin /var/lib/jellyfin/plugins/ConcertRadar_${VERSION}/
+sudo mkdir -p "$DIR"
+sudo unzip concert-radar.zip -d "$DIR"
+sudo chown -R jellyfin:jellyfin "$DIR"
 sudo systemctl start jellyfin
 ```
 
@@ -175,16 +176,16 @@ Confirm listed under **Dashboard → Plugins**.
 Required for plugin development or producing your own release artifact.
 
 Requirements:
-- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) (9.0.115 or later).
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (10.0.400 or later).
 - `git` and a POSIX shell.
-- Optional for release packaging: Python 3.10+ and [`jprm`](https://github.com/oddstr13/jellyfin-plugin-repository-manager) (`pip install jprm`).
+- Optional for release packaging: Python 3.10+ and [`jprm`](https://github.com/oddstr13/jellyfin-plugin-repository-manager) (`pip install jprm==1.1.0`).
 
 macOS (keg-only Homebrew formula):
 
 ```bash
-brew install dotnet@9
-export DOTNET_ROOT="$(brew --prefix)/opt/dotnet@9/libexec"
-export PATH="$(brew --prefix)/opt/dotnet@9/bin:$PATH"
+brew install dotnet@10
+export DOTNET_ROOT="$(brew --prefix)/opt/dotnet@10/libexec"
+export PATH="$(brew --prefix)/opt/dotnet@10/bin:$PATH"
 ```
 
 Clone, restore, build, test:
@@ -200,9 +201,9 @@ dotnet test  --configuration Release
 Package a release zip (same format the manifest-based install consumes):
 
 ```bash
-pip install jprm
-jprm plugin build . --version 0.1.0 --output ./artifacts
-# → ./artifacts/jellyfin-concert-radar_0.1.0.0.zip
+pip install jprm==1.1.0
+jprm plugin build . --version 0.2.0 --output ./artifacts
+# → ./artifacts/concert-radar_0.2.0.0.zip
 ```
 
 To install the resulting zip locally, follow the [Manual install](#manual-install) steps above.

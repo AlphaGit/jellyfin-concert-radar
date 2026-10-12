@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Extensions.Json;
 using Jellyfin.Plugin.ConcertRadar.RateLimiting;
 using Jellyfin.Plugin.ConcertRadar.ScheduledTasks;
 using Jellyfin.Plugin.ConcertRadar.Sources;
@@ -21,7 +22,8 @@ namespace Jellyfin.Plugin.ConcertRadar.Api;
 /// </summary>
 [ApiController]
 [Authorize(Policy = Policies.RequiresElevation)]
-[Route("Plugins/ConcertRadar/api/admin")]
+[Route("Plugins/ConcertRadar/Admin")]
+[Produces(JsonDefaults.CamelCaseMediaType)]
 public sealed class AdminController : ControllerBase
 {
     private readonly ConcertRepository _concertRepository;
@@ -64,7 +66,7 @@ public sealed class AdminController : ControllerBase
     /// Triggers the <see cref="RefreshConcertsTask"/> immediately.
     /// </summary>
     /// <returns>202 Accepted.</returns>
-    [HttpPost("run-now")]
+    [HttpPost("RunNow")]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult RunNow()
@@ -90,7 +92,7 @@ public sealed class AdminController : ControllerBase
     /// <param name="id">The source identifier (e.g. "ticketmaster").</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>204 No Content.</returns>
-    [HttpPost("sources/{id}/reset")]
+    [HttpPost("Sources/{id}/Reset")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> ResetSourceAsync(
@@ -110,7 +112,7 @@ public sealed class AdminController : ControllerBase
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>JSON with the number of deleted rows.</returns>
-    [HttpPost("purge")]
+    [HttpPost("Purge")]
     [ProducesResponseType(typeof(PurgeResult), StatusCodes.Status200OK)]
     public async Task<ActionResult<PurgeResult>> PurgeAllAsync(
         CancellationToken cancellationToken = default)
@@ -128,7 +130,7 @@ public sealed class AdminController : ControllerBase
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>204 No Content.</returns>
-    [HttpPost("resolve-ids")]
+    [HttpPost("ResolveIds")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<ActionResult> ResolveIdsAsync(
         CancellationToken cancellationToken = default)
@@ -153,7 +155,7 @@ public sealed class AdminController : ControllerBase
     /// <param name="q">Free-text location query.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>JSON array passthrough from Nominatim (or an error payload).</returns>
-    [HttpGet("geocode")]
+    [HttpGet("Geocode")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status502BadGateway)]

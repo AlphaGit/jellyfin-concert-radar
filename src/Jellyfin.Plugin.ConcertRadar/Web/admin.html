@@ -572,7 +572,7 @@
             'use strict';
 
             var PLUGIN_ID = '65bb36d5-70d5-4121-8771-3dd404d20287';
-            var API_BASE  = 'Plugins/ConcertRadar/api';
+            var API_BASE  = 'Plugins/ConcertRadar';
 
             var ALL_SOURCES = ['ticketmaster', 'bandsintown', 'edmtrain', 'songkick', 'dice', 'ra'];
 
@@ -702,7 +702,7 @@
                 grid.querySelectorAll('.cr-reset-source').forEach(function (btn) {
                     btn.addEventListener('click', function () {
                         var sid = btn.getAttribute('data-source-id');
-                        adminPost('/admin/sources/' + encodeURIComponent(sid) + '/reset')
+                        adminPost('/Admin/Sources/' + encodeURIComponent(sid) + '/Reset')
                             .then(function () {
                                 announce('Source ' + sid + ' reset.');
                                 loadStatus();
@@ -720,7 +720,7 @@
             }
 
             function loadStatus() {
-                adminGet('/status').then(function (data) {
+                adminGet('/Status').then(function (data) {
                     var d = data || {};
                     var lastRun    = pick(d, 'LastRun',        'lastRun');
                     var nextRun    = pick(d, 'NextRun',        'nextRun');
@@ -1049,7 +1049,7 @@
                 // Call the plugin proxy rather than Nominatim directly: Nominatim does
                 // not emit CORS headers, and the proxy attaches a compliant User-Agent.
                 var token = ++geocodeToken;
-                var path = API_BASE + '/admin/geocode?q=' + encodeURIComponent(query);
+                var path = API_BASE + '/Admin/Geocode?q=' + encodeURIComponent(query);
 
                 ApiClient.ajax({
                     url: ApiClient.getUrl(path),
@@ -1337,7 +1337,7 @@
             });
 
             page.querySelector('#cr-btn-run-now').addEventListener('click', function () {
-                adminPost('/admin/run-now').then(function () {
+                adminPost('/Admin/RunNow').then(function () {
                     announce('Refresh queued.');
                     Dashboard.alert({ message: 'Refresh queued. The task will run shortly.' });
                 }).catch(function (err) {
@@ -1347,7 +1347,7 @@
 
             page.querySelector('#cr-btn-purge').addEventListener('click', function () {
                 if (!confirm('This will delete ALL stored concerts and force a full re-fetch on the next run. Are you sure?')) return;
-                adminPost('/admin/purge').then(function () {
+                adminPost('/Admin/Purge').then(function () {
                     announce('All concerts purged.');
                     Dashboard.alert({ message: 'All concerts have been deleted.' });
                 }).catch(function (err) {

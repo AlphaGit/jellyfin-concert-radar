@@ -1,6 +1,6 @@
 # Jellyfin Concert Radar — Specification
 
-> Server plugin for Jellyfin 10.11.x that aggregates upcoming concerts for artists in the music library from multiple sources, normalizes them, and displays them in an admin and user-facing page.
+> Server plugin for Jellyfin 12.x that aggregates upcoming concerts for artists in the music library from multiple sources, normalizes them, and displays them in an admin and user-facing page.
 
 ---
 
@@ -18,19 +18,19 @@
 
 - Ticket purchasing. Plugin only links out to the source.
 - Push notifications / calendar export. Possible future work.
-- Running on Jellyfin < 10.11 or > 10.11.x. A framework retarget may be required for 10.12.
+- Running on Jellyfin < 12. Version 0.1.x is the last line for Jellyfin 10.11.
 - Per-user configuration. All configuration is server-global.
 
 ## 3. Constraints
 
-- **Runtime**: .NET 9, `Jellyfin.Controller` 10.11.6, `Jellyfin.Model` 10.11.6, `ExcludeAssets=runtime` on both. (Jellyfin 10.11.x targets net9.0; net8 was the 10.10.x line.)
+- **Runtime**: .NET 10, `Jellyfin.Controller` / `Jellyfin.Model` / `Jellyfin.Data` 12.0.0, `ExcludeAssets=runtime` on all. (Jellyfin 12 targets net10.0; `Jellyfin.Data` is no longer transitive through `Jellyfin.Controller`.)
 - **License**: MIT (sources confirm permissive licenses are acceptable per the plugin template policy).
 - **Persistence**: private SQLite database under `IApplicationPaths.DataPath/concertradar/concerts.db` via `Microsoft.Data.Sqlite`. Never write to the Jellyfin system database.
 - **Configuration**: `BasePluginConfiguration`-derived type, server-global only. Jellyfin has no native per-user plugin config.
 - **Outbound HTTP**: `IHttpClientFactory` (named client `NamedClient.Default`) + `System.Threading.RateLimiting`. No third-party HTTP wrappers.
 - **No headless browser**. Plugin must run inside the Jellyfin process; bundling Chromium is not acceptable. All scrapers must work with plain HttpClient + HTML/JSON parsing.
 - **No third-party Jellyfin plugin dependencies** (no `jellyfin-plugin-pages`, no home-sections).
-- **ABI lock**: target `Jellyfin.Controller` 10.11.6 exactly; manifest pins ABI.
+- **ABI lock**: target `Jellyfin.Controller` 12.0.0 exactly; `targetAbi=12.0.0.0`, so every 12.x server is offered the plugin.
 
 ## 4. Sources
 
@@ -227,24 +227,32 @@ GC:
 ### HTTP endpoints
 
 ```
-GET  /Plugins/ConcertRadar/api/concerts                [Authorize]
+GET  /Plugins/ConcertRadar/Concerts                    [Authorize]
      ?from=<ISO>&to=<ISO>&country=<CC>&city=<str>&source=<id>
      &artistMbid=<uuid>&page=<n>&pageSize=<n>&sort=<date|artist>
      → { items: ConcertDto[], total: int }
 
-GET  /Plugins/ConcertRadar/api/artists                 [Authorize]
+GET  /Plugins/ConcertRadar/Artists                     [Authorize]
      → { items: ArtistDto[] }          // name, mbid, lastCheckedAt, resolvedSources
 
-GET  /Plugins/ConcertRadar/api/status                  [Authorize]
+GET  /Plugins/ConcertRadar/Status                      [Authorize]
      → { sources: SourceStatusDto[], lastRun, nextRun, queueSize }
 
-POST /Plugins/ConcertRadar/api/admin/run-now           [RequiresElevation]
+POST /Plugins/ConcertRadar/Admin/RunNow                [RequiresElevation]
      → 202 Accepted; kicks RefreshConcertsTask
-POST /Plugins/ConcertRadar/api/admin/sources/{id}/reset [RequiresElevation]
+POST /Plugins/ConcertRadar/Admin/Sources/{id}/Reset    [RequiresElevation]
      → clears circuit breaker
-POST /Plugins/ConcertRadar/api/admin/purge              [RequiresElevation]
+POST /Plugins/ConcertRadar/Admin/Purge                 [RequiresElevation]
      → deletes all concerts (forces re-fetch)
+POST /Plugins/ConcertRadar/Admin/ResolveIds            [RequiresElevation]
+     → clears resolved external IDs (forces re-resolution)
+GET  /Plugins/ConcertRadar/Admin/Geocode?q=<str>       [RequiresElevation]
+     → Nominatim proxy for location entry
+GET  /Plugins/ConcertRadar/UserView                    [Authorize]
+     → user-view.html fragment for Plugin Pages
 ```
+
+Every JSON response is camelCase (`[Produces(JsonDefaults.CamelCaseMediaType)]`) and every route segment is PascalCase with no `api` segment; see `docs/http-surface.md`.
 
 ## 7. Adapter contract
 
@@ -374,7 +382,7 @@ Authentication flow when visited directly via `/web/ConfigurationPage?name=conce
 ## 14. Packaging & distribution
 
 - `build.yaml` for JPRM.
-- `manifest.json` with `category`, `guid`, versions array (`version`, `changelog`, `targetAbi=10.11.0.0`, `sourceUrl`, `checksum`, `timestamp`).
+- `manifest.json` with `category`, `guid`, versions array (`version`, `changelog`, `targetAbi=12.0.0.0`, `sourceUrl`, `checksum`, `timestamp`).
 - GitHub Actions workflow: on tag `v*`, run `dotnet publish`, run JPRM, upload artifact, update `manifest.json` on `gh-pages`.
 - Users add the repository URL (`https://<owner>.github.io/jellyfin-concert-radar/manifest.json`) in Jellyfin Dashboard → Plugins → Repositories.
 
@@ -384,4 +392,4 @@ Authentication flow when visited directly via `/web/ConfigurationPage?name=conce
 - Scraper drift for Dice/RA/Songkick — mitigated by fixture-based contract tests + circuit breaker.
 - Cloudflare escalation on Dice — plugin sets realistic `User-Agent` and `Accept-Language`; on persistent 403 the circuit disables the adapter and surfaces a message.
 - Absent MBIDs in library → name-based fallback lookups with lower confidence; matches with confidence below threshold are stored but flagged.
-- Jellyfin 10.12 may require a framework retarget.
+- A future Jellyfin major (13) may require a framework retarget.

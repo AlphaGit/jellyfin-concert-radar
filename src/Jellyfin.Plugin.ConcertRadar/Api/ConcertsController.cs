@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.ConcertRadar.Api.Dtos;
 using Jellyfin.Plugin.ConcertRadar.Model;
+using Jellyfin.Extensions.Json;
 using Jellyfin.Plugin.ConcertRadar.Storage;
 using MediaBrowser.Model.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +20,8 @@ namespace Jellyfin.Plugin.ConcertRadar.Api;
 /// </summary>
 [ApiController]
 [Authorize]
-[Route("Plugins/ConcertRadar/api")]
+[Route("Plugins/ConcertRadar")]
+[Produces(JsonDefaults.CamelCaseMediaType)]
 public sealed class ConcertsController : ControllerBase
 {
     private readonly ConcertRepository _concertRepository;
@@ -64,7 +66,7 @@ public sealed class ConcertsController : ControllerBase
     /// <param name="sort">Sort field: date | artist | city (default date).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Paginated list of concerts.</returns>
-    [HttpGet("concerts")]
+    [HttpGet("Concerts")]
     [ProducesResponseType(typeof(QueryResult<ConcertDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<QueryResult<ConcertDto>>> GetConcertsAsync(
         [FromQuery] DateTimeOffset? from = null,
@@ -134,7 +136,7 @@ public sealed class ConcertsController : ControllerBase
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of artists with resolution status.</returns>
-    [HttpGet("artists")]
+    [HttpGet("Artists")]
     [ProducesResponseType(typeof(QueryResult<ArtistDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<QueryResult<ArtistDto>>> GetArtistsAsync(
         CancellationToken cancellationToken = default)
@@ -151,7 +153,7 @@ public sealed class ConcertsController : ControllerBase
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Status summary.</returns>
-    [HttpGet("status")]
+    [HttpGet("Status")]
     [ProducesResponseType(typeof(StatusResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<StatusResponse>> GetStatusAsync(
         CancellationToken cancellationToken = default)

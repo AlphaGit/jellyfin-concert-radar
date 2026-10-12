@@ -5,7 +5,7 @@ Test pyramid:
 - **Unit** — pure functions, DTO mapping, filter logic, per-adapter response parsing with recorded fixtures. `xUnit + FluentAssertions + NSubstitute`. No network, no DB file.
 - **Integration** — SQLite repositories against a real file-backed temp DB; scheduled task end-to-end against mock adapters.
 - **Contract** — per-source fixture parsing (recorded HTTP bodies + HTML snapshots checked into `tests/fixtures/<source>/...`). Catches upstream drift.
-- **Smoke (manual)** — install built plugin into a local Jellyfin 10.11.6, run scheduled task, inspect admin UI + user view. Documented steps, not automated.
+- **Smoke (manual)** — install built plugin into a Jellyfin 12.x server, run scheduled task, inspect admin UI + user view. Documented steps, not automated.
 
 Fixtures directory layout:
 ```
@@ -215,7 +215,7 @@ Optional automated: Playwright tests for admin + view pages, driven against a lo
 
 ## Smoke test checklist (manual, pre-release)
 
-Performed against a real Jellyfin 10.11.6 instance with a small music library.
+Performed against a real Jellyfin 12.1 instance (originally 10.11.6 for 0.1.x) with a small music library.
 
 1. Install plugin via manual DLL drop.
 2. Restart Jellyfin; confirm plugin appears in Dashboard → Plugins.

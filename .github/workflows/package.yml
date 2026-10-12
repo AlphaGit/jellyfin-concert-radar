@@ -5,36 +5,94 @@ on:
     tags: ['v*']
   workflow_dispatch:
 
+# Each version's package is an asset of its GitHub Release; the catalogue is the committed
+# repo/manifest.json, which servers read from the default branch's raw address. So a release
+# creates the GitHub Release and writes the catalogue back to the branch. Nothing is deployed.
+permissions:
+  contents: write
+
+concurrency:
+  group: package
+  cancel-in-progress: false
+
 jobs:
   package:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup .NET 9
-        uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
         with:
-          dotnet-version: '9.0.x'
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
       - name: Install JPRM
-        run: pip install jprm
+        run: pip install jprm==1.1.0
 
+      # JPRM normalises a version to four parts and names the package for the normalised one,
+      # so tag v1.0.0 yields concert-radar_1.0.0.0.zip. Both forms are needed: the three
+      # part one to pass to JPRM, the four part one to find what it wrote.
       - name: Derive version from tag
         id: ver
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          version4="$version"
+          while [ "$(printf '%s' "$version4" | tr -cd . | wc -c)" -lt 3 ]; do version4="$version4.0"; done
+          echo "version=$version"   >> "$GITHUB_OUTPUT"
+          echo "version4=$version4" >> "$GITHUB_OUTPUT"
 
+      # The catalogue text JPRM publishes is the tagged version's section of CHANGELOG.md, so the
+      # two cannot drift. A missing or empty section fails the run. Node comes with
+      # the runner image; the script uses only its standard library.
+      - name: Write the changelog entry into build.yaml
+        run: node .github/scripts/changelog-entry.js "${{ steps.ver.outputs.version }}"
+
+      # Build to a staging directory, outside repo/: the package is published as a release asset,
+      # never committed.
       - name: Package with JPRM
         run: |
           mkdir -p ./artifacts
           jprm plugin build . --version "${{ steps.ver.outputs.version }}" --output ./artifacts
 
-      - name: Upload plugin artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: jellyfin-concert-radar-${{ steps.ver.outputs.version }}
-          path: ./artifacts/*.zip
+      # JPRM rewrites <TargetFramework> from build.yaml while packaging and restores it; it also
+      # rewrites <Version> and does NOT restore that. The framework is what is checked, and the
+      # project file is put back before anything is committed.
+      - name: Verify packaging restored the target framework
+        run: |
+          grep -q '<TargetFramework>net10.0</TargetFramework>' \
+            src/Jellyfin.Plugin.ConcertRadar/Jellyfin.Plugin.ConcertRadar.csproj
+          git checkout -- src/Jellyfin.Plugin.ConcertRadar/Jellyfin.Plugin.ConcertRadar.csproj
+
+      # Every version's package is the asset of its own GitHub Release, under one name with no
+      # version in it. The tag names the release, so each version's address differs and is never
+      # overwritten. `gh` comes with the runner image.
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node .github/scripts/changelog-entry.js "${{ steps.ver.outputs.version }}" --notes ./artifacts/release-notes.md
+          mv "./artifacts/concert-radar_${{ steps.ver.outputs.version4 }}.zip" ./artifacts/concert-radar.zip
+          gh release create "$GITHUB_REF_NAME" ./artifacts/concert-radar.zip --title "$GITHUB_REF_NAME" --notes-file ./artifacts/release-notes.md
+
+      - name: Add the version to the published repository
+        run: |
+          jprm repo add \
+            --plugin-url "https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/concert-radar.zip" \
+            ./repo/manifest.json \
+            ./artifacts/concert-radar.zip
+
+      - name: Commit the published repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add repo
+          git commit -m "release: publish ${{ steps.ver.outputs.version }} to the plugin repository"
+          git push origin "HEAD:${{ github.event.repository.default_branch }}"

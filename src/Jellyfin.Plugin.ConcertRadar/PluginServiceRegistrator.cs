@@ -1,3 +1,5 @@
+using System.Runtime.Loader;
+using Jellyfin.Plugin.ConcertRadar.Integration;
 using Jellyfin.Plugin.ConcertRadar.Library;
 using Jellyfin.Plugin.ConcertRadar.RateLimiting;
 using Jellyfin.Plugin.ConcertRadar.Resolution;
@@ -37,6 +39,13 @@ public sealed class PluginServiceRegistrator : IPluginServiceRegistrator
 
         // Run schema migration exactly once at startup before any repository is used.
         serviceCollection.AddHostedService<SchemaBootstrapHostedService>();
+
+        // The Concerts page entry, registered with Plugin Pages at host start and withdrawn at
+        // stop. A hosted service, not the Plugin constructor: construction order between two
+        // plugins is not guaranteed, and the generic host starts these once every plugin exists.
+        serviceCollection.AddSingleton(new PluginPagesGateway(
+            () => AssemblyLoadContext.All.SelectMany(context => context.Assemblies)));
+        serviceCollection.AddHostedService<PluginPagesRegistrationService>();
 
         // T2.1: Rate limiter infrastructure.
         serviceCollection.TryAddSingleton<IPluginConfigurationProvider, DefaultPluginConfigurationProvider>();

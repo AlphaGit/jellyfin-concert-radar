@@ -264,7 +264,7 @@
         (function () {
             'use strict';
 
-            var API_BASE  = 'Plugins/ConcertRadar/api';
+            var API_BASE  = 'Plugins/ConcertRadar';
             var PAGE_SIZE = 50;
 
             var page = document.querySelector('#concertradarViewPage');
@@ -544,7 +544,7 @@
                 countEl.textContent = '';
                 announce('Loading concerts…');
 
-                apiGet('/concerts', buildQuery()).then(function (data) {
+                apiGet('/Concerts', buildQuery()).then(function (data) {
                     data = data || {};
                     var items = pick(data, 'Items', 'items') || [];
                     var total = pick(data, 'TotalRecordCount', 'totalRecordCount');
@@ -605,7 +605,7 @@
             }
 
             function loadSources() {
-                apiGet('/status').then(function (data) {
+                apiGet('/Status').then(function (data) {
                     var sources = pick(data, 'Sources', 'sources') || [];
                     state.sources = sources;
                     var sel = page.querySelector('#cr-filter-source');
@@ -620,7 +620,7 @@
             }
 
             function loadArtists() {
-                apiGet('/artists').then(function (data) {
+                apiGet('/Artists').then(function (data) {
                     var arr = pick(data, 'Items', 'items') || [];
                     // Normalize to lowercase keys for consumer code.
                     state.artists = arr.map(function (a) {

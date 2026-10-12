@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -11,7 +11,7 @@
     <RootNamespace>Jellyfin.Plugin.ConcertRadar</RootNamespace>
     <Product>Jellyfin Concert Radar</Product>
     <Authors>Alpha</Authors>
-    <Version>0.1.1.0</Version>
+    <Version>0.2.0.0</Version>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
@@ -26,24 +26,30 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Jellyfin 10.11.6 targets net9.0. Keep package versions in lockstep with the server ABI. -->
-    <PackageReference Include="Jellyfin.Controller" Version="10.11.6">
+    <!-- Jellyfin 12.0.0 targets net10.0. Keep package versions in lockstep with the server ABI. -->
+    <PackageReference Include="Jellyfin.Controller" Version="12.0.0">
       <ExcludeAssets>runtime</ExcludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Jellyfin.Model" Version="10.11.6">
+    <PackageReference Include="Jellyfin.Model" Version="12.0.0">
       <ExcludeAssets>runtime</ExcludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
 
-    <!-- SQLite persistence (net9-compatible baseline) -->
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.*" />
+    <!-- Direct from Jellyfin 12: BaseItemKind was transitive through Jellyfin.Controller before. -->
+    <PackageReference Include="Jellyfin.Data" Version="12.0.0">
+      <ExcludeAssets>runtime</ExcludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <!-- SQLite persistence. Exact pin; native libe_sqlite3 ships via build.yaml artifacts. -->
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
 
     <!--
       AngleSharp is the canonical HTML parsing library for all scrapers in this plugin.
       Do NOT add a second HTML parser (e.g. HtmlAgilityPack) - use AngleSharp for everything.
     -->
-    <PackageReference Include="AngleSharp" Version="1.*" />
+    <PackageReference Include="AngleSharp" Version="1.8.3" />
   </ItemGroup>
 
 </Project>
