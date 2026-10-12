@@ -560,4 +560,4 @@ catalogue moves from `gh-pages` to a committed `repo/manifest.json`.
 - [x] T15.5 [INFRA] CI: `build.yml` on .NET 10 plus Node page tests; `package.yml` creates a GitHub Release with `concert-radar.zip`, adds it to `repo/manifest.json` with `jprm repo add`, and commits the catalogue to `main`. Catalogue text comes from `CHANGELOG.md`.
 - [x] T15.6 [TEST] Plugin Pages registration and legacy cleanup, HTTP surface rules, packaging metadata, changelog extraction.
 - [x] T15.7 [DOC] README, SPEC, MANUAL, TESTS, CHANGELOG updated for Jellyfin 12.
-- [ ] T15.8 [OPS] Tag v0.2.0; retire `manifest.json` and `downloads/` on `gh-pages` (keep `assets/`); install on the production server from the new catalogue and verify.
+- [x] T15.8 [OPS] Tag v0.2.0; retire `manifest.json` and `downloads/` on `gh-pages` (keep `assets/`); install on the production server from the new catalogue and verify.
