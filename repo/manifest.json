@@ -7,6 +7,15 @@
         "owner": "Alpha",
         "category": "General",
         "imageUrl": "https://alphagit.github.io/jellyfin-concert-radar/logo.png",
-        "versions": []
+        "versions": [
+            {
+                "version": "0.2.0.0",
+                "changelog": "### Upgrading from 0.1.x \u2014 once\n\n- **Requires Jellyfin 12.** This version does not load on Jellyfin 10.11. Jellyfin 12 disables\n  0.1.x during its own upgrade; your settings and stored concerts are kept and this version reads\n  them unchanged.\n- **Replace the repository address.** The catalogue is no longer served from GitHub Pages. In\n  Dashboard \u2192 Plugins \u2192 Repositories, add\n  `https://raw.githubusercontent.com/AlphaGit/jellyfin-concert-radar/main/repo/manifest.json` and\n  remove the old `github.io` address.\n\n### Changed\n\n- **Runs on Jellyfin 12** (.NET 10). Built against the Jellyfin 12.0.0 libraries, so it loads on\n  every 12.x server.\n- **The Concerts menu entry registers through Plugin Pages' own API** (Plugin Pages 3.0.0.0 or\n  later, with File Transformation) and is withdrawn when the server stops. On first start the\n  plugin removes the entry 0.1.x wrote into Plugin Pages' `config.json`, so an uninstall no longer\n  leaves a dead menu entry behind.\n- **API routes follow Jellyfin's own naming.** `Plugins/ConcertRadar/api/concerts` is now\n  `Plugins/ConcertRadar/Concerts`; every segment is PascalCase and the `api` segment is gone (see\n  `docs/http-surface.md`). Responses are always camelCase, whatever the host default. A script\n  calling the old paths must be updated.\n- **The catalogue name is \"Concert Radar\"**, matching the name the plugin reports, so Jellyfin\n  replaces an older copy on upgrade instead of loading both.",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/AlphaGit/jellyfin-concert-radar/releases/download/v0.2.0/concert-radar.zip",
+                "checksum": "25a06063e2bd36d78c7474a78db1e47c",
+                "timestamp": "2026-10-12T00:23:04Z"
+            }
+        ]
     }
 ]
