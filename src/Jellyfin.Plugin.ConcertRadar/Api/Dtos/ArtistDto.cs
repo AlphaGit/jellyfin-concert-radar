@@ -23,6 +23,9 @@ public sealed record ArtistDto
     /// <summary>Gets the list of source IDs for which external IDs have been resolved.</summary>
     public required IReadOnlyList<string> ResolvedSources { get; init; }
 
+    /// <summary>Gets a value indicating whether the admin ignored this artist.</summary>
+    public bool Ignored { get; init; }
+
     /// <summary>Maps a <see cref="StoredArtist"/> to <see cref="ArtistDto"/>.</summary>
     public static ArtistDto FromStored(StoredArtist a) => new()
     {
@@ -31,5 +34,6 @@ public sealed record ArtistDto
         Name            = a.Name,
         LastCheckedAt   = a.LastCheckedAt,
         ResolvedSources = a.ExternalIds.Keys.ToList(),
+        Ignored         = a.IgnoredAt is not null,
     };
 }

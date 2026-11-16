@@ -14,6 +14,7 @@ namespace Jellyfin.Plugin.ConcertRadar.Model;
 /// <param name="LastCheckedAt">When this artist was last processed by the scheduler (null = never).</param>
 /// <param name="LastError">Last error message from a refresh attempt (null = none).</param>
 /// <param name="ConsecutiveErrors">Number of consecutive refresh failures.</param>
+/// <param name="IgnoredAt">When the admin ignored this artist (null = tracked).</param>
 public sealed record StoredArtist(
     string Id,
     string? Mbid,
@@ -22,4 +23,5 @@ public sealed record StoredArtist(
     IReadOnlyDictionary<string, string> ExternalIds,
     DateTimeOffset? LastCheckedAt,
     string? LastError,
-    int ConsecutiveErrors);
+    int ConsecutiveErrors,
+    DateTimeOffset? IgnoredAt = null);

@@ -273,6 +273,22 @@
                 </div>
             </section>
 
+            <!-- ── Artists ─────────────────────────────────────── -->
+            <section class="cr-section">
+                <h2>Artists</h2>
+                <p class="cr-hint">Ignored artists are not checked for concerts, and their stored concerts are deleted.</p>
+                <div class="inputContainer">
+                    <input is="emby-input" type="search" id="cr-artist-search" label="Search artists" />
+                </div>
+                <div class="checkboxContainer">
+                    <label class="emby-checkbox-label">
+                        <input is="emby-checkbox" type="checkbox" id="cr-artist-ignored-only" />
+                        <span>Show ignored only</span>
+                    </label>
+                </div>
+                <div id="cr-artist-list" aria-live="polite"><p class="cr-placeholder">Loading artists…</p></div>
+            </section>
+
             <!-- ── Config form ─────────────────────────────────── -->
             <form id="cr-config-form" novalidate>
 
@@ -642,6 +658,70 @@
                     type: 'POST'
                 });
             }
+
+            function adminDelete(path) {
+                return ApiClient.ajax({
+                    url: ApiClient.getUrl(API_BASE + path),
+                    type: 'DELETE'
+                });
+            }
+
+            // ── Artists (ignore list) ────────────────────────────────────
+            var artists = [];
+            var ARTIST_RENDER_LIMIT = 200;
+
+            function renderArtists() {
+                var el = page.querySelector('#cr-artist-list');
+                var q = page.querySelector('#cr-artist-search').value.trim().toLowerCase();
+                var onlyIgnored = page.querySelector('#cr-artist-ignored-only').checked;
+                var rows = artists.filter(function (a) {
+                    return (!onlyIgnored || a.ignored) && (!q || a.name.toLowerCase().indexOf(q) !== -1);
+                });
+                if (!rows.length) {
+                    el.innerHTML = '<p class="cr-placeholder">No artists match.</p>';
+                    return;
+                }
+                var html = rows.slice(0, ARTIST_RENDER_LIMIT).map(function (a) {
+                    return '<div class="cr-artist-row" style="display:flex;align-items:center;justify-content:space-between;gap:1em;padding:.25em 0;">' +
+                        '<span>' + escHtml(a.name) + (a.ignored ? ' <em style="opacity:.6">(ignored)</em>' : '') + '</span>' +
+                        '<button is="emby-button" type="button" class="raised emby-button cr-toggle-ignore" ' +
+                        'data-artist-id="' + escHtml(a.id) + '" data-ignored="' + (a.ignored ? '1' : '0') + '">' +
+                        '<span>' + (a.ignored ? 'Unignore' : 'Ignore') + '</span></button></div>';
+                }).join('');
+                if (rows.length > ARTIST_RENDER_LIMIT) {
+                    html += '<p class="cr-hint">Showing ' + ARTIST_RENDER_LIMIT + ' of ' + rows.length + '. Refine the search.</p>';
+                }
+                el.innerHTML = html;
+            }
+
+            function loadArtists() {
+                adminGet('/Artists').then(function (data) {
+                    var items = pick(data, 'Items', 'items') || [];
+                    artists = items.map(function (a) {
+                        return {
+                            id: pick(a, 'Id', 'id'),
+                            name: pick(a, 'Name', 'name') || '',
+                            ignored: !!pick(a, 'Ignored', 'ignored')
+                        };
+                    });
+                    renderArtists();
+                }).catch(function () {
+                    page.querySelector('#cr-artist-list').innerHTML = '<p class="cr-placeholder">Failed to load artists.</p>';
+                });
+            }
+
+            page.querySelector('#cr-artist-search').addEventListener('input', renderArtists);
+            page.querySelector('#cr-artist-ignored-only').addEventListener('change', renderArtists);
+            page.querySelector('#cr-artist-list').addEventListener('click', function (e) {
+                var btn = e.target.closest ? e.target.closest('.cr-toggle-ignore') : null;
+                if (!btn) return;
+                var id = encodeURIComponent(btn.getAttribute('data-artist-id'));
+                var path = '/Admin/Artists/' + id + '/Ignore';
+                btn.disabled = true;
+                (btn.getAttribute('data-ignored') === '1' ? adminDelete(path) : adminPost(path))
+                    .then(loadArtists)
+                    .catch(function () { btn.disabled = false; announce('Could not change artist.'); });
+            });
 
             // ── Status rendering ─────────────────────────────────────────
             function badgeClass(status) {
@@ -1302,6 +1382,7 @@
                     formErr.classList.add('cr-visible');
                 });
 
+                loadArtists();
                 startStatusPolling();
             });
 

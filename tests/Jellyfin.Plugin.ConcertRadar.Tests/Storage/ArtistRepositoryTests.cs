@@ -22,6 +22,89 @@ public class ArtistRepositoryTests
     private static LibraryArtist MakeArtist(string name, string? mbid = null, Guid? id = null)
         => new LibraryArtist(id ?? Guid.NewGuid(), name, mbid);
 
+    // ── Ignore ────────────────────────────────────────────────────────────────
+
+    private const string Mbid = "a74b1b7f-71a5-4011-9441-d0b5e4122711";
+
+    private static async Task<int> ConcertCountAsync(TestDatabase db)
+        => (await db.Concerts.QueryAsync(new ConcertQuery(), CancellationToken.None)).Total;
+
+    [Fact]
+    public async Task UpsertFromLibrary_DoesNotClearIgnoredAt()
+    {
+        await using var db = await TestDatabase.CreateAsync();
+        await db.Artists.UpsertFromLibraryAsync(new[] { MakeArtist("Radiohead", Mbid) }, CancellationToken.None);
+        await db.Artists.SetIgnoredAsync(Mbid, true, Now, CancellationToken.None);
+
+        await db.Artists.UpsertFromLibraryAsync(new[] { MakeArtist("Radiohead", Mbid) }, CancellationToken.None);
+
+        var all = await db.Artists.GetAllAsync(CancellationToken.None);
+        all.Single().IgnoredAt.Should().Be(Now);
+    }
+
+    [Fact]
+    public async Task SetIgnored_True_DeletesThatArtistsConcertsOnly()
+    {
+        await using var db = await TestDatabase.CreateAsync();
+        string noMbidId = ArtistRepository.ComputeId(null, "Nombid");
+        await db.Artists.UpsertFromLibraryAsync(
+            new[] { MakeArtist("Radiohead", Mbid), MakeArtist("Nombid"), MakeArtist("Other", "11111111-1111-1111-1111-111111111111") },
+            CancellationToken.None);
+        await db.Concerts.UpsertAsync(ConcertRecordFactory.Create(sourceEventId: "a", artistMbid: Mbid), CancellationToken.None);
+        await db.Concerts.UpsertAsync(ConcertRecordFactory.Create(sourceEventId: "b", artistMbid: null, artistName: "NOMBID"), CancellationToken.None);
+        await db.Concerts.UpsertAsync(ConcertRecordFactory.Create(sourceEventId: "c", artistMbid: "11111111-1111-1111-1111-111111111111", artistName: "Other"), CancellationToken.None);
+
+        (await db.Artists.SetIgnoredAsync(Mbid, true, Now, CancellationToken.None)).Should().BeTrue();
+        (await ConcertCountAsync(db)).Should().Be(2, "only the MBID artist's concert is deleted");
+
+        (await db.Artists.SetIgnoredAsync(noMbidId, true, Now, CancellationToken.None)).Should().BeTrue();
+        var left = await db.Concerts.QueryAsync(new ConcertQuery(), CancellationToken.None);
+        left.Items.Single().ArtistName.Should().Be("Other", "no-MBID artist matches by name, case-insensitively");
+    }
+
+    [Fact]
+    public async Task SetIgnored_False_ClearsIgnoredAtAndLastChecked()
+    {
+        await using var db = await TestDatabase.CreateAsync();
+        await db.Artists.UpsertFromLibraryAsync(new[] { MakeArtist("Radiohead", Mbid) }, CancellationToken.None);
+        await db.Artists.UpdateCheckedAsync(Mbid, Now, null, CancellationToken.None);
+        await db.Artists.SetIgnoredAsync(Mbid, true, Now, CancellationToken.None);
+
+        await db.Artists.SetIgnoredAsync(Mbid, false, Now, CancellationToken.None);
+
+        var a = (await db.Artists.GetAllAsync(CancellationToken.None)).Single();
+        a.IgnoredAt.Should().BeNull();
+        a.LastCheckedAt.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SetIgnored_IsIdempotent_AndUnknownIdReturnsFalse()
+    {
+        await using var db = await TestDatabase.CreateAsync();
+        await db.Artists.UpsertFromLibraryAsync(new[] { MakeArtist("Radiohead", Mbid) }, CancellationToken.None);
+
+        await db.Artists.SetIgnoredAsync(Mbid, true, Now, CancellationToken.None);
+        await db.Artists.SetIgnoredAsync(Mbid, true, Now.AddDays(1), CancellationToken.None);
+        (await db.Artists.GetAllAsync(CancellationToken.None)).Single().IgnoredAt.Should().Be(Now, "first ignore time is kept");
+
+        await db.Artists.SetIgnoredAsync(Mbid, false, Now, CancellationToken.None);
+        await db.Artists.SetIgnoredAsync(Mbid, false, Now, CancellationToken.None);
+
+        (await db.Artists.SetIgnoredAsync("nope", true, Now, CancellationToken.None)).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetNextBatch_SkipsIgnoredArtists()
+    {
+        await using var db = await TestDatabase.CreateAsync();
+        await db.Artists.UpsertFromLibraryAsync(new[] { MakeArtist("Radiohead", Mbid), MakeArtist("Portishead") }, CancellationToken.None);
+        await db.Artists.SetIgnoredAsync(Mbid, true, Now, CancellationToken.None);
+
+        var batch = await db.Artists.GetNextBatchAsync(50, CancellationToken.None);
+
+        batch.Select(a => a.Name).Should().Equal("Portishead");
+    }
+
     // ── UpsertFromLibrary ─────────────────────────────────────────────────────
 
     [Fact]

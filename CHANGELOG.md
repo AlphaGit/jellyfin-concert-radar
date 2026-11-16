@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Ignore an artist.** In the admin page's new Artists section, or with the Ignore artist button on a concert card (administrators only), you can stop tracking concerts for an artist. Ignoring deletes that artist's stored concerts and skips them in every run. Unignoring puts them first in the next run. The list is server-wide.
+
 ## [0.2.0] — 2026-10-11
 
 ### Upgrading from 0.1.x — once

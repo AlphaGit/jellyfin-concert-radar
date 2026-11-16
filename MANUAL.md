@@ -19,6 +19,7 @@ A walkthrough of configuring, navigating, and using Concert Radar. Start with [A
 - [Monitoring](#monitoring)
   - [Status cards](#status-cards)
   - [Run Now / Purge / Reset](#run-now--purge--reset)
+  - [Ignoring artists](#ignoring-artists)
 - [User guide](#user-guide)
   - [Opening the concerts page](#opening-the-concerts-page)
   - [Reading a concert card](#reading-a-concert-card)
@@ -120,6 +121,12 @@ The top status bar shows:
 - **Run Now** — queues an immediate run of the scheduled task. Safe to hit any time; uses the same daily budget and rate limits as scheduled runs.
 - **Purge All Concerts** — wipes every stored concert record. The next run re-fetches everything. Use if data looks corrupted or after a major config change.
 - **Reset** (per source) — clears a single source's failure counter + daily call count. Use after fixing a credential or waiting out a rate-limit ban.
+
+### Ignoring artists
+
+The **Artists** section of the admin page lists every library artist. Use **Ignore** to stop tracking concerts for an artist: their stored concerts are deleted now, and later runs skip them (so they cost no source budget). **Unignore** puts the artist first in the next run. The list applies to all users.
+
+Administrators also see an **Ignore artist** button on each concert card.
 
 ---
 

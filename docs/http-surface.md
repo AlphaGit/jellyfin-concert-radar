@@ -66,6 +66,8 @@ Enforced by `HttpSurfaceTests.NoEmbeddedPage_CallsTheRetiredApiPrefix`.
 | `GET` | `Plugins/ConcertRadar/Status` | `ConcertsController` | `StatusResponse` |
 | `POST` | `Plugins/ConcertRadar/Admin/RunNow` | `AdminController` | none (202) |
 | `POST` | `Plugins/ConcertRadar/Admin/Sources/{id}/Reset` | `AdminController` | none |
+| `POST` | `Plugins/ConcertRadar/Admin/Artists/{id}/Ignore` | `AdminController` | none (204, 404 unknown id) |
+| `DELETE` | `Plugins/ConcertRadar/Admin/Artists/{id}/Ignore` | `AdminController` | none (204, 404 unknown id) |
 | `POST` | `Plugins/ConcertRadar/Admin/Purge` | `AdminController` | none |
 | `POST` | `Plugins/ConcertRadar/Admin/ResolveIds` | `AdminController` | none (204) |
 | `GET` | `Plugins/ConcertRadar/Admin/Geocode?q=` | `AdminController` | Nominatim results |

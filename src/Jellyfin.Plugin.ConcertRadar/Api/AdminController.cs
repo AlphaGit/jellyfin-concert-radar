@@ -142,6 +142,33 @@ public sealed class AdminController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Ignores an artist: stops tracking and deletes their stored concerts.</summary>
+    /// <param name="id">Artist id (<c>artists.id</c>).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>204, or 404 for an unknown id.</returns>
+    [HttpPost("Artists/{id}/Ignore")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<ActionResult> IgnoreArtistAsync(string id, CancellationToken cancellationToken = default)
+        => SetIgnoredAsync(id, true, cancellationToken);
+
+    /// <summary>Un-ignores an artist; they are fetched first on the next run.</summary>
+    /// <param name="id">Artist id (<c>artists.id</c>).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>204, or 404 for an unknown id.</returns>
+    [HttpDelete("Artists/{id}/Ignore")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<ActionResult> UnignoreArtistAsync(string id, CancellationToken cancellationToken = default)
+        => SetIgnoredAsync(id, false, cancellationToken);
+
+    private async Task<ActionResult> SetIgnoredAsync(string id, bool ignored, CancellationToken ct)
+    {
+        bool found = await _artistRepository.SetIgnoredAsync(id, ignored, DateTimeOffset.UtcNow, ct)
+            .ConfigureAwait(false);
+        return found ? NoContent() : NotFound();
+    }
+
     /// <summary>Result payload for the purge endpoint.</summary>
     public sealed record PurgeResult(int Deleted);
 

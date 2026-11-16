@@ -145,6 +145,24 @@ public sealed class AdminControllerTests : IAsyncLifetime
         remaining.Total.Should().Be(0, "PurgeAll must delete all rows");
     }
 
+    [Fact]
+    public async Task AdminController_IgnoreArtist_NoContent_ThenUnignore_AndUnknownIs404()
+    {
+        await _db.Artists.UpsertFromLibraryAsync(
+            new[] { new LibraryArtist(Guid.NewGuid(), "Radiohead", "a74b1b7f-71a5-4011-9441-d0b5e4122711") },
+            CancellationToken.None);
+        var controller = BuildController();
+        const string id = "a74b1b7f-71a5-4011-9441-d0b5e4122711";
+
+        (await controller.IgnoreArtistAsync(id, CancellationToken.None)).Should().BeOfType<NoContentResult>();
+        (await _db.Artists.GetAllAsync(CancellationToken.None)).Single().IgnoredAt.Should().NotBeNull();
+
+        (await controller.UnignoreArtistAsync(id, CancellationToken.None)).Should().BeOfType<NoContentResult>();
+        (await _db.Artists.GetAllAsync(CancellationToken.None)).Single().IgnoredAt.Should().BeNull();
+
+        (await controller.IgnoreArtistAsync("nope", CancellationToken.None)).Should().BeOfType<NotFoundResult>();
+    }
+
     /// <summary>
     /// ResolveIdsAsync clears all ext_ids and returns 204.
     /// </summary>

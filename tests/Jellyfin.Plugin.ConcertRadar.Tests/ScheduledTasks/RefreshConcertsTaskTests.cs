@@ -12,6 +12,7 @@ using Jellyfin.Plugin.ConcertRadar.Model;
 using Jellyfin.Plugin.ConcertRadar.RateLimiting;
 using Jellyfin.Plugin.ConcertRadar.Resolution;
 using Jellyfin.Plugin.ConcertRadar.ScheduledTasks;
+using Jellyfin.Plugin.ConcertRadar.Storage;
 using Jellyfin.Plugin.ConcertRadar.Sources;
 using Jellyfin.Plugin.ConcertRadar.Tests.Support;
 using MediaBrowser.Common.Configuration;
@@ -197,6 +198,27 @@ public sealed class RefreshConcertsTaskTests : IAsyncLifetime
         result.Total.Should().Be(2, "one concert per source per artist");
         result.Items.Should().Contain(c => c.Source == "fake1" && c.SourceEventId == "evt-a1");
         result.Items.Should().Contain(c => c.Source == "fake2" && c.SourceEventId == "evt-a2");
+    }
+
+    /// <summary>
+    /// An ignored artist is never fetched.
+    /// </summary>
+    [Fact]
+    public async Task Task_DoesNotCallAdaptersForIgnoredArtist()
+    {
+        await _db.Artists.UpsertFromLibraryAsync(
+            new[] { new LibraryArtist(Guid.NewGuid(), "Artist1", null), new LibraryArtist(Guid.NewGuid(), "Artist2", null) },
+            CancellationToken.None);
+        await _db.Artists.SetIgnoredAsync(
+            ArtistRepository.ComputeId(null, "Artist2"), true, Now, CancellationToken.None);
+
+        var adapter = new FakeSourceAdapter("fake1", events: new[] { MakeRawEvent("evt-1", "Artist1") });
+        var task = BuildTask(new ISourceAdapter[] { adapter },
+            new[] { MakeMusicArtist("Artist1"), MakeMusicArtist("Artist2") });
+
+        await task.ExecuteAsync(Substitute.For<IProgress<double>>(), CancellationToken.None);
+
+        adapter.CallCount.Should().Be(1, "only Artist1 is tracked");
     }
 
     /// <summary>

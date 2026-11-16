@@ -372,6 +372,25 @@
                 return 'cr-source-pill ' + (map[(source || '').toLowerCase()] || '');
             }
 
+            // ── Admin-only "Ignore artist" ──────────────────────────────────
+            var isAdmin = false;
+            function resolveAdmin() {
+                return Promise.resolve(ApiClient.getCurrentUser()).then(function (u) {
+                    var pol = u && pick(u, 'Policy', 'policy');
+                    isAdmin = !!(pol && pick(pol, 'IsAdministrator', 'isAdministrator'));
+                }).catch(function () { isAdmin = false; });
+            }
+            function ignoreArtist(artistId, btn) {
+                btn.disabled = true;
+                return ApiClient.ajax({
+                    url: ApiClient.getUrl(API_BASE + '/Admin/Artists/' + encodeURIComponent(artistId) + '/Ignore'),
+                    type: 'POST'
+                }).then(loadConcerts).catch(function () {
+                    btn.disabled = false;
+                    announce('Could not ignore artist.');
+                });
+            }
+
             function renderCard(c) {
                 var isoDt    = pick(c, 'EventDateTime', 'eventDateTime');
                 var artist   = pick(c, 'ArtistName',   'artistName')   || '';
@@ -439,6 +458,12 @@
                                     '<span>Buy Tickets</span></a>';
                 }
 
+                var artistId = pick(c, 'ArtistId', 'artistId');
+                var btnIgnoreHtml = (isAdmin && artistId)
+                    ? '<button is="emby-button" type="button" class="raised emby-button cr-ignore-artist" data-artist-id="' +
+                      escHtml(artistId) + '" title="Stop tracking concerts for ' + escHtml(artist) + '"><span>Ignore artist</span></button>'
+                    : '';
+
                 var pillHtml = '<span class="' + escHtml(sourcePillClass(source)) + '">' +
                                escHtml(source) + '</span>';
                 if (source && source.toLowerCase() === 'edmtrain') {
@@ -459,8 +484,8 @@
                         priceHtml +
                         '<div class="cr-card-meta">' + pillHtml + '</div>' +
                     '</div>' +
-                    (btnViewHtml || btnTicketHtml
-                        ? '<div class="cr-card-side">' + btnViewHtml + btnTicketHtml + '</div>'
+                    (btnViewHtml || btnTicketHtml || btnIgnoreHtml
+                        ? '<div class="cr-card-side">' + btnViewHtml + btnTicketHtml + btnIgnoreHtml + '</div>'
                         : '') +
                 '</article>';
             }
@@ -684,6 +709,10 @@
                 });
 
                 page.querySelector('#cr-btn-clear').addEventListener('click', clearFilters);
+                page.querySelector('#cr-results').addEventListener('click', function (e) {
+                    var btn = e.target.closest ? e.target.closest('.cr-ignore-artist') : null;
+                    if (btn) { ignoreArtist(btn.getAttribute('data-artist-id'), btn); }
+                });
             }
 
             page.addEventListener('pageshow', function () {
@@ -696,7 +725,7 @@
                 wireEvents();
                 loadSources();
                 loadArtists();
-                loadConcerts();
+                resolveAdmin().then(loadConcerts);
             });
         })();
     </script>

@@ -30,6 +30,8 @@ public class HttpSurfaceTests
             "GET Plugins/ConcertRadar/Concerts",
             "GET Plugins/ConcertRadar/Status",
             "GET Plugins/ConcertRadar/Admin/Geocode",
+            "POST Plugins/ConcertRadar/Admin/Artists/{id}/Ignore",
+            "DELETE Plugins/ConcertRadar/Admin/Artists/{id}/Ignore",
             "POST Plugins/ConcertRadar/Admin/Purge",
             "POST Plugins/ConcertRadar/Admin/ResolveIds",
             "POST Plugins/ConcertRadar/Admin/RunNow",

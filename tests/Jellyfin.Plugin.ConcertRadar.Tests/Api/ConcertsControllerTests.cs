@@ -82,6 +82,36 @@ public sealed class ConcertsControllerTests : IAsyncLifetime
             c.Source == "ticketmaster" && c.ArtistName == "Radiohead");
     }
 
+    [Fact]
+    public async Task ConcertsController_GetConcerts_ReturnsArtistId()
+    {
+        await _db.Concerts.UpsertAsync(
+            ConcertRecordFactory.Create(sourceEventId: "id-1", artistMbid: null, artistName: "Portishead"),
+            CancellationToken.None);
+
+        var result = await BuildController().GetConcertsAsync(cancellationToken: CancellationToken.None);
+
+        var qr = result.Result.Should().BeOfType<OkObjectResult>().Subject
+            .Value.Should().BeOfType<QueryResult<ConcertDto>>().Subject;
+        qr.Items.Single().ArtistId.Should().Be(Jellyfin.Plugin.ConcertRadar.Storage.ArtistRepository.ComputeId(null, "Portishead"));
+    }
+
+    [Fact]
+    public async Task ConcertsController_GetArtists_ReportsIgnoredFlag()
+    {
+        await _db.Artists.UpsertFromLibraryAsync(
+            new[] { new LibraryArtist(Guid.NewGuid(), "Portishead", null) }, CancellationToken.None);
+        await _db.Artists.SetIgnoredAsync(
+            Jellyfin.Plugin.ConcertRadar.Storage.ArtistRepository.ComputeId(null, "Portishead"),
+            true, DateTimeOffset.UtcNow, CancellationToken.None);
+
+        var result = await BuildController().GetArtistsAsync(CancellationToken.None);
+
+        var qr = result.Result.Should().BeOfType<OkObjectResult>().Subject
+            .Value.Should().BeOfType<QueryResult<ArtistDto>>().Subject;
+        qr.Items.Single().Ignored.Should().BeTrue();
+    }
+
     /// <summary>
     /// Pagination: page 2 of pageSize=1 returns the second concert.
     /// </summary>

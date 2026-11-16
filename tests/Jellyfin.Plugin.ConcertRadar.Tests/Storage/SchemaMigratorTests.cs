@@ -50,14 +50,14 @@ public class SchemaMigratorTests
         var act = async () => await migrator.MigrateAsync(CancellationToken.None);
         await act.Should().NotThrowAsync();
 
-        // schema_version should have exactly one row (version 1).
+        // schema_version should have exactly one row per migration (001, 002).
         await using var conn = new SqliteConnection(db.Locator.ConnectionString);
         await conn.OpenAsync();
 
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT COUNT(*) FROM schema_version";
         var count = Convert.ToInt32(await cmd.ExecuteScalarAsync());
-        count.Should().Be(1, because: "second run must not insert duplicate schema_version rows");
+        count.Should().Be(2, because: "second run must not insert duplicate schema_version rows");
     }
 
     [Fact]
@@ -84,6 +84,26 @@ public class SchemaMigratorTests
         // Verify it's parseable as a DateTimeOffset.
         DateTimeOffset.TryParse(appliedAt, out _).Should().BeTrue(
             because: "applied_at must be a valid ISO 8601 timestamp");
+    }
+
+    [Fact]
+    public async Task Migrator_AddsIgnoredAtColumn_KeepsExistingRows()
+    {
+        await using var db = await TestDatabase.CreateAsync();
+        await db.Artists.UpsertFromLibraryAsync(
+            new[] { new Jellyfin.Plugin.ConcertRadar.Model.LibraryArtist(Guid.NewGuid(), "Keeper", null) },
+            CancellationToken.None);
+
+        var migrator = new Jellyfin.Plugin.ConcertRadar.Storage.SchemaMigrator(
+            db.Locator,
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<Jellyfin.Plugin.ConcertRadar.Storage.SchemaMigrator>.Instance);
+        await migrator.MigrateAsync(CancellationToken.None);
+
+        await using var conn = new SqliteConnection(db.Locator.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM artists WHERE name = 'Keeper' AND ignored_at IS NULL";
+        Convert.ToInt32(await cmd.ExecuteScalarAsync()).Should().Be(1);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

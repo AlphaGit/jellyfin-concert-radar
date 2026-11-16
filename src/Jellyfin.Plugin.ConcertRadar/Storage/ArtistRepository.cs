@@ -172,6 +172,60 @@ public sealed class ArtistRepository
         _logger.LogInformation("ResetAllChecked nullified last_checked_at for {Count} artist(s).", rows);
     }
 
+    /// <summary>
+    /// Ignores or un-ignores an artist. Ignoring sets <c>ignored_at</c> and deletes the artist's
+    /// concerts in the same transaction (matched by MBID, else case-insensitive name). Un-ignoring
+    /// clears <c>ignored_at</c> and <c>last_checked_at</c> so the artist is next in the queue.
+    /// Idempotent.
+    /// </summary>
+    /// <returns>False when no artist has <paramref name="id"/>.</returns>
+    public async Task<bool> SetIgnoredAsync(string id, bool ignored, DateTimeOffset now, CancellationToken ct)
+    {
+        await using var conn = await OpenAsync(ct).ConfigureAwait(false);
+        await using var tx = (SqliteTransaction)await conn.BeginTransactionAsync(ct).ConfigureAwait(false);
+
+        string? mbid, name;
+        await using (var read = conn.CreateCommand())
+        {
+            read.Transaction = tx;
+            read.CommandText = "SELECT mbid, name FROM artists WHERE id = @id";
+            read.Parameters.AddWithValue("@id", id);
+            await using var r = await read.ExecuteReaderAsync(ct).ConfigureAwait(false);
+            if (!await r.ReadAsync(ct).ConfigureAwait(false)) return false;
+            mbid = r.IsDBNull(0) ? null : r.GetString(0);
+            name = r.GetString(1);
+        }
+
+        await using (var upd = conn.CreateCommand())
+        {
+            upd.Transaction = tx;
+            upd.CommandText = ignored
+                ? "UPDATE artists SET ignored_at = COALESCE(ignored_at, @now) WHERE id = @id"
+                : "UPDATE artists SET ignored_at = NULL, last_checked_at = NULL WHERE id = @id";
+            if (ignored) upd.Parameters.AddWithValue("@now", now.ToString("O"));
+            upd.Parameters.AddWithValue("@id", id);
+            await upd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+        }
+
+        if (ignored)
+        {
+            await using var del = conn.CreateCommand();
+            del.Transaction = tx;
+            // ponytail: concerts keep no artist_id; a source spelling that differs from the library
+            // name on an MBID-less artist leaves rows behind until GC. Add concerts.artist_id if seen.
+            del.CommandText = mbid is null
+                ? "DELETE FROM concerts WHERE artist_mbid IS NULL AND lower(artist_name) = lower(@name)"
+                : "DELETE FROM concerts WHERE artist_mbid = @mbid";
+            if (mbid is null) del.Parameters.AddWithValue("@name", name);
+            else del.Parameters.AddWithValue("@mbid", mbid);
+            int rows = await del.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            _logger.LogInformation("Ignored artist {Id}; deleted {Count} concert(s).", id, rows);
+        }
+
+        await tx.CommitAsync(ct).ConfigureAwait(false);
+        return true;
+    }
+
     // ── Read ──────────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -184,8 +238,9 @@ public sealed class ArtistRepository
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             SELECT id, mbid, name, jellyfin_item_id, ext_ids,
-                   last_checked_at, last_error, consecutive_errors
+                   last_checked_at, last_error, consecutive_errors, ignored_at
             FROM artists
+            WHERE ignored_at IS NULL
             ORDER BY last_checked_at ASC NULLS FIRST
             LIMIT @limit
             """;
@@ -208,7 +263,7 @@ public sealed class ArtistRepository
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             SELECT id, mbid, name, jellyfin_item_id, ext_ids,
-                   last_checked_at, last_error, consecutive_errors
+                   last_checked_at, last_error, consecutive_errors, ignored_at
             FROM artists
             ORDER BY name ASC
             """;
@@ -329,6 +384,7 @@ public sealed class ArtistRepository
             ExternalIds:      extIds,
             LastCheckedAt:    r.IsDBNull(5) ? null : DateTimeOffset.Parse(r.GetString(5)),
             LastError:        r.IsDBNull(6) ? null : r.GetString(6),
-            ConsecutiveErrors: r.GetInt32(7));
+            ConsecutiveErrors: r.GetInt32(7),
+            IgnoredAt:        r.IsDBNull(8) ? null : DateTimeOffset.Parse(r.GetString(8)));
     }
 }

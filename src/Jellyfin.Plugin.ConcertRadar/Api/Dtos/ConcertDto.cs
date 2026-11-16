@@ -19,6 +19,9 @@ public sealed record ConcertDto
     /// <summary>Gets the direct URL to the event on the source website.</summary>
     public required string SourceUrl { get; init; }
 
+    /// <summary>Gets the plugin artist key (same value as <c>artists.id</c>).</summary>
+    public required string ArtistId { get; init; }
+
     /// <summary>Gets the MusicBrainz artist ID (nullable).</summary>
     public string? ArtistMbid { get; init; }
 
@@ -78,6 +81,7 @@ public sealed record ConcertDto
         Source           = r.Source,
         SourceEventId    = r.SourceEventId,
         SourceUrl        = r.SourceUrl,
+        ArtistId         = Storage.ArtistRepository.ComputeId(r.ArtistMbid, r.ArtistName),
         ArtistMbid       = r.ArtistMbid,
         ArtistName       = r.ArtistName,
         EventDateTime    = r.EventDateTime,
