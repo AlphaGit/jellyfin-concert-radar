@@ -175,6 +175,20 @@ Each source fixture has at least: `happy_path`, `empty_results`, `malformed`, `r
 - `AdminController_ResetSource_ClearsCircuit`.
 - `AdminController_ResolveIds_ClearsExtIds`.
 
+### Ignored artists
+- `Migrator_AddsIgnoredAtColumn_KeepsExistingRows`.
+- `UpsertFromLibrary_DoesNotClearIgnoredAt`.
+- `SetIgnored_True_DeletesThatArtistsConcertsOnly` — other artists' rows stay; match by MBID, or by name when no MBID.
+- `SetIgnored_False_ClearsIgnoredAtAndLastChecked`.
+- `SetIgnored_IsIdempotent`.
+- `GetNextBatch_SkipsIgnoredArtists`.
+- `Task_DoesNotCallAdaptersForIgnoredArtist`.
+- `AdminController_IgnoreArtist_RequiresElevation`.
+- `AdminController_IgnoreArtist_UnknownId_Returns404`.
+- `ConcertsController_GetArtists_ReportsIgnoredFlag`.
+- `ConcertsController_GetConcerts_ReturnsArtistId`.
+- Manual smoke: admin sees the "Ignore artist" button on `view.html`; a non-admin does not. Ignoring removes the cards; un-ignore in admin page brings concerts back after "Run now".
+
 ---
 
 ## Contract / fixture tests

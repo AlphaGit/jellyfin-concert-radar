@@ -19,7 +19,7 @@
 - Ticket purchasing. Plugin only links out to the source.
 - Push notifications / calendar export. Possible future work.
 - Running on Jellyfin < 12. Version 0.1.x is the last line for Jellyfin 10.11.
-- Per-user configuration. All configuration is server-global.
+- Per-user configuration. All configuration is server-global, including the ignored-artist list.
 
 ## 3. Constraints
 
@@ -93,7 +93,8 @@ CREATE TABLE artists (
   ext_ids            TEXT NOT NULL DEFAULT '{}', -- JSON {source: externalId}
   last_checked_at    TEXT,                     -- nullable; NULLS FIRST for round-robin
   last_error         TEXT,
-  consecutive_errors INTEGER NOT NULL DEFAULT 0
+  consecutive_errors INTEGER NOT NULL DEFAULT 0,
+  ignored_at         TEXT                      -- nullable; non-null = admin ignored this artist (migration 002)
 );
 CREATE INDEX ix_artists_last_checked ON artists(last_checked_at);
 
@@ -191,7 +192,8 @@ ArtistRepository.UpsertFromLibrary  (add new; do not delete — soft-missing)
       │
       ▼
 ArtistScheduler
-  • SELECT * FROM artists ORDER BY last_checked_at ASC NULLS FIRST
+  • SELECT * FROM artists WHERE ignored_at IS NULL
+    ORDER BY last_checked_at ASC NULLS FIRST
     LIMIT config.MaxArtistsPerRun
       │
       ▼
@@ -233,7 +235,7 @@ GET  /Plugins/ConcertRadar/Concerts                    [Authorize]
      → { items: ConcertDto[], total: int }
 
 GET  /Plugins/ConcertRadar/Artists                     [Authorize]
-     → { items: ArtistDto[] }          // name, mbid, lastCheckedAt, resolvedSources
+     → { items: ArtistDto[] }          // name, mbid, lastCheckedAt, resolvedSources, ignored
 
 GET  /Plugins/ConcertRadar/Status                      [Authorize]
      → { sources: SourceStatusDto[], lastRun, nextRun, queueSize }
@@ -246,6 +248,10 @@ POST /Plugins/ConcertRadar/Admin/Purge                 [RequiresElevation]
      → deletes all concerts (forces re-fetch)
 POST /Plugins/ConcertRadar/Admin/ResolveIds            [RequiresElevation]
      → clears resolved external IDs (forces re-resolution)
+POST   /Plugins/ConcertRadar/Admin/Artists/{id}/Ignore [RequiresElevation]
+     → sets ignored_at, deletes the artist's concerts; 204; 404 if unknown id; idempotent
+DELETE /Plugins/ConcertRadar/Admin/Artists/{id}/Ignore [RequiresElevation]
+     → clears ignored_at and last_checked_at (artist is first in next run); 204; 404 if unknown id; idempotent
 GET  /Plugins/ConcertRadar/Admin/Geocode?q=<str>       [RequiresElevation]
      → Nominatim proxy for location entry
 GET  /Plugins/ConcertRadar/UserView                    [Authorize]
@@ -344,6 +350,17 @@ Responsibilities:
 3. Rate-limited to 1 req/s per MusicBrainz ToS. User-Agent: `JellyfinConcertRadar/<version> (+<repo-url>)`.
 4. Results cached in `artists.ext_ids`. Re-resolved only when `ext_ids == "{}"` or admin issues a `/resolve-ids` command.
 
+## Ignored artists
+
+The admin can ignore an artist so that no concerts are tracked for them. The list is server-global (see §2).
+
+- **Storage**: `artists.ignored_at` (migration `002_ignored_artist.sql`). `UpsertFromLibrary` never writes this column, so a library rescan keeps the flag.
+- **Ignore**: sets `ignored_at = now`, then deletes every `concerts` row for that artist (matched by `artist_mbid`, or by `artist_name` when the artist has no MBID) in one transaction.
+- **Un-ignore**: sets `ignored_at = NULL` and `last_checked_at = NULL`. Concerts return on the next run; nothing is restored directly.
+- **Scheduler**: ignored artists are never selected, so they cost no source budget. Stored `ext_ids` are kept.
+- **Lineups**: an ignored artist named in another artist's lineup is unaffected. Only the fetch for that library artist stops.
+- **Scope**: admin only. `ArtistDto` gains `ignored`; `ConcertDto` gains `artistId` (same value as `artists.id`) so the UI can address the artist.
+
 ## 12. Admin UI (embedded `admin.html`)
 
 Sections:
@@ -351,6 +368,7 @@ Sections:
 - **Credentials** — API keys for TM, Bandsintown, EdmTrain.
 - **Sources** — toggles per source; opt-in checkboxes for Dice (ToS) and RA (ToS) with explanatory text.
 - **Filters** — location list editor (add city/country/coords/radius), country allowlist multi-select, genre allowlist, min/max days ahead, skip-festivals, skip-soldout.
+- **Artists** — searchable list of library artists with an Ignore / Unignore toggle and an "Ignored" filter. Shows `ignored` state from `GET /Artists`.
 - **Scheduler** — `MaxArtistsPerRun`, `PerSourceDailyBudget`, `StaleRecordDays`, circuit breaker knobs.
 - **Rate limits** — table: source, req/s, req/day, override inputs.
 
@@ -371,7 +389,8 @@ Sections:
   - "Buy tickets" button → `ticket_url` (if distinct).
   - Source pill.
 - Pagination: 50 per page.
-- Read-only. No config controls here.
+- Read-only for regular users. When the viewer is an administrator (`GET /Users/Me` → `Policy.IsAdministrator`), each card also shows an "Ignore artist" button. It calls `POST /Admin/Artists/{artistId}/Ignore` and removes the artist's cards from the list. Non-admins never see it.
+- No other config controls here.
 
 Authentication flow when visited directly via `/web/ConfigurationPage?name=concertradar-view`:
 1. Read `localStorage['jellyfin_credentials']` JSON.

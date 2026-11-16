@@ -561,3 +561,15 @@ catalogue moves from `gh-pages` to a committed `repo/manifest.json`.
 - [x] T15.6 [TEST] Plugin Pages registration and legacy cleanup, HTTP surface rules, packaging metadata, changelog extraction.
 - [x] T15.7 [DOC] README, SPEC, MANUAL, TESTS, CHANGELOG updated for Jellyfin 12.
 - [x] T15.8 [OPS] Tag v0.2.0; retire `manifest.json` and `downloads/` on `gh-pages` (keep `assets/`); install on the production server from the new catalogue and verify.
+
+## Phase 16 — Ignore artist
+
+Admin-global ignore list. See SPEC.md "Ignored artists".
+
+- [ ] T16.1 [BE] Migration `002_ignored_artist.sql`: `ALTER TABLE artists ADD COLUMN ignored_at TEXT`. `StoredArtist.IgnoredAt`; `UpsertFromLibrary` leaves it untouched.
+- [ ] T16.2 [BE] `ArtistRepository.SetIgnored(id, bool)`: ignore sets `ignored_at` and deletes that artist's concerts in one transaction; un-ignore clears `ignored_at` and `last_checked_at`. `GetNextBatch` filters `ignored_at IS NULL`.
+- [ ] T16.3 [BE] `AdminController` `POST`/`DELETE Admin/Artists/{id}/Ignore` (`RequiresElevation`, 204, 404 unknown id, idempotent). `ArtistDto.Ignored`, `ConcertDto.ArtistId`.
+- [ ] T16.4 [FE] `admin.html` Artists section: search, Ignore/Unignore toggle, Ignored filter.
+- [ ] T16.5 [FE] `view.html`: admin-only "Ignore artist" button on cards; remove the artist's cards on success.
+- [ ] T16.6 [TEST] Tests listed under TESTS.md "Ignored artists".
+- [ ] T16.7 [DOC] MANUAL, CHANGELOG (`Unreleased`), `docs/http-surface.md` route table.
